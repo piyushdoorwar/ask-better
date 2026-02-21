@@ -238,11 +238,3 @@ body {
         transform: translateY(-2px);
         box-shadow: var(--shadow-purple), 0 8px 24px rgba(255, 215, 0, 0.2);
       }
-
-      .foot {
-        margin-top: 12px;
-        border-top: 1px solid var(--border);
-        padding-top: 10px;
-        color: var(--text-muted);
-        font-size: 12px;
-      }

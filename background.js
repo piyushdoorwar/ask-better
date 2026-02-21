@@ -59,16 +59,16 @@ async function handleMessage(message) {
     return { ok: false, code: "BAD_REQUEST", message: "Invalid request." };
   }
 
-  if (message.type === "PROMPTFORGE_GET_PUBLIC_SETTINGS") {
+  if (message.type === "ASKBETTER_GET_PUBLIC_SETTINGS") {
     const settings = await readSettings();
     return { ok: true, settings: toPublicSettings(settings) };
   }
 
-  if (message.type === "PROMPTFORGE_TEST_KEY") {
+  if (message.type === "ASKBETTER_TEST_KEY") {
     return await testKey(message.payload || {});
   }
 
-  if (message.type === "PROMPTFORGE_OPTIMIZE") {
+  if (message.type === "ASKBETTER_OPTIMIZE") {
     return await optimizePrompt(message);
   }
 

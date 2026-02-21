@@ -1,6 +1,6 @@
-# PromptForge (Chrome Extension, MV3)
+# AskBetter (Chrome Extension, MV3)
 
-PromptForge is a local-first prompt optimizer for:
+AskBetter is a local-first prompt optimizer for:
 
 - ChatGPT (`chat.openai.com` and `chatgpt.com`)
 - Google Gemini (`gemini.google.com`)
@@ -16,6 +16,7 @@ It injects a lightweight `Optimize` button near the prompt input. Clicking it re
 - Prompt text is never logged by the extension.
 - If `Custom Prompt Additions` is set, it is sent only with optimize requests to your selected provider.
 - Analytics is opt-in and local-only in this v0 (no prompt text sent anywhere).
+- Full privacy policy: `https://piyushdoorwar.github.io/policy/`
 
 ## Presets
 
@@ -55,11 +56,11 @@ It injects a lightweight `Optimize` button near the prompt input. Clicking it re
 2. Enable `Developer mode` (top right).
 3. Click `Load unpacked`.
 4. Select this folder: `c:\Repos\prompt-optimizer-ask-better`.
-5. Pin the PromptForge extension (optional, recommended).
+5. Pin the AskBetter extension (optional, recommended).
 
 ## Configure
 
-1. Click the PromptForge extension icon.
+1. Click the AskBetter extension icon.
 2. Click `Open settings`.
 3. Use the left menu sections:
    - Models
@@ -83,9 +84,9 @@ It injects a lightweight `Optimize` button near the prompt input. Clicking it re
 1. Open ChatGPT or Gemini.
 2. Type or paste a prompt.
 3. Click `Optimize`.
-4. PromptForge replaces the current prompt with the optimized version.
+4. AskBetter replaces the current prompt with the optimized version.
 
-If AI is off or no key is set, PromptForge shows:
+If AI is off or no key is set, AskBetter shows:
 
 - `AI disabled or key missing`
 
@@ -98,6 +99,18 @@ If AI is off or no key is set, PromptForge shows:
 
 - Provider support includes OpenAI and Google Gemini.
 - Anthropic remains TODO in settings.
+
+## Legal Notice
+
+By installing, enabling, or using AskBetter, you acknowledge and agree that AskBetter is provided "as is" and
+"as available," without warranties of any kind, to the maximum extent permitted by applicable law.
+
+You are solely responsible for your prompts, outputs, key management, provider configuration, compliance with provider
+terms, data handling obligations, and applicable laws in your jurisdiction.
+
+To the maximum extent permitted by law, the developer is not liable for indirect, incidental, special, consequential,
+exemplary, or punitive damages, or for loss of data, business, revenue, or reputation arising from use of, or
+inability to use, AskBetter.
 
 ## Manual Test Checklist
 

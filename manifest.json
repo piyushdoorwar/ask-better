@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "PromptForge",
+  "name": "AskBetter",
   "description": "Local prompt optimizer for ChatGPT and Gemini.",
   "version": "0.1.0",
   "permissions": [
@@ -23,7 +23,7 @@
     "128": "assets/icons/icon128.png"
   },
   "action": {
-    "default_title": "PromptForge",
+    "default_title": "AskBetter",
     "default_popup": "ui/popup.html",
     "default_icon": {
       "16": "assets/icons/icon16.png",

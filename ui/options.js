@@ -23,7 +23,7 @@ const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"]
 const SECTION_INFO_CONTENT = {
   models: {
     title: "Models",
-    description: "This section controls which provider and model PromptForge calls when you press Optimize.",
+    description: "This section controls which provider and model AskBetter calls when you press Optimize.",
     points: [
       "OpenAI and Google Gemini are supported right now.",
       "Faster/lighter models usually respond quicker and cost less; larger models can improve rewrite quality.",
@@ -43,7 +43,7 @@ const SECTION_INFO_CONTENT = {
   },
   integrations: {
     title: "Integrations",
-    description: "Integrations decide where PromptForge appears and whether optimization is enabled at all.",
+    description: "Integrations decide where AskBetter appears and whether optimization is enabled at all.",
     points: [
       "Enable AI (global) turns optimization on/off everywhere.",
       "Enable on ChatGPT and Enable on Gemini control injection per site.",
@@ -488,7 +488,7 @@ function bindSecurityActions() {
     testKeyStatus.className = "";
 
     const response = await sendMessage({
-      type: "PROMPTFORGE_TEST_KEY",
+      type: "ASKBETTER_TEST_KEY",
       payload: {
         provider,
         apiKey,
@@ -519,7 +519,7 @@ function bindSecurityActions() {
   });
 
   clearDataBtn.addEventListener("click", async () => {
-    const confirmed = window.confirm("Clear all stored PromptForge settings and local usage data?");
+    const confirmed = window.confirm("Clear all stored AskBetter settings and local usage data?");
     if (!confirmed) {
       return;
     }

@@ -9,10 +9,10 @@
     "textarea"
   ];
 
-  startPromptForge(SITE, ENABLE_KEY, SELECTORS);
+  startAskBetter(SITE, ENABLE_KEY, SELECTORS);
 })();
 
-function startPromptForge(site, siteToggleKey, selectors) {
+function startAskBetter(site, siteToggleKey, selectors) {
   let button = null;
   let activeInput = null;
   let settingsCache = null;
@@ -109,7 +109,7 @@ function startPromptForge(site, siteToggleKey, selectors) {
 
     setBusy(true);
     const response = await sendMessage({
-      type: "PROMPTFORGE_OPTIMIZE",
+      type: "ASKBETTER_OPTIMIZE",
       prompt,
       preset: settings.defaultPreset,
       site
@@ -133,7 +133,7 @@ function startPromptForge(site, siteToggleKey, selectors) {
     if (!forceRefresh && settingsCache && now - settingsLoadedAt < 5000) {
       return settingsCache;
     }
-    const response = await sendMessage({ type: "PROMPTFORGE_GET_PUBLIC_SETTINGS" });
+    const response = await sendMessage({ type: "ASKBETTER_GET_PUBLIC_SETTINGS" });
     if (response && response.ok && response.settings) {
       settingsCache = response.settings;
       settingsLoadedAt = now;
