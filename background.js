@@ -7,7 +7,9 @@ const DEFAULT_SETTINGS = {
   enableGemini: true,
   enableAI: true,
   analyticsOptIn: false,
-  keepUserVoice: false
+  keepUserVoice: false,
+  keyVerified: false,
+  customPromptAdditions: ""
 };
 
 const PRESET_INSTRUCTIONS = {

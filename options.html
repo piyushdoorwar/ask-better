@@ -7,187 +7,594 @@
     <style>
       :root {
         color-scheme: dark;
+        --purple: #6739b7;
+        --purple-light: #8b5cf6;
+        --purple-dark: #5b21b6;
+        --yellow: #ffd700;
+        --yellow-dark: #ffc700;
+        --yellow-light: #ffe55c;
+        --green: #00d09c;
+        --pink: #ff6b9d;
+        --blue: #5dade2;
+        --bg: #0d0d0d;
+        --bg-secondary: #1a1a1a;
+        --bg-panel: #1e1e1e;
+        --bg-elevated: #252525;
+        --text: #ffffff;
+        --text-secondary: #b8b8b8;
+        --text-muted: rgba(255, 255, 255, 0.6);
+        --border: rgba(255, 255, 255, 0.06);
+        --border-light: rgba(255, 255, 255, 0.1);
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+        --shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+        --shadow-purple: 0 8px 24px rgba(103, 57, 183, 0.3);
+        --focus: rgba(103, 57, 183, 0.3);
+        --radius-sm: 10px;
+        --radius: 12px;
+        --radius-card: 24px;
       }
+
+      * {
+        box-sizing: border-box;
+        scrollbar-width: thin;
+        scrollbar-color: var(--purple) transparent;
+      }
+
       body {
         margin: 0;
-        font-family: "Segoe UI", Arial, sans-serif;
-        background: #050816;
-        color: #e2e8f0;
+        font-family: "Inter", "Segoe UI", Arial, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(1200px 700px at 10% 0%, rgba(103, 57, 183, 0.12), transparent 60%),
+          radial-gradient(900px 600px at 90% 20%, rgba(255, 107, 157, 0.08), transparent 60%),
+          radial-gradient(700px 500px at 50% 100%, rgba(93, 173, 226, 0.06), transparent 60%),
+          var(--bg);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
+
       .wrap {
-        max-width: 840px;
-        margin: 24px auto;
-        padding: 0 16px 24px;
+        max-width: 1120px;
+        margin: 26px auto;
+        padding: 0 18px 24px;
       }
-      h1 {
-        margin: 0 0 14px;
-        font-size: 24px;
+
+      .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 14px;
       }
+
       .brand {
         display: flex;
         align-items: center;
         gap: 12px;
-        margin: 0 0 14px;
       }
-      .brand h1 {
-        margin: 0;
-      }
+
       .brand-icon {
-        width: 30px;
-        height: 30px;
+        width: 34px;
+        height: 34px;
         display: block;
       }
-      .card {
-        background: #0b1224;
-        border: 1px solid #1f2937;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 14px;
+
+      .title-group h1 {
+        margin: 0;
+        font-size: 30px;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+        background: linear-gradient(135deg, var(--yellow), var(--purple-light));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
       }
+
+      .subtitle {
+        margin: 3px 0 0;
+        color: var(--text-secondary);
+        font-size: 14px;
+      }
+
+      #statusMsg {
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        min-height: 38px;
+        min-width: 230px;
+        padding: 9px 12px;
+        font-size: 14px;
+        color: var(--text-muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .ok {
+        color: var(--green) !important;
+      }
+
+      .warn {
+        color: var(--yellow) !important;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: 14px;
+      }
+
+      .card {
+        border: 1px solid var(--border);
+        border-radius: var(--radius-card);
+        background: var(--bg-panel);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .sidebar {
+        padding: 12px;
+        position: sticky;
+        top: 14px;
+        height: fit-content;
+      }
+
+      .menu-title {
+        margin: 2px 0 10px;
+        color: var(--text-muted);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+
+      .nav-btn {
+        width: 100%;
+        text-align: left;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text);
+        padding: 10px 11px;
+        margin-bottom: 8px;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+      }
+
+      .nav-btn:hover {
+        background: var(--bg-elevated);
+        border-color: var(--border-light);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .nav-btn.active {
+        border-color: var(--purple-light);
+        background: linear-gradient(135deg, var(--purple), var(--purple-dark));
+        color: var(--text);
+        box-shadow: var(--shadow-purple);
+      }
+
+      .nav-btn.active::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 18%;
+        width: 3px;
+        height: 64%;
+        background: var(--yellow);
+        border-radius: 0 2px 2px 0;
+      }
+
+      .content {
+        padding: 14px;
+      }
+
+      .settings-section {
+        display: none;
+      }
+
+      .settings-section.active {
+        display: block;
+      }
+
+      .section-title {
+        margin: 0 0 6px;
+        font-size: 22px;
+      }
+
+      .section-sub {
+        margin: 0 0 14px;
+        color: var(--text-secondary);
+        font-size: 14px;
+      }
+
       .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .full {
+        grid-column: 1 / -1;
+      }
+
+      .field label {
+        display: block;
+        margin: 0 0 7px;
+        color: var(--text-secondary);
+        font-size: 15px;
+      }
+
+      input[type="password"],
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 11px 12px;
+        font-size: 16px;
+        outline: none;
+        font-family: inherit;
+        box-shadow: var(--shadow-sm);
+      }
+
+      textarea {
+        min-height: 170px;
+        resize: vertical;
+        line-height: 1.45;
+      }
+
+      input[type="password"]:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--purple-light);
+        box-shadow: 0 0 0 3px var(--focus), var(--shadow-purple);
+      }
+
+      .inline-note {
+        margin-top: 7px;
+        color: var(--text-muted);
+        font-size: 13px;
+      }
+
+      .sub-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+      }
+
+      #testKeyBtn {
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 8px 14px;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      #testKeyBtn:hover {
+        background: var(--purple);
+        border-color: var(--purple-light);
+        box-shadow: var(--shadow-purple);
+      }
+
+      #testKeyStatus {
+        min-height: 18px;
+        font-size: 14px;
+      }
+
+      .help-link {
+        color: var(--yellow-light);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        font-size: 14px;
+      }
+
+      .help-link:hover {
+        color: var(--yellow);
+      }
+
+      .key-locked-banner {
+        border: 1px solid rgba(0, 208, 156, 0.4);
+        border-radius: var(--radius-sm);
+        background: rgba(0, 208, 156, 0.12);
+        color: #a7f3d0;
+        padding: 11px 12px;
+        font-size: 14px;
+      }
+
+      .toggle-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 12px;
       }
-      .full {
-        grid-column: 1 / -1;
-      }
-      label {
-        display: block;
-        font-size: 13px;
-        margin-bottom: 6px;
-      }
-      input[type="text"],
-      input[type="password"],
-      select {
-        width: 100%;
-        border: 1px solid #334155;
-        border-radius: 8px;
-        background: #111827;
-        color: #e2e8f0;
-        padding: 9px 10px;
-        font-size: 14px;
-      }
-      .toggle {
+
+      .toggle-row {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 10px;
+        padding: 11px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        transition: all 0.2s ease;
       }
-      .toggle input {
-        width: 18px;
-        height: 18px;
+
+      .toggle-row:hover {
+        border-color: var(--border-light);
+        transform: translateY(-1px);
       }
-      .toggle label {
+
+      .toggle-row.full {
+        grid-column: 1 / -1;
+      }
+
+      .toggle-row label {
         margin: 0;
+        font-size: 16px;
+        color: var(--text);
       }
-      .actions {
-        display: flex;
-        gap: 10px;
-        margin-top: 14px;
-        flex-wrap: wrap;
+
+      .switch {
+        position: relative;
+        width: 44px;
+        height: 24px;
+        flex-shrink: 0;
       }
-      button {
-        border: 1px solid #334155;
-        border-radius: 8px;
-        background: #111827;
-        color: #e2e8f0;
-        padding: 9px 12px;
-        font-size: 14px;
+
+      .switch input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
         cursor: pointer;
       }
-      .primary {
-        background: #7c3aed;
-        border-color: #8b5cf6;
-        font-weight: 600;
+
+      .slider {
+        position: absolute;
+        inset: 0;
+        border-radius: 999px;
+        background: #2d2d2d;
+        border: 1px solid var(--border-light);
+        transition: 130ms ease;
       }
-      .danger {
-        border-color: #7f1d1d;
-        background: #3f1010;
+
+      .slider::before {
+        content: "";
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        left: 2px;
+        top: 2px;
+        border-radius: 50%;
+        background: #f8fafc;
+        transition: 130ms ease;
       }
-      #statusMsg {
-        min-height: 20px;
+
+      .switch input:checked + .slider {
+        background: linear-gradient(90deg, var(--purple), var(--purple-light));
+        border-color: var(--purple-light);
+        box-shadow: var(--shadow-purple);
+      }
+
+      .switch input:checked + .slider::before {
+        transform: translateX(20px);
+      }
+
+      .switch input:focus-visible + .slider {
+        box-shadow: 0 0 0 3px var(--focus);
+      }
+
+      #clearDataBtn {
+        border: 1px solid rgba(255, 107, 157, 0.5);
+        border-radius: var(--radius);
+        color: #fecaca;
+        background: rgba(255, 107, 157, 0.12);
+        padding: 10px 15px;
+        font-size: 15px;
+        font-weight: 650;
+        cursor: pointer;
+      }
+
+      #clearDataBtn:hover {
+        border-color: rgba(255, 107, 157, 0.85);
+        box-shadow: 0 8px 24px rgba(255, 107, 157, 0.25);
+      }
+
+      .note {
         margin-top: 10px;
-        font-size: 13px;
+        color: var(--text-muted);
+        font-size: 14px;
       }
-      .ok {
-        color: #22c55e;
-      }
-      .warn {
-        color: #f59e0b;
-      }
-      .muted {
-        color: #94a3b8;
-        font-size: 12px;
-      }
-      @media (max-width: 760px) {
-        .grid {
+
+      @media (max-width: 980px) {
+        .layout {
           grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          position: static;
+        }
+
+        .grid,
+        .toggle-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .top {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        #statusMsg {
+          width: 100%;
         }
       }
     </style>
   </head>
   <body>
     <div class="wrap">
-      <div class="brand">
-        <img class="brand-icon" src="assets/promptforge-icon.svg" alt="PromptForge icon" />
-        <h1>PromptForge Settings</h1>
+      <div class="top">
+        <div class="brand">
+          <img class="brand-icon" src="assets/promptforge-icon.svg" alt="PromptForge icon" />
+          <div class="title-group">
+            <h1>PromptForge Settings</h1>
+            <p class="subtitle">Organized sections with auto-save enabled.</p>
+          </div>
+        </div>
+        <div id="statusMsg">Auto-save ready</div>
       </div>
 
-      <form id="settingsForm" class="card">
-        <div class="grid">
-          <div>
-            <label for="provider">Provider</label>
-            <select id="provider" name="provider">
-              <option value="openai">OpenAI</option>
-              <option value="anthropic" disabled>Anthropic (TODO)</option>
-            </select>
-          </div>
-          <div>
-            <label for="openaiModel">OpenAI model</label>
-            <input id="openaiModel" name="openaiModel" type="text" placeholder="gpt-4.1-mini" />
-          </div>
-          <div class="full">
-            <label for="apiKey">API key</label>
-            <input id="apiKey" name="apiKey" type="password" autocomplete="off" placeholder="sk-..." />
-            <div class="actions">
-              <button type="button" id="testKeyBtn">Test key</button>
-              <span class="muted" id="testKeyStatus"></span>
-            </div>
-          </div>
-          <div>
-            <label for="defaultPreset">Default preset</label>
-            <select id="defaultPreset" name="defaultPreset">
-              <option value="structured">Structured</option>
-              <option value="concise">Concise</option>
-              <option value="grammar">Fix grammar</option>
-              <option value="clarity">Improve clarity</option>
-            </select>
-          </div>
-          <div class="toggle">
-            <input id="enableAI" name="enableAI" type="checkbox" />
-            <label for="enableAI">Enable AI (global)</label>
-          </div>
-          <div class="toggle">
-            <input id="enableChatGPT" name="enableChatGPT" type="checkbox" />
-            <label for="enableChatGPT">Enable on ChatGPT</label>
-          </div>
-          <div class="toggle">
-            <input id="enableGemini" name="enableGemini" type="checkbox" />
-            <label for="enableGemini">Enable on Gemini</label>
-          </div>
-          <div class="toggle full">
-            <input id="analyticsOptIn" name="analyticsOptIn" type="checkbox" />
-            <label for="analyticsOptIn">Share anonymous usage analytics (prompt text never sent)</label>
-          </div>
-          <div class="full muted">Keep user voice toggle: TODO (planned for a future version).</div>
-        </div>
+      <div class="layout">
+        <aside class="sidebar card">
+          <p class="menu-title">Menu</p>
+          <button class="nav-btn active" data-section="section-models" type="button">Models</button>
+          <button class="nav-btn" data-section="section-presets" type="button">Presets</button>
+          <button class="nav-btn" data-section="section-integrations" type="button">Integrations</button>
+          <button class="nav-btn" data-section="section-custom" type="button">Custom Prompt Additions</button>
+          <button class="nav-btn" data-section="section-security" type="button">Security</button>
+        </aside>
 
-        <div class="actions">
-          <button type="submit" class="primary">Save settings</button>
-          <button type="button" class="danger" id="clearDataBtn">Clear stored key/data</button>
-        </div>
-        <div id="statusMsg"></div>
-      </form>
+        <main class="content card">
+          <section id="section-models" class="settings-section active">
+            <h2 class="section-title">Models</h2>
+            <p class="section-sub">Choose provider and the OpenAI model used for optimization.</p>
+            <div class="grid">
+              <div class="field">
+                <label for="provider">Provider</label>
+                <select id="provider" name="provider">
+                  <option value="openai">OpenAI</option>
+                  <option value="anthropic" disabled>Anthropic (TODO)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="openaiModel">OpenAI model</label>
+                <select id="openaiModel" name="openaiModel">
+                  <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                  <option value="gpt-4.1">gpt-4.1</option>
+                  <option value="gpt-4o-mini">gpt-4o-mini</option>
+                  <option value="gpt-4o">gpt-4o</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section id="section-presets" class="settings-section">
+            <h2 class="section-title">Presets</h2>
+            <p class="section-sub">Set the default rewrite behavior used by the Optimize button.</p>
+            <div class="grid">
+              <div class="field">
+                <label for="defaultPreset">Default preset</label>
+                <select id="defaultPreset" name="defaultPreset">
+                  <option value="structured">Structured</option>
+                  <option value="concise">Concise</option>
+                  <option value="grammar">Fix grammar</option>
+                  <option value="clarity">Improve clarity</option>
+                </select>
+                <p class="inline-note">Keep user voice toggle: TODO.</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="section-integrations" class="settings-section">
+            <h2 class="section-title">Integrations</h2>
+            <p class="section-sub">Enable where PromptForge should appear.</p>
+            <div class="toggle-grid">
+              <div class="toggle-row">
+                <label for="enableAI">Enable AI (global)</label>
+                <span class="switch">
+                  <input id="enableAI" name="enableAI" type="checkbox" />
+                  <span class="slider"></span>
+                </span>
+              </div>
+
+              <div class="toggle-row">
+                <label for="enableChatGPT">Enable on ChatGPT</label>
+                <span class="switch">
+                  <input id="enableChatGPT" name="enableChatGPT" type="checkbox" />
+                  <span class="slider"></span>
+                </span>
+              </div>
+
+              <div class="toggle-row">
+                <label for="enableGemini">Enable on Gemini</label>
+                <span class="switch">
+                  <input id="enableGemini" name="enableGemini" type="checkbox" />
+                  <span class="slider"></span>
+                </span>
+              </div>
+
+              <div class="toggle-row full">
+                <label for="analyticsOptIn">Share anonymous usage analytics (prompt text never sent)</label>
+                <span class="switch">
+                  <input id="analyticsOptIn" name="analyticsOptIn" type="checkbox" />
+                  <span class="slider"></span>
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <section id="section-custom" class="settings-section">
+            <h2 class="section-title">Custom Prompt Additions</h2>
+            <p class="section-sub">Add reusable instructions that can be integrated in future optimization passes.</p>
+            <div class="grid">
+              <div class="field full">
+                <label for="customPromptAdditions">Reusable additions</label>
+                <textarea
+                  id="customPromptAdditions"
+                  placeholder="Example: Always keep a professional tone. Include concrete acceptance criteria."
+                ></textarea>
+                <p class="inline-note">Saved automatically. Not sent anywhere by itself.</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="section-security" class="settings-section">
+            <h2 class="section-title">Security</h2>
+            <p class="section-sub">Verify key once. After verification, key editing is locked.</p>
+            <div class="grid">
+              <div class="field full">
+                <label for="apiKey">API key</label>
+                <div id="apiKeyEditor">
+                  <input id="apiKey" name="apiKey" type="password" autocomplete="off" placeholder="sk-..." />
+                  <div class="sub-actions">
+                    <button type="button" id="testKeyBtn">Test key</button>
+                    <span id="testKeyStatus"></span>
+                    <a
+                      id="generateKeyLink"
+                      class="help-link"
+                      href="https://platform.openai.com/api-keys"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      hidden
+                    >
+                      Generate API key
+                    </a>
+                  </div>
+                </div>
+                <div id="keyLockedBanner" class="key-locked-banner" hidden>
+                  API key verified and saved. Editing is locked. Use clear data to reset key setup.
+                </div>
+              </div>
+              <div class="field full">
+                <button type="button" id="clearDataBtn">Clear stored key/data</button>
+                <p class="note">Clears local settings and usage stats from this browser profile.</p>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
     </div>
 
     <script src="options.js"></script>

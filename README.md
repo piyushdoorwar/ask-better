@@ -5,7 +5,7 @@ PromptForge is a local-first prompt optimizer for:
 - ChatGPT (`chat.openai.com` and `chatgpt.com`)
 - Google Gemini (`gemini.google.com`)
 
-It injects a lightweight `✨ Optimize` button near the prompt input. Clicking it rewrites the current prompt based on your selected preset and replaces the textbox content.
+It injects a lightweight `Optimize` button near the prompt input. Clicking it rewrites the current prompt based on your selected preset and replaces the textbox content.
 
 ## Privacy and Security
 
@@ -35,8 +35,8 @@ It injects a lightweight `✨ Optimize` button near the prompt input. Clicking i
 - `content/chatgpt.js` (ChatGPT injection)
 - `content/gemini.js` (Gemini injection)
 - `injected/styles.css` (button + toast styles)
-- `popup.html`, `popup.js` (quick controls/status)
-- `options.html`, `options.js` (full settings)
+- `popup.html`, `popup.js` (quick controls/status/model switch)
+- `options.html`, `options.js` (sectioned settings + auto-save)
 
 ## Install (Unpacked)
 
@@ -50,20 +50,27 @@ It injects a lightweight `✨ Optimize` button near the prompt input. Clicking i
 
 1. Click the PromptForge extension icon.
 2. Click `Open settings`.
-3. Set:
+3. Use the left menu sections:
+   - Models
+   - Presets
+   - Integrations
+   - Custom Prompt Additions
+   - Security
+4. Set:
    - Provider: `OpenAI`
    - API key
-   - Model (default `gpt-4.1-mini`)
+   - Model
    - Default preset
    - Toggles (Global AI, ChatGPT, Gemini)
-4. Click `Save settings`.
-5. Optional: click `Test key`.
+5. Settings auto-save on change (no Save button required).
+6. In Security, click `Test key` once. On success, the key is saved and locked.
+7. Use `Clear stored key/data` to reset key setup.
 
 ## Use on ChatGPT/Gemini
 
 1. Open ChatGPT or Gemini.
 2. Type or paste a prompt.
-3. Click `✨ Optimize`.
+3. Click `Optimize`.
 4. PromptForge replaces the current prompt with the optimized version.
 
 If AI is off or no key is set, PromptForge shows:
@@ -82,4 +89,7 @@ If AI is off or no key is set, PromptForge shows:
 - [ ] Works on Gemini (`gemini.google.com`).
 - [ ] Missing key shows helpful toast (`AI disabled or key missing`).
 - [ ] Optimize replaces textbox content.
+- [ ] OpenAI model switch persists and is used by optimization requests.
+- [ ] Options page left menu switches sections correctly.
+- [ ] Changes auto-save without clicking a Save button.
 - [ ] Settings persist after extension/page reload.
