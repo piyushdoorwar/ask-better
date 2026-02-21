@@ -358,6 +358,7 @@ function readApiErrorMessage(body) {
 function buildSystemInstruction({ preset, settings, completionPass }) {
   const instruction = PRESET_INSTRUCTIONS[preset] || PRESET_INSTRUCTIONS.structured;
   const customGuidance = String(settings && settings.customPromptAdditions ? settings.customPromptAdditions : "").trim();
+  const keepUserVoice = !!(settings && settings.keepUserVoice);
   const parts = [
     "You rewrite prompts for end users.",
     "Return only one rewritten prompt as plain text.",
@@ -370,6 +371,12 @@ function buildSystemInstruction({ preset, settings, completionPass }) {
   if (preset === "structured") {
     parts.push(
       "For structured preset, write in 2-3 cohesive narrative paragraphs with natural flow, not bullet lists."
+    );
+  }
+
+  if (keepUserVoice) {
+    parts.push(
+      "Preserve the user's voice: keep their tone, cadence, and phrasing style where possible while improving quality."
     );
   }
 
@@ -483,6 +490,7 @@ function toPublicSettings(settings) {
     enableChatGPT: !!settings.enableChatGPT,
     enableGemini: !!settings.enableGemini,
     enableAI: !!settings.enableAI,
+    keepUserVoice: !!settings.keepUserVoice,
     analyticsOptIn: !!settings.analyticsOptIn,
     hasApiKey
   };

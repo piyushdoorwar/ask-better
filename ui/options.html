@@ -132,7 +132,7 @@
               </div>
             </div>
             <div class="grid">
-              <div class="field">
+              <div class="field full">
                 <label for="defaultPreset">Default preset</label>
                 <select id="defaultPreset" name="defaultPreset">
                   <optgroup label="Core Rewrite">
@@ -157,7 +157,14 @@
                     <option value="implementation_plan">Implementation plan</option>
                   </optgroup>
                 </select>
-                <p class="inline-note">Keep user voice toggle: TODO.</p>
+                <div class="toggle-row preset-toggle-row">
+                  <label for="keepUserVoice">Keep user voice</label>
+                  <span class="switch">
+                    <input id="keepUserVoice" name="keepUserVoice" type="checkbox" />
+                    <span class="slider"></span>
+                  </span>
+                </div>
+                <p class="inline-note">When enabled, rewrites preserve your tone and writing style as much as possible.</p>
               </div>
             </div>
           </section>

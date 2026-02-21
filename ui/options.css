@@ -679,6 +679,10 @@
         color: var(--text);
       }
 
+      .preset-toggle-row {
+        margin-top: 12px;
+      }
+
       .switch {
         position: relative;
         width: 44px;

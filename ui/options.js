@@ -37,7 +37,8 @@ const SECTION_INFO_CONTENT = {
       "Core Rewrite presets: Story structured, Concise, Fix grammar, Improve clarity.",
       "Communication Style presets: Persuasive, Executive brief, Coaching tone, Email rephrase/rewrite.",
       "Critical Thinking presets: Devil's advocate, First principles, Risk audit.",
-      "Build and Delivery presets: Technical spec, Implementation plan."
+      "Build and Delivery presets: Technical spec, Implementation plan.",
+      "Keep user voice preserves your writing tone and voice while applying the selected preset."
     ]
   },
   integrations: {
@@ -76,6 +77,7 @@ const modelLabelEl = document.getElementById("modelLabel");
 const openaiModelEl = document.getElementById("openaiModel");
 const apiKeyEl = document.getElementById("apiKey");
 const defaultPresetEl = document.getElementById("defaultPreset");
+const keepUserVoiceEl = document.getElementById("keepUserVoice");
 const enableAIEl = document.getElementById("enableAI");
 const enableChatGPTEl = document.getElementById("enableChatGPT");
 const enableGeminiEl = document.getElementById("enableGemini");
@@ -275,6 +277,10 @@ function bindAutoSave() {
 
   defaultPresetEl.addEventListener("change", async () => {
     await savePartial({ defaultPreset: normalizePreset(defaultPresetEl.value) });
+  });
+
+  keepUserVoiceEl.addEventListener("change", async () => {
+    await savePartial({ keepUserVoice: !!keepUserVoiceEl.checked });
   });
 
   enableAIEl.addEventListener("change", async () => {
@@ -548,6 +554,7 @@ function fillForm(settings) {
   currentSettings = normalized;
   providerEl.value = normalizeProvider(normalized.provider);
   defaultPresetEl.value = normalizePreset(normalized.defaultPreset);
+  keepUserVoiceEl.checked = !!normalized.keepUserVoice;
   enableAIEl.checked = !!normalized.enableAI;
   enableChatGPTEl.checked = !!normalized.enableChatGPT;
   enableGeminiEl.checked = !!normalized.enableGemini;

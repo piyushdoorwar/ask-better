@@ -24,6 +24,7 @@ const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"]
 const statusBox = document.getElementById("statusBox");
 const statusText = document.getElementById("statusText");
 const defaultPresetEl = document.getElementById("defaultPreset");
+const keepUserVoiceEl = document.getElementById("keepUserVoice");
 const openaiModelEl = document.getElementById("openaiModel");
 const enableChatGPTEl = document.getElementById("enableChatGPT");
 const enableGeminiEl = document.getElementById("enableGemini");
@@ -42,11 +43,16 @@ async function init() {
   const provider = normalizeProvider(settings.provider);
   const model = getProviderModel(settings, provider);
   renderModelOptions(provider, model);
+  keepUserVoiceEl.checked = !!settings.keepUserVoice;
   enableChatGPTEl.checked = !!settings.enableChatGPT;
   enableGeminiEl.checked = !!settings.enableGemini;
 
   defaultPresetEl.addEventListener("change", async () => {
     await updateSettings({ defaultPreset: normalizePreset(defaultPresetEl.value) });
+  });
+
+  keepUserVoiceEl.addEventListener("change", async () => {
+    await updateSettings({ keepUserVoice: !!keepUserVoiceEl.checked });
   });
 
   enableChatGPTEl.addEventListener("change", async () => {

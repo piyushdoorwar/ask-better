@@ -72,6 +72,7 @@ It injects a lightweight `Optimize` button near the prompt input. Clicking it re
    - API key
    - Model
    - Default preset
+   - Keep user voice toggle (preserve tone/style during rewrites)
    - Toggles (Global AI, ChatGPT, Gemini)
 5. Settings auto-save on change (no Save button required).
 6. In Security, click `Test key` once. On success, the key is saved and locked.
@@ -97,7 +98,6 @@ If AI is off or no key is set, PromptForge shows:
 
 - Provider support includes OpenAI and Google Gemini.
 - Anthropic remains TODO in settings.
-- Keep User Voice toggle is marked TODO for a future version.
 
 ## Manual Test Checklist
 
