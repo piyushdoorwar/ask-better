@@ -14,19 +14,27 @@ It injects a lightweight `Optimize` button near the prompt input. Clicking it re
 - API key is read and used only by `background.js` (service worker).
 - Content scripts never read or store the API key.
 - Prompt text is never logged by the extension.
+- If `Custom Prompt Additions` is set, it is sent only with optimize requests to your selected provider.
 - Analytics is opt-in and local-only in this v0 (no prompt text sent anywhere).
 
 ## Presets
 
-- `Fix grammar`: spelling/grammar fixes, minimal rewrites.
-- `Improve clarity`: clearer phrasing, same meaning.
-- `Concise`: shorter while preserving requirements.
-- `Structured`: rewrites as:
-  - `Context`
-  - `Task`
-  - `Constraints`
-  - `Output Format`
-  - `Questions (if any)`
+- `Core Rewrite`
+  - `Structured`: story-like 2-3 paragraph prompt with strong context and constraints.
+  - `Concise`: shorter while preserving requirements.
+  - `Fix grammar`: spelling/grammar fixes with minimal rewrite.
+  - `Improve clarity`: clearer phrasing with the same meaning.
+- `Communication Style`
+  - `Persuasive`: more compelling and outcome-oriented.
+  - `Executive brief`: concise, strategic, stakeholder-friendly.
+  - `Coaching tone`: supportive, accountable, action-driven.
+- `Critical Thinking`
+  - `Devil's advocate`: challenge weak assumptions and blind spots.
+  - `First principles`: decompose to fundamentals and core logic.
+  - `Risk audit`: focus on risks, failure modes, and mitigations.
+- `Build and Delivery`
+  - `Technical spec`: precise requirements and acceptance criteria.
+  - `Implementation plan`: ordered tasks, dependencies, and deliverables.
 
 ## Files
 

@@ -34,10 +34,10 @@ const SECTION_INFO_CONTENT = {
     title: "Presets",
     description: "Presets define your default rewrite style for the Optimize button.",
     points: [
-      "Structured: rewrites into clear sections (Context, Task, Constraints, Output Format, Questions).",
-      "Concise: shortens wording while preserving intent and requirements.",
-      "Fix grammar: corrects grammar/spelling with minimal rewrite.",
-      "Improve clarity: keeps meaning while making wording clearer."
+      "Core Rewrite presets: Story structured, Concise, Fix grammar, Improve clarity.",
+      "Communication Style presets: Persuasive, Executive brief, Coaching tone.",
+      "Critical Thinking presets: Devil's advocate, First principles, Risk audit.",
+      "Build and Delivery presets: Technical spec, Implementation plan."
     ]
   },
   integrations: {
@@ -51,11 +51,13 @@ const SECTION_INFO_CONTENT = {
   },
   custom: {
     title: "Custom Prompt Additions",
-    description: "Use this for reusable instruction snippets you want available for future optimization behavior.",
+    description: "Use this for reusable instruction snippets that are appended as extra guidance during optimization.",
     points: [
+      "Use quick tags to add or remove common instruction snippets with one click.",
+      "Selected additions appear as removable chips, and you can add your own custom attributes.",
       "Keep additions short and reusable (tone, constraints, output preferences).",
       "These values are stored locally in your browser profile.",
-      "Current version saves this content now and is designed for deeper use in future iterations."
+      "When you click Optimize, these additions are sent only to your selected provider along with the prompt."
     ]
   },
   security: {
@@ -79,9 +81,15 @@ const enableChatGPTEl = document.getElementById("enableChatGPT");
 const enableGeminiEl = document.getElementById("enableGemini");
 const analyticsOptInEl = document.getElementById("analyticsOptIn");
 const customPromptAdditionsEl = document.getElementById("customPromptAdditions");
+const customAdditionsListEl = document.getElementById("customAdditionsList");
+const customAdditionsEmptyEl = document.getElementById("customAdditionsEmpty");
+const customAdditionInputEl = document.getElementById("customAdditionInput");
+const addCustomAdditionBtnEl = document.getElementById("addCustomAdditionBtn");
+const quickTagButtons = Array.from(document.querySelectorAll(".quick-tag"));
 const testKeyBtn = document.getElementById("testKeyBtn");
 const clearDataBtn = document.getElementById("clearDataBtn");
 const statusMsg = document.getElementById("statusMsg");
+const statusMsgText = document.getElementById("statusMsgText");
 const testKeyStatus = document.getElementById("testKeyStatus");
 const generateKeyLinkEl = document.getElementById("generateKeyLink");
 const keyLockedBannerEl = document.getElementById("keyLockedBanner");
@@ -103,6 +111,7 @@ let customSaveTimer = 0;
 let statusResetTimer = 0;
 let lastInfoTriggerEl = null;
 let lastPrivacyTriggerEl = null;
+let customAdditions = [];
 
 init().catch(() => {
   setStatus("Unable to load settings.", "warn");
@@ -112,6 +121,8 @@ async function init() {
   bindNavigation();
   bindSectionInfo();
   bindPrivacyInfo();
+  bindQuickAdditions();
+  bindCustomAdditionsEditor();
   currentSettings = await readSettings();
   fillForm(currentSettings);
   bindAutoSave();
@@ -281,14 +292,162 @@ function bindAutoSave() {
   analyticsOptInEl.addEventListener("change", async () => {
     await savePartial({ analyticsOptIn: !!analyticsOptInEl.checked });
   });
+}
 
-  customPromptAdditionsEl.addEventListener("input", () => {
-    window.clearTimeout(customSaveTimer);
-    setStatus("Saving...");
-    customSaveTimer = window.setTimeout(async () => {
-      await savePartial({ customPromptAdditions: customPromptAdditionsEl.value.trim() });
-    }, 350);
+function bindQuickAdditions() {
+  if (!quickTagButtons.length) {
+    return;
+  }
+  for (const button of quickTagButtons) {
+    button.addEventListener("click", () => {
+      const snippet = String(button.getAttribute("data-snippet") || "").trim();
+      if (!snippet) {
+        return;
+      }
+      toggleSnippetInCustomAdditions(snippet);
+    });
+  }
+}
+
+function bindCustomAdditionsEditor() {
+  if (!customAdditionsListEl || !customAdditionInputEl || !addCustomAdditionBtnEl) {
+    return;
+  }
+
+  addCustomAdditionBtnEl.addEventListener("click", () => {
+    addCustomAdditionFromInput();
   });
+
+  customAdditionInputEl.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      addCustomAdditionFromInput();
+    }
+  });
+
+  customAdditionsListEl.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+    const removeButton = target.closest(".custom-chip-remove");
+    if (!removeButton) {
+      return;
+    }
+    const index = Number(removeButton.getAttribute("data-index"));
+    if (!Number.isInteger(index) || index < 0 || index >= customAdditions.length) {
+      return;
+    }
+    customAdditions.splice(index, 1);
+    persistCustomAdditions();
+    setStatus("Addition removed", "ok", true);
+  });
+}
+
+function addCustomAdditionFromInput() {
+  if (!customAdditionInputEl) {
+    return;
+  }
+  const snippet = normalizeAddition(customAdditionInputEl.value);
+  if (!snippet) {
+    return;
+  }
+  const exists = customAdditions.some((item) => item.toLowerCase() === snippet.toLowerCase());
+  if (exists) {
+    setStatus("Addition already exists", "ok", true);
+    customAdditionInputEl.select();
+    return;
+  }
+  customAdditions.push(snippet);
+  customAdditionInputEl.value = "";
+  persistCustomAdditions();
+  setStatus("Addition added", "ok", true);
+}
+
+function toggleSnippetInCustomAdditions(snippet) {
+  const normalized = normalizeAddition(snippet);
+  if (!normalized) {
+    return;
+  }
+
+  const index = customAdditions.findIndex((item) => item.toLowerCase() === normalized.toLowerCase());
+  if (index >= 0) {
+    customAdditions.splice(index, 1);
+    persistCustomAdditions();
+    setStatus("Tag removed", "ok", true);
+    return;
+  }
+
+  customAdditions.push(normalized);
+  persistCustomAdditions();
+  setStatus("Tag added", "ok", true);
+}
+
+function persistCustomAdditions() {
+  customPromptAdditionsEl.value = customAdditions.join("\n");
+  renderCustomAdditions();
+  syncQuickTagState();
+
+  window.clearTimeout(customSaveTimer);
+  setStatus("Saving...");
+  customSaveTimer = window.setTimeout(async () => {
+    await savePartial({ customPromptAdditions: customPromptAdditionsEl.value.trim() });
+  }, 350);
+}
+
+function splitAdditionsLines(text) {
+  return String(text || "")
+    .split(/\r?\n+/)
+    .map((line) => normalizeAddition(line))
+    .filter(Boolean);
+}
+
+function normalizeAddition(text) {
+  return String(text || "").replace(/\s+/g, " ").trim();
+}
+
+function syncQuickTagState() {
+  if (!quickTagButtons.length) {
+    return;
+  }
+  const lines = customAdditions.map((line) => line.toLowerCase());
+  for (const button of quickTagButtons) {
+    const snippet = String(button.getAttribute("data-snippet") || "").trim().toLowerCase();
+    const selected = !!snippet && lines.includes(snippet);
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-pressed", selected ? "true" : "false");
+  }
+}
+
+function renderCustomAdditions() {
+  if (!customAdditionsListEl || !customAdditionsEmptyEl) {
+    return;
+  }
+
+  customAdditionsListEl.textContent = "";
+  for (let i = 0; i < customAdditions.length; i += 1) {
+    const item = customAdditions[i];
+
+    const chip = document.createElement("div");
+    chip.className = "custom-chip";
+
+    const label = document.createElement("span");
+    label.className = "custom-chip-text";
+    label.textContent = item;
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "custom-chip-remove";
+    removeButton.setAttribute("data-index", String(i));
+    removeButton.setAttribute("aria-label", `Remove addition: ${item}`);
+    removeButton.textContent = "x";
+
+    chip.appendChild(label);
+    chip.appendChild(removeButton);
+    customAdditionsListEl.appendChild(chip);
+  }
+
+  customAdditionsEmptyEl.hidden = customAdditions.length > 0;
 }
 
 function bindSecurityActions() {
@@ -393,7 +552,13 @@ function fillForm(settings) {
   enableChatGPTEl.checked = !!normalized.enableChatGPT;
   enableGeminiEl.checked = !!normalized.enableGemini;
   analyticsOptInEl.checked = !!normalized.analyticsOptIn;
-  customPromptAdditionsEl.value = normalized.customPromptAdditions || "";
+  customAdditions = splitAdditionsLines(normalized.customPromptAdditions || "");
+  customPromptAdditionsEl.value = customAdditions.join("\n");
+  if (customAdditionInputEl) {
+    customAdditionInputEl.value = "";
+  }
+  renderCustomAdditions();
+  syncQuickTagState();
   applyProviderUI();
 }
 
@@ -513,7 +678,21 @@ function normalizeProvider(value) {
 
 function normalizePreset(value) {
   const preset = String(value || "").toLowerCase();
-  if (preset === "structured" || preset === "concise" || preset === "grammar" || preset === "clarity") {
+  const validPresets = new Set([
+    "structured",
+    "concise",
+    "grammar",
+    "clarity",
+    "persuasive",
+    "executive",
+    "coaching",
+    "devils_advocate",
+    "first_principles",
+    "risk_audit",
+    "technical_spec",
+    "implementation_plan"
+  ]);
+  if (validPresets.has(preset)) {
     return preset;
   }
   return DEFAULT_SETTINGS.defaultPreset;
@@ -525,7 +704,9 @@ function normalizeModel(model, fallback) {
 }
 
 function setStatus(message, tone, resetToReady) {
-  statusMsg.textContent = message;
+  const label = statusMsgText || statusMsg;
+  label.textContent = message;
+  statusMsg.title = message;
   statusMsg.classList.remove("ok", "warn");
   if (tone === "ok" || tone === "warn") {
     statusMsg.classList.add(tone);
@@ -533,7 +714,8 @@ function setStatus(message, tone, resetToReady) {
   window.clearTimeout(statusResetTimer);
   if (resetToReady) {
     statusResetTimer = window.setTimeout(() => {
-      statusMsg.textContent = "Auto-save ready";
+      label.textContent = "Auto-save";
+      statusMsg.title = "Auto-save enabled";
       statusMsg.classList.remove("ok", "warn");
     }, 1400);
   }

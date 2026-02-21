@@ -39,10 +39,26 @@
         <p class="section-title">Default Optimization Style</p>
         <label for="defaultPreset">Preset</label>
         <select id="defaultPreset">
-          <option value="structured">Structured</option>
-          <option value="concise">Concise</option>
-          <option value="grammar">Fix grammar</option>
-          <option value="clarity">Improve clarity</option>
+          <optgroup label="Core">
+            <option value="structured">Story structured</option>
+            <option value="concise">Concise</option>
+            <option value="grammar">Fix grammar</option>
+            <option value="clarity">Improve clarity</option>
+          </optgroup>
+          <optgroup label="Style">
+            <option value="persuasive">Persuasive</option>
+            <option value="executive">Executive brief</option>
+            <option value="coaching">Coaching tone</option>
+          </optgroup>
+          <optgroup label="Critical">
+            <option value="devils_advocate">Devil's advocate</option>
+            <option value="first_principles">First principles</option>
+            <option value="risk_audit">Risk audit</option>
+          </optgroup>
+          <optgroup label="Delivery">
+            <option value="technical_spec">Technical spec</option>
+            <option value="implementation_plan">Implementation plan</option>
+          </optgroup>
         </select>
       </div>
 

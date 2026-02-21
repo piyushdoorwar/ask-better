@@ -126,7 +126,21 @@ async function updateSettings(partial) {
 
 function normalizePreset(value) {
   const preset = String(value || "").toLowerCase();
-  if (preset === "structured" || preset === "concise" || preset === "grammar" || preset === "clarity") {
+  const validPresets = new Set([
+    "structured",
+    "concise",
+    "grammar",
+    "clarity",
+    "persuasive",
+    "executive",
+    "coaching",
+    "devils_advocate",
+    "first_principles",
+    "risk_audit",
+    "technical_spec",
+    "implementation_plan"
+  ]);
+  if (validPresets.has(preset)) {
     return preset;
   }
   return DEFAULT_SETTINGS.defaultPreset;

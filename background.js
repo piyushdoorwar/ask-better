@@ -21,7 +21,15 @@ const PRESET_INSTRUCTIONS = {
   clarity: "Improve clarity while preserving intent, requirements, and details.",
   concise: "Make it concise without losing requirements, constraints, or key context.",
   structured:
-    "Rewrite into these sections: Context, Task, Constraints, Output Format, Questions (if any). Keep content faithful."
+    "Rewrite into a story-like, high-context prompt in 2-3 strong paragraphs. Keep all requirements and constraints, but never use section labels such as Context, Task, Constraints, Output Format, or Questions unless the user explicitly asks for labeled sections.",
+  persuasive: "Rewrite to be more persuasive and outcomes-focused while preserving user intent and constraints.",
+  executive: "Rewrite in executive style: clear, decisive, strategic, and optimized for quick stakeholder alignment.",
+  coaching: "Rewrite in a supportive coaching style with motivation, accountability, and practical action steps.",
+  devils_advocate: "Rewrite with a devil's advocate lens: expose weak assumptions, gaps, and possible counterarguments.",
+  first_principles: "Rewrite using first-principles thinking: break down assumptions and focus on core facts and logic.",
+  risk_audit: "Rewrite to emphasize risks, edge cases, failure modes, and mitigation strategies.",
+  technical_spec: "Rewrite as a precise technical spec with clear requirements, constraints, and acceptance criteria.",
+  implementation_plan: "Rewrite as an implementation-ready plan with ordered tasks, dependencies, and deliverables."
 };
 
 chrome.runtime.onInstalled.addListener(async () => {
@@ -89,9 +97,32 @@ async function optimizePrompt(message) {
   }
 
   try {
-    const optimizedPrompt = provider === "gemini"
-      ? await callGemini({ apiKey, model, prompt, preset })
-      : await callOpenAI({ apiKey, model, prompt, preset });
+    let optimizedPrompt = provider === "gemini"
+      ? await callGemini({ apiKey, model, prompt, preset, settings })
+      : await callOpenAI({ apiKey, model, prompt, preset, settings });
+
+    if (isLikelyIncompleteOutput(optimizedPrompt)) {
+      const retry = provider === "gemini"
+        ? await callGemini({
+          apiKey,
+          model,
+          prompt,
+          preset,
+          settings,
+          completionPass: true
+        })
+        : await callOpenAI({
+          apiKey,
+          model,
+          prompt,
+          preset,
+          settings,
+          completionPass: true
+        });
+      if (retry && retry.trim()) {
+        optimizedPrompt = retry;
+      }
+    }
 
     if (!optimizedPrompt) {
       return {
@@ -108,14 +139,8 @@ async function optimizePrompt(message) {
   }
 }
 
-async function callOpenAI({ apiKey, model, prompt, preset }) {
-  const instruction = PRESET_INSTRUCTIONS[preset] || PRESET_INSTRUCTIONS.structured;
-  const systemText = [
-    "You rewrite prompts for end users.",
-    "Return only one rewritten prompt as plain text.",
-    "Do not include commentary, labels, markdown fences, or explanations.",
-    `Preset behavior: ${instruction}`
-  ].join(" ");
+async function callOpenAI({ apiKey, model, prompt, preset, settings, completionPass }) {
+  const systemText = buildSystemInstruction({ preset, settings, completionPass });
 
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
@@ -125,8 +150,8 @@ async function callOpenAI({ apiKey, model, prompt, preset }) {
     },
     body: JSON.stringify({
       model: model || DEFAULT_SETTINGS.openaiModel,
-      temperature: 0.2,
-      max_output_tokens: 700,
+      temperature: 0.1,
+      max_output_tokens: 1200,
       input: [
         {
           role: "system",
@@ -157,14 +182,8 @@ async function callOpenAI({ apiKey, model, prompt, preset }) {
   return extractOpenAIText(data).trim();
 }
 
-async function callGemini({ apiKey, model, prompt, preset }) {
-  const instruction = PRESET_INSTRUCTIONS[preset] || PRESET_INSTRUCTIONS.structured;
-  const systemText = [
-    "You rewrite prompts for end users.",
-    "Return only one rewritten prompt as plain text.",
-    "Do not include commentary, labels, markdown fences, or explanations.",
-    `Preset behavior: ${instruction}`
-  ].join(" ");
+async function callGemini({ apiKey, model, prompt, preset, settings, completionPass }) {
+  const systemText = buildSystemInstruction({ preset, settings, completionPass });
 
   const normalizedModel = normalizeGeminiModel(model || DEFAULT_SETTINGS.geminiModel);
   const response = await fetch(
@@ -186,8 +205,8 @@ async function callGemini({ apiKey, model, prompt, preset }) {
           }
         ],
         generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 700
+          temperature: 0.1,
+          maxOutputTokens: 1200
         }
       })
     }
@@ -335,6 +354,82 @@ function readApiErrorMessage(body) {
   return "";
 }
 
+function buildSystemInstruction({ preset, settings, completionPass }) {
+  const instruction = PRESET_INSTRUCTIONS[preset] || PRESET_INSTRUCTIONS.structured;
+  const customGuidance = String(settings && settings.customPromptAdditions ? settings.customPromptAdditions : "").trim();
+  const parts = [
+    "You rewrite prompts for end users.",
+    "Return only one rewritten prompt as plain text.",
+    "Do not include commentary, markdown fences, or explanations.",
+    "Preserve all critical requirements and constraints from the original prompt.",
+    "The rewritten prompt must be complete and end with a complete sentence.",
+    `Preset behavior: ${instruction}`
+  ];
+
+  if (preset === "structured") {
+    parts.push(
+      "For structured preset, write in 2-3 cohesive narrative paragraphs with natural flow, not bullet lists."
+    );
+  }
+
+  if (customGuidance) {
+    parts.push("Additional user guidance is provided below and should take priority over default preset style when they conflict.");
+    parts.push(`Additional user guidance: ${customGuidance}`);
+  }
+
+  if (completionPass) {
+    parts.push(
+      "Previous rewrite appeared incomplete. Regenerate the full prompt from scratch and ensure no sentence is cut off."
+    );
+  }
+
+  return parts.join(" ");
+}
+
+function isLikelyIncompleteOutput(text) {
+  const value = String(text || "").trim();
+  if (!value) {
+    return true;
+  }
+  if (value.length < 60) {
+    return false;
+  }
+  if (/[.!?]["')\]]?$/.test(value)) {
+    return false;
+  }
+  if (/[,;:\-–—]$/.test(value)) {
+    return true;
+  }
+  const lastWord = value.split(/\s+/).pop().toLowerCase();
+  const danglingWords = new Set([
+    "and",
+    "or",
+    "to",
+    "for",
+    "with",
+    "that",
+    "which",
+    "because",
+    "while",
+    "when",
+    "if",
+    "of",
+    "in",
+    "on",
+    "at",
+    "by",
+    "from",
+    "as",
+    "than",
+    "then",
+    "about"
+  ]);
+  if (danglingWords.has(lastWord)) {
+    return true;
+  }
+  return true;
+}
+
 function mapProviderError(error) {
   const status = Number(error && error.status);
   if (status === 401 || status === 403) {
@@ -394,7 +489,7 @@ function toPublicSettings(settings) {
 
 function normalizePreset(value) {
   const preset = String(value || "").toLowerCase();
-  if (preset === "grammar" || preset === "clarity" || preset === "concise" || preset === "structured") {
+  if (Object.prototype.hasOwnProperty.call(PRESET_INSTRUCTIONS, preset)) {
     return preset;
   }
   return DEFAULT_SETTINGS.defaultPreset;
