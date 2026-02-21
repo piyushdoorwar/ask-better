@@ -28,6 +28,7 @@ It injects a lightweight `Optimize` button near the prompt input. Clicking it re
   - `Persuasive`: more compelling and outcome-oriented.
   - `Executive brief`: concise, strategic, stakeholder-friendly.
   - `Coaching tone`: supportive, accountable, action-driven.
+  - `Email rephrase/rewrite`: polished email-ready rewrite with clear structure and tone.
 - `Critical Thinking`
   - `Devil's advocate`: challenge weak assumptions and blind spots.
   - `First principles`: decompose to fundamentals and core logic.

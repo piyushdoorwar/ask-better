@@ -25,6 +25,7 @@ const PRESET_INSTRUCTIONS = {
   persuasive: "Rewrite to be more persuasive and outcomes-focused while preserving user intent and constraints.",
   executive: "Rewrite in executive style: clear, decisive, strategic, and optimized for quick stakeholder alignment.",
   coaching: "Rewrite in a supportive coaching style with motivation, accountability, and practical action steps.",
+  email_rewrite: "Rewrite as a polished email draft with a clear subject line, concise body, and professional tone while preserving intent.",
   devils_advocate: "Rewrite with a devil's advocate lens: expose weak assumptions, gaps, and possible counterarguments.",
   first_principles: "Rewrite using first-principles thinking: break down assumptions and focus on core facts and logic.",
   risk_audit: "Rewrite to emphasize risks, edge cases, failure modes, and mitigation strategies.",

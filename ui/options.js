@@ -35,7 +35,7 @@ const SECTION_INFO_CONTENT = {
     description: "Presets define your default rewrite style for the Optimize button.",
     points: [
       "Core Rewrite presets: Story structured, Concise, Fix grammar, Improve clarity.",
-      "Communication Style presets: Persuasive, Executive brief, Coaching tone.",
+      "Communication Style presets: Persuasive, Executive brief, Coaching tone, Email rephrase/rewrite.",
       "Critical Thinking presets: Devil's advocate, First principles, Risk audit.",
       "Build and Delivery presets: Technical spec, Implementation plan."
     ]
@@ -686,6 +686,7 @@ function normalizePreset(value) {
     "persuasive",
     "executive",
     "coaching",
+    "email_rewrite",
     "devils_advocate",
     "first_principles",
     "risk_audit",

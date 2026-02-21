@@ -134,6 +134,7 @@ function normalizePreset(value) {
     "persuasive",
     "executive",
     "coaching",
+    "email_rewrite",
     "devils_advocate",
     "first_principles",
     "risk_audit",
