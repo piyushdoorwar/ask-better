@@ -1,7 +1,11 @@
 const DEFAULT_SETTINGS = {
   provider: "openai",
   openaiApiKey: "",
+  geminiApiKey: "",
   openaiModel: "gpt-4.1-mini",
+  geminiModel: "gemini-2.5-flash",
+  openaiKeyVerified: false,
+  geminiKeyVerified: false,
   defaultPreset: "structured",
   enableChatGPT: true,
   enableGemini: true,
@@ -13,9 +17,12 @@ const DEFAULT_SETTINGS = {
 };
 
 const OPENAI_KEY_URL = "https://platform.openai.com/api-keys";
+const GEMINI_KEY_URL = "https://aistudio.google.com/apikey";
 const OPENAI_MODELS = ["gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini", "gpt-4o"];
+const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"];
 
 const providerEl = document.getElementById("provider");
+const modelLabelEl = document.getElementById("modelLabel");
 const openaiModelEl = document.getElementById("openaiModel");
 const apiKeyEl = document.getElementById("apiKey");
 const defaultPresetEl = document.getElementById("defaultPreset");
@@ -34,6 +41,7 @@ const apiKeyEditorEl = document.getElementById("apiKeyEditor");
 const navButtons = Array.from(document.querySelectorAll(".nav-btn"));
 const sections = Array.from(document.querySelectorAll(".settings-section"));
 
+let currentSettings = null;
 let keyLocked = false;
 let customSaveTimer = 0;
 let statusResetTimer = 0;
@@ -44,11 +52,8 @@ init().catch(() => {
 
 async function init() {
   bindNavigation();
-  const settings = await readSettings();
-  keyLocked = !!(settings.keyVerified && settings.openaiApiKey && settings.openaiApiKey.trim());
-  fillForm(settings);
-  applyKeyLockState();
-  updateMissingKeyLinkVisibility();
+  currentSettings = await readSettings();
+  fillForm(currentSettings);
   bindAutoSave();
   bindSecurityActions();
   setStatus("Auto-save enabled");
@@ -76,12 +81,17 @@ function activateSection(targetId) {
 
 function bindAutoSave() {
   providerEl.addEventListener("change", async () => {
-    await savePartial({ provider: providerEl.value || DEFAULT_SETTINGS.provider });
-    updateMissingKeyLinkVisibility();
+    const provider = normalizeProvider(providerEl.value);
+    await savePartial({ provider });
+    applyProviderUI();
+    testKeyStatus.textContent = "";
+    testKeyStatus.className = "";
   });
 
   openaiModelEl.addEventListener("change", async () => {
-    await savePartial({ openaiModel: normalizeModel(openaiModelEl.value) });
+    const provider = getActiveProvider();
+    const meta = getProviderMeta(provider);
+    await savePartial({ [meta.modelField]: normalizeModel(openaiModelEl.value, meta.defaultModel) });
   });
 
   defaultPresetEl.addEventListener("change", async () => {
@@ -130,7 +140,10 @@ function bindSecurityActions() {
       return;
     }
 
+    const provider = getActiveProvider();
+    const meta = getProviderMeta(provider);
     const apiKey = apiKeyEl.value.trim();
+
     if (!apiKey) {
       testKeyStatus.textContent = "API key is missing.";
       testKeyStatus.className = "warn";
@@ -141,20 +154,20 @@ function bindSecurityActions() {
     testKeyStatus.textContent = "Testing...";
     testKeyStatus.className = "";
 
-    const payload = {
-      provider: providerEl.value,
-      apiKey,
-      openaiModel: normalizeModel(openaiModelEl.value)
-    };
+    const response = await sendMessage({
+      type: "PROMPTFORGE_TEST_KEY",
+      payload: {
+        provider,
+        apiKey,
+        model: openaiModelEl.value
+      }
+    });
 
-    const response = await sendMessage({ type: "PROMPTFORGE_TEST_KEY", payload });
     if (response && response.ok) {
       await savePartial(
         {
-          provider: providerEl.value || DEFAULT_SETTINGS.provider,
-          openaiModel: normalizeModel(openaiModelEl.value),
-          openaiApiKey: apiKey,
-          keyVerified: true
+          [meta.keyField]: apiKey,
+          [meta.verifiedField]: true
         },
         { silentStatus: true }
       );
@@ -163,7 +176,7 @@ function bindSecurityActions() {
       updateMissingKeyLinkVisibility();
       testKeyStatus.textContent = "Valid key.";
       testKeyStatus.className = "ok";
-      setStatus("API key verified and saved.", "ok");
+      setStatus(`${meta.providerName} key verified and saved.`, "ok");
       return;
     }
 
@@ -178,82 +191,156 @@ function bindSecurityActions() {
       return;
     }
     await chrome.storage.local.clear();
-    await chrome.storage.local.set({ settings: { ...DEFAULT_SETTINGS } });
-    keyLocked = false;
-    fillForm(DEFAULT_SETTINGS);
-    applyKeyLockState();
+    const defaults = { ...DEFAULT_SETTINGS };
+    await chrome.storage.local.set({ settings: defaults });
+    currentSettings = defaults;
+    fillForm(currentSettings);
     testKeyStatus.textContent = "";
     testKeyStatus.className = "";
-    updateMissingKeyLinkVisibility();
     setStatus("Stored key/data cleared.", "ok");
   });
 }
 
 async function savePartial(partial, options) {
   const opts = options || {};
-  const current = await readSettings();
+  const current = currentSettings || await readSettings();
   const next = {
     ...current,
     ...partial
   };
-
-  if (keyLocked && !Object.prototype.hasOwnProperty.call(partial, "openaiApiKey")) {
-    next.keyVerified = true;
-  }
-
   await chrome.storage.local.set({ settings: next });
+  currentSettings = next;
   if (!opts.silentStatus) {
     setStatus("All changes saved.", "ok", true);
   }
+  return next;
 }
 
 function fillForm(settings) {
-  providerEl.value = settings.provider || DEFAULT_SETTINGS.provider;
-  applyModelValue(settings.openaiModel || DEFAULT_SETTINGS.openaiModel);
-  apiKeyEl.value = keyLocked ? "" : (settings.openaiApiKey || "");
-  apiKeyEl.placeholder = keyLocked ? "Saved securely" : "sk-...";
-  defaultPresetEl.value = normalizePreset(settings.defaultPreset);
-  enableAIEl.checked = !!settings.enableAI;
-  enableChatGPTEl.checked = !!settings.enableChatGPT;
-  enableGeminiEl.checked = !!settings.enableGemini;
-  analyticsOptInEl.checked = !!settings.analyticsOptIn;
-  customPromptAdditionsEl.value = settings.customPromptAdditions || "";
+  const normalized = migrateSettings(settings);
+  currentSettings = normalized;
+  providerEl.value = normalizeProvider(normalized.provider);
+  defaultPresetEl.value = normalizePreset(normalized.defaultPreset);
+  enableAIEl.checked = !!normalized.enableAI;
+  enableChatGPTEl.checked = !!normalized.enableChatGPT;
+  enableGeminiEl.checked = !!normalized.enableGemini;
+  analyticsOptInEl.checked = !!normalized.analyticsOptIn;
+  customPromptAdditionsEl.value = normalized.customPromptAdditions || "";
+  applyProviderUI();
+}
 
-  if (generateKeyLinkEl) {
-    generateKeyLinkEl.href = OPENAI_KEY_URL;
+function applyProviderUI() {
+  const provider = getActiveProvider();
+  const meta = getProviderMeta(provider);
+  const modelValue = String(currentSettings[meta.modelField] || meta.defaultModel).trim() || meta.defaultModel;
+  renderModelOptions(meta.models, modelValue);
+  if (modelLabelEl) {
+    modelLabelEl.textContent = meta.modelLabel;
   }
+
+  const storedKey = String(currentSettings[meta.keyField] || "").trim();
+  const verified = !!currentSettings[meta.verifiedField];
+  keyLocked = verified && !!storedKey;
+
+  apiKeyEl.value = keyLocked ? "" : storedKey;
+  apiKeyEl.placeholder = keyLocked ? "Saved securely" : meta.keyPlaceholder;
+  generateKeyLinkEl.href = meta.keyUrl;
+  applyKeyLockState();
+  updateMissingKeyLinkVisibility();
 }
 
 function applyKeyLockState() {
-  if (apiKeyEl) {
-    apiKeyEl.disabled = keyLocked;
-  }
-  if (testKeyBtn) {
-    testKeyBtn.hidden = keyLocked;
-  }
-  if (keyLockedBannerEl) {
-    keyLockedBannerEl.hidden = !keyLocked;
-  }
-  if (apiKeyEditorEl) {
-    apiKeyEditorEl.hidden = keyLocked;
-  }
+  apiKeyEl.disabled = keyLocked;
+  testKeyBtn.hidden = keyLocked;
+  keyLockedBannerEl.hidden = !keyLocked;
+  apiKeyEditorEl.hidden = keyLocked;
 }
 
 function updateMissingKeyLinkVisibility() {
   if (!generateKeyLinkEl) {
     return;
   }
-  const provider = providerEl.value || DEFAULT_SETTINGS.provider;
+  const provider = getActiveProvider();
+  const meta = getProviderMeta(provider);
+  generateKeyLinkEl.href = meta.keyUrl;
   const isMissingKey = !apiKeyEl.value.trim();
-  generateKeyLinkEl.hidden = keyLocked || provider !== "openai" || !isMissingKey;
+  generateKeyLinkEl.hidden = keyLocked || !isMissingKey;
+}
+
+function renderModelOptions(models, selected) {
+  openaiModelEl.textContent = "";
+  for (const model of models) {
+    const option = document.createElement("option");
+    option.value = model;
+    option.textContent = model;
+    openaiModelEl.appendChild(option);
+  }
+  if (!models.includes(selected)) {
+    const customOption = document.createElement("option");
+    customOption.value = selected;
+    customOption.textContent = `${selected} (custom)`;
+    openaiModelEl.appendChild(customOption);
+  }
+  openaiModelEl.value = selected;
+}
+
+function getActiveProvider() {
+  return normalizeProvider(providerEl.value);
+}
+
+function getProviderMeta(provider) {
+  if (provider === "gemini") {
+    return {
+      providerName: "Gemini",
+      keyField: "geminiApiKey",
+      verifiedField: "geminiKeyVerified",
+      modelField: "geminiModel",
+      defaultModel: DEFAULT_SETTINGS.geminiModel,
+      models: GEMINI_MODELS,
+      keyUrl: GEMINI_KEY_URL,
+      keyPlaceholder: "AIza...",
+      modelLabel: "Gemini model"
+    };
+  }
+  return {
+    providerName: "OpenAI",
+    keyField: "openaiApiKey",
+    verifiedField: "openaiKeyVerified",
+    modelField: "openaiModel",
+    defaultModel: DEFAULT_SETTINGS.openaiModel,
+    models: OPENAI_MODELS,
+    keyUrl: OPENAI_KEY_URL,
+    keyPlaceholder: "sk-...",
+    modelLabel: "OpenAI model"
+  };
 }
 
 async function readSettings() {
   const stored = await chrome.storage.local.get(["settings"]);
-  return {
+  return migrateSettings(stored.settings || {});
+}
+
+function migrateSettings(rawSettings) {
+  const settings = {
     ...DEFAULT_SETTINGS,
-    ...(stored.settings || {})
+    ...(rawSettings || {})
   };
+
+  const provider = normalizeProvider(settings.provider);
+  settings.provider = provider;
+
+  if (!settings.openaiKeyVerified && settings.keyVerified && String(settings.openaiApiKey || "").trim()) {
+    settings.openaiKeyVerified = true;
+  }
+
+  settings.openaiModel = normalizeModel(settings.openaiModel, DEFAULT_SETTINGS.openaiModel);
+  settings.geminiModel = normalizeModel(settings.geminiModel, DEFAULT_SETTINGS.geminiModel);
+  settings.customPromptAdditions = String(settings.customPromptAdditions || "");
+  return settings;
+}
+
+function normalizeProvider(value) {
+  return String(value || "").toLowerCase() === "gemini" ? "gemini" : "openai";
 }
 
 function normalizePreset(value) {
@@ -262,6 +349,11 @@ function normalizePreset(value) {
     return preset;
   }
   return DEFAULT_SETTINGS.defaultPreset;
+}
+
+function normalizeModel(model, fallback) {
+  const value = String(model || "").trim();
+  return value || fallback;
 }
 
 function setStatus(message, tone, resetToReady) {
@@ -289,35 +381,4 @@ function sendMessage(payload) {
       resolve(response);
     });
   });
-}
-
-function applyModelValue(model) {
-  const normalized = normalizeModel(model);
-  if (!hasModelOption(normalized)) {
-    const option = document.createElement("option");
-    option.value = normalized;
-    option.textContent = `${normalized} (custom)`;
-    openaiModelEl.appendChild(option);
-  }
-  openaiModelEl.value = normalized;
-}
-
-function hasModelOption(model) {
-  for (const option of openaiModelEl.options) {
-    if (option.value === model) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function normalizeModel(model) {
-  const value = String(model || "").trim();
-  if (!value) {
-    return DEFAULT_SETTINGS.openaiModel;
-  }
-  if (OPENAI_MODELS.includes(value)) {
-    return value;
-  }
-  return value;
 }

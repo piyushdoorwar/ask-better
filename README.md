@@ -31,12 +31,12 @@ It injects a lightweight `Optimize` button near the prompt input. Clicking it re
 ## Files
 
 - `manifest.json` (MV3 config)
-- `background.js` (secure API handling + OpenAI calls)
+- `background.js` (secure API handling + provider API calls)
 - `content/chatgpt.js` (ChatGPT injection)
 - `content/gemini.js` (Gemini injection)
 - `injected/styles.css` (button + toast styles)
-- `popup.html`, `popup.js` (quick controls/status/model switch)
-- `options.html`, `options.js` (sectioned settings + auto-save)
+- `ui/popup.html`, `ui/popup.js`, `ui/popup.css` (quick controls/status/model switch)
+- `ui/options.html`, `ui/options.js`, `ui/options.css` (sectioned settings + auto-save)
 
 ## Install (Unpacked)
 
@@ -57,7 +57,7 @@ It injects a lightweight `Optimize` button near the prompt input. Clicking it re
    - Custom Prompt Additions
    - Security
 4. Set:
-   - Provider: `OpenAI`
+   - Provider: `OpenAI` or `Google Gemini`
    - API key
    - Model
    - Default preset
@@ -77,10 +77,15 @@ If AI is off or no key is set, PromptForge shows:
 
 - `AI disabled or key missing`
 
+## API Key Links
+
+- OpenAI key: `https://platform.openai.com/api-keys`
+- Gemini key: `https://aistudio.google.com/apikey`
+
 ## Notes
 
-- Provider support starts with OpenAI only.
-- Anthropic is listed as TODO in settings.
+- Provider support includes OpenAI and Google Gemini.
+- Anthropic remains TODO in settings.
 - Keep User Voice toggle is marked TODO for a future version.
 
 ## Manual Test Checklist

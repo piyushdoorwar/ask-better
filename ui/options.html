@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PromptForge Settings</title>
+        <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="top">
+        <div class="brand">
+          <img class="brand-icon" src="../assets/promptforge-icon.svg" alt="PromptForge icon" />
+          <div class="title-group">
+            <h1>PromptForge Settings</h1>
+            <p class="subtitle">Organized sections with auto-save enabled.</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <div id="statusMsg">Auto-save ready</div>
+          <a
+            class="help-btn"
+            href="https://help.openai.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Help"
+            title="Help"
+          >
+            ?
+          </a>
+        </div>
+      </div>
+
+      <div class="layout">
+        <aside class="sidebar card">
+          <p class="menu-title">Menu</p>
+          <button class="nav-btn active" data-section="section-models" type="button">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32">
+                <path class="icon-fill" d="M28.4473,16.1055,23,13.3818V7a1,1,0,0,0-.5527-.8945l-6-3a1.0008,1.0008,0,0,0-.8946,0l-6,3A1,1,0,0,0,9,7v6.3818L3.5527,16.1055A1,1,0,0,0,3,17v7a1,1,0,0,0,.5527.8945l6,3a1.001,1.001,0,0,0,.8946,0L16,25.1182l5.5527,2.7763a1.001,1.001,0,0,0,.8946,0l6-3A1,1,0,0,0,29,24V17A1,1,0,0,0,28.4473,16.1055ZM21,13.3818l-4,2V10.6182l4-2ZM16,5.1182,19.7637,7,16,8.8818,12.2363,7Zm-5,3.5,4,2v4.7636l-4-2ZM9,25.3818l-4-2V18.6182l4,2Zm1-6.5L6.2363,17,10,15.1182,13.7637,17Zm1,1.7364,4-2v4.7636l-4,2Zm10,4.7636-4-2V18.6182l4,2Zm1-6.5L18.2363,17,22,15.1182,25.7637,17Zm5,4.5-4,2V20.6182l4-2Z"></path>
+              </svg>
+            </span>
+            <span class="nav-label">Models</span>
+          </button>
+          <button class="nav-btn" data-section="section-presets" type="button">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 484.185 484.185">
+                <path class="icon-fill" d="M282.023,39.931h-12.465V0h-54.931v39.931h-12.465c-9.64,0-17.482,7.843-17.482,17.482v129.775c0,9.64,7.843,17.482,17.482,17.482h12.465v279.515h54.931V204.67h12.465c9.64,0,17.483-7.843,17.483-17.482V57.413C299.506,47.773,291.663,39.931,282.023,39.931z"></path>
+                <path class="icon-fill-soft" d="M431.763,149.74h-12.465V0h-54.93v149.74h-12.465c-9.64,0-17.483,7.843-17.483,17.483v129.774c0,9.64,7.843,17.483,17.483,17.483h12.465v169.705h54.93V314.48h12.465c9.64,0,17.483-7.843,17.483-17.483V167.223C449.246,157.583,441.403,149.74,431.763,149.74z"></path>
+                <path class="icon-fill-faint" d="M132.283,239.584h-12.465V0H64.887v239.584H52.422c-9.64,0-17.483,7.843-17.483,17.482V386.84c0,9.64,7.843,17.483,17.483,17.483h12.465v79.861h54.931v-79.861h12.465c9.64,0,17.482-7.843,17.482-17.483V257.066C149.766,247.427,141.923,239.584,132.283,239.584z"></path>
+              </svg>
+            </span>
+            <span class="nav-label">Presets</span>
+          </button>
+          <button class="nav-btn" data-section="section-integrations" type="button">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48">
+                <path class="icon-fill" d="M22.1004,12.6338c-1.2356,0-2.3177-0.6418-2.9404-1.6087c-0.2359-0.3662-0.6282-0.5979-1.0575-0.6432v7.7348h-7.7746c0.0576-0.4115,0.2853-0.7844,0.6377-1.0121c0.9669-0.6213,1.6074-1.7046,1.6074-2.9403c0-2.0063-1.6895-3.6191-3.7248-3.4916c-1.75,0.1097-3.1707,1.5414-3.2681,3.2928c-0.0727,1.3206,0.5869,2.4904,1.6114,3.1446c0.3511,0.2249,0.5733,0.5993,0.6281,1.0066H0V4.7673C0,2.1424,2.1284,0.014,4.7533,0.014h13.3494v7.8719c0.4252-0.0439,0.8187-0.2702,1.0519-0.635c0.6542-1.0231,1.824-1.6841,3.1461-1.6114c1.7513,0.0973,3.1831,1.5181,3.2927,3.2694C25.7197,10.9428,24.1083,12.6338,22.1004,12.6338z"></path>
+                <path class="icon-fill-soft" d="M36.2056,18.1167h-7.8294c0.0329,0.4444,0.2619,0.8572,0.6377,1.0972c1.0244,0.6542,1.6841,1.8254,1.6114,3.1461c-0.0973,1.7513-1.5181,3.1831-3.2681,3.2928c-2.0352,0.1276-3.7248-1.4853-3.7248-3.493c0-1.2343,0.6404-2.3177,1.6074-2.939c0.3799-0.2455,0.6144-0.6583,0.6487-1.104h-7.7856v-7.7348c0.4293,0.0452,0.8214,0.277,1.0574,0.6432c0.6226,0.9669,1.7047,1.6087,2.9405,1.6087c2.0078,0,3.6192-1.6909,3.493-3.7247c-0.1097-1.7513-1.5414-3.1721-3.2928-3.2694c-1.3221-0.0727-2.4919,0.5883-3.1461,1.6114c-0.2332,0.3648-0.6267,0.5911-1.0519,0.635V0.014h13.3494c2.6249,0,4.7533,2.1284,4.7533,4.7533V18.1167z"></path>
+                <path class="icon-fill-faint" d="M48,28.3833v13.3494c0,2.6249-2.1284,4.7533-4.7533,4.7533H29.8972v-7.78c-0.4252,0.0439-0.8187,0.2702-1.0519,0.635c-0.6542,1.0231-1.824,1.6841-3.1461,1.6101c-1.7513-0.0973-3.1831-1.5181-3.2927-3.2681c-0.1262-2.0352,1.4853-3.7248,3.493-3.7248c1.2356,0,2.3177,0.6405,2.9404,1.6074c0.2359,0.3676,0.6282,0.5979,1.0575,0.6432v-7.8253h7.7856c-0.0343,0.4457-0.2688,0.8585-0.6487,1.104c-0.9669,0.6213-1.6074,1.7047-1.6074,2.939c0,2.0078,1.6895,3.6206,3.7248,3.493c1.75-0.1097,3.1707-1.5414,3.2681-3.2928c0.0727-1.3206-0.5869-2.4919-1.6114-3.1461c-0.3758-0.24-0.6048-0.6528-0.6377-1.0972H48z"></path>
+              </svg>
+            </span>
+            <span class="nav-label">Integrations</span>
+          </button>
+          <button class="nav-btn" data-section="section-custom" type="button">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path class="icon-stroke" d="M16 8H8V16H16V8Z"></path>
+                <path class="icon-stroke" d="M5 22C6.65 22 8 20.65 8 19V16H5C3.35 16 2 17.35 2 19C2 20.65 3.35 22 5 22Z"></path>
+                <path class="icon-stroke" d="M5 8H8V5C8 3.35 6.65 2 5 2C3.35 2 2 3.35 2 5C2 6.65 3.35 8 5 8Z" opacity="0.5"></path>
+                <path class="icon-stroke" d="M16 8H19C20.65 8 22 6.65 22 5C22 3.35 20.65 2 19 2C17.35 2 16 3.35 16 5V8Z"></path>
+                <path class="icon-stroke" d="M19 22C20.65 22 22 20.65 22 19C22 17.35 20.65 16 19 16H16V19C16 20.65 17.35 22 19 22Z" opacity="0.5"></path>
+              </svg>
+            </span>
+            <span class="nav-label">Custom Prompt Additions</span>
+          </button>
+          <button class="nav-btn" data-section="section-security" type="button">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 468.125 512">
+                <path class="icon-fill" d="M468.125,128.73C304.284,99.474,234.069,0,234.069,0S163.848,99.474,0.013,128.73c0,64.367-5.858,277.944,234.057,383.27C473.977,406.675,468.125,193.098,468.125,128.73z"></path>
+                <path class="icon-fill-soft" d="M234.069,466.88C63.977,384.073,43.61,240.378,41.256,161.786c95.349-23.792,158.067-69.25,192.814-101.558c34.746,32.308,97.458,77.766,192.807,101.558C424.528,240.378,404.155,384.073,234.069,466.88z"></path>
+                <path class="icon-fill-faint" d="M410.284,169.867c-1.813,70.95-19.134,203.716-176.214,279.583c-29.05-14.015-53.306-29.989-73.583-47.191c-27.411-23.173-47.513-48.568-62.293-74.285c-33.346-58.164-39.32-118.025-40.346-158.106c88.156-21.531,145.384-63.78,176.221-92.92c15.328,14.483,37.185,32.21,66.118,49.035c26.16,15.183,58.132,29.637,96.284,40.256C400.981,167.525,405.6,168.725,410.284,169.867z"></path>
+              </svg>
+            </span>
+            <span class="nav-label">Security</span>
+          </button>
+        </aside>
+
+        <main class="content card">
+          <section id="section-models" class="settings-section active">
+            <div class="section-head">
+              <span class="section-badge" aria-hidden="true">
+                <svg viewBox="0 0 32 32">
+                  <path
+                    class="icon-fill"
+                    d="M28.4473,16.1055,23,13.3818V7a1,1,0,0,0-.5527-.8945l-6-3a1.0008,1.0008,0,0,0-.8946,0l-6,3A1,1,0,0,0,9,7v6.3818L3.5527,16.1055A1,1,0,0,0,3,17v7a1,1,0,0,0,.5527.8945l6,3a1.001,1.001,0,0,0,.8946,0L16,25.1182l5.5527,2.7763a1.001,1.001,0,0,0,.8946,0l6-3A1,1,0,0,0,29,24V17A1,1,0,0,0,28.4473,16.1055ZM21,13.3818l-4,2V10.6182l4-2ZM16,5.1182,19.7637,7,16,8.8818,12.2363,7Zm-5,3.5,4,2v4.7636l-4-2ZM9,25.3818l-4-2V18.6182l4,2Zm1-6.5L6.2363,17,10,15.1182,13.7637,17Zm1,1.7364,4-2v4.7636l-4,2Zm10,4.7636-4-2V18.6182l4,2Zm1-6.5L18.2363,17,22,15.1182,25.7637,17Zm5,4.5-4,2V20.6182l4-2Z"
+                  ></path>
+                </svg>
+              </span>
+              <div>
+                <h2 class="section-title">Models</h2>
+                <p class="section-sub">Choose provider and the model used for optimization.</p>
+              </div>
+            </div>
+            <div class="grid">
+              <div class="field">
+                <label for="provider">Provider</label>
+                <select id="provider" name="provider">
+                  <option value="openai">OpenAI</option>
+                  <option value="gemini">Google Gemini</option>
+                  <option value="anthropic" disabled>Anthropic (TODO)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label id="modelLabel" for="openaiModel">OpenAI model</label>
+                <select id="openaiModel" name="openaiModel">
+                  <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                  <option value="gpt-4.1">gpt-4.1</option>
+                  <option value="gpt-4o-mini">gpt-4o-mini</option>
+                  <option value="gpt-4o">gpt-4o</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section id="section-presets" class="settings-section">
+            <div class="section-head">
+              <span class="section-badge" aria-hidden="true">
+                <svg viewBox="0 0 484.185 484.185">
+                  <path
+                    class="icon-fill"
+                    d="M282.023,39.931h-12.465V0h-54.931v39.931h-12.465c-9.64,0-17.482,7.843-17.482,17.482v129.775c0,9.64,7.843,17.482,17.482,17.482h12.465v279.515h54.931V204.67h12.465c9.64,0,17.483-7.843,17.483-17.482V57.413C299.506,47.773,291.663,39.931,282.023,39.931z"
+                  ></path>
+                  <path
+                    class="icon-fill-soft"
+                    d="M431.763,149.74h-12.465V0h-54.93v149.74h-12.465c-9.64,0-17.483,7.843-17.483,17.483v129.774c0,9.64,7.843,17.483,17.483,17.483h12.465v169.705h54.93V314.48h12.465c9.64,0,17.483-7.843,17.483-17.483V167.223C449.246,157.583,441.403,149.74,431.763,149.74z"
+                  ></path>
+                  <path
+                    class="icon-fill-faint"
+                    d="M132.283,239.584h-12.465V0H64.887v239.584H52.422c-9.64,0-17.483,7.843-17.483,17.482V386.84c0,9.64,7.843,17.483,17.483,17.483h12.465v79.861h54.931v-79.861h12.465c9.64,0,17.482-7.843,17.482-17.483V257.066C149.766,247.427,141.923,239.584,132.283,239.584z"
+                  ></path>
+                </svg>
+              </span>
+              <div>
+                <h2 class="section-title">Presets</h2>
+                <p class="section-sub">Set the default rewrite behavior used by the Optimize button.</p>
+              </div>
+            </div>
+            <div class="grid">
+              <div class="field">
+                <label for="defaultPreset">Default preset</label>
+                <select id="defaultPreset" name="defaultPreset">
+                  <option value="structured">Structured</option>
+                  <option value="concise">Concise</option>
+                  <option value="grammar">Fix grammar</option>
+                  <option value="clarity">Improve clarity</option>
+                </select>
+                <p class="inline-note">Keep user voice toggle: TODO.</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="section-integrations" class="settings-section">
+            <div class="section-head">
+              <span class="section-badge" aria-hidden="true">
+                <svg viewBox="0 0 48 48">
+                  <path
+                    class="icon-fill"
+                    d="M22.1004,12.6338c-1.2356,0-2.3177-0.6418-2.9404-1.6087c-0.2359-0.3662-0.6282-0.5979-1.0575-0.6432v7.7348h-7.7746c0.0576-0.4115,0.2853-0.7844,0.6377-1.0121c0.9669-0.6213,1.6074-1.7046,1.6074-2.9403c0-2.0063-1.6895-3.6191-3.7248-3.4916c-1.75,0.1097-3.1707,1.5414-3.2681,3.2928c-0.0727,1.3206,0.5869,2.4904,1.6114,3.1446c0.3511,0.2249,0.5733,0.5993,0.6281,1.0066H0V4.7673C0,2.1424,2.1284,0.014,4.7533,0.014h13.3494v7.8719c0.4252-0.0439,0.8187-0.2702,1.0519-0.635c0.6542-1.0231,1.824-1.6841,3.1461-1.6114c1.7513,0.0973,3.1831,1.5181,3.2927,3.2694C25.7197,10.9428,24.1083,12.6338,22.1004,12.6338z"
+                  ></path>
+                  <path
+                    class="icon-fill-soft"
+                    d="M36.2056,18.1167h-7.8294c0.0329,0.4444,0.2619,0.8572,0.6377,1.0972c1.0244,0.6542,1.6841,1.8254,1.6114,3.1461c-0.0973,1.7513-1.5181,3.1831-3.2681,3.2928c-2.0352,0.1276-3.7248-1.4853-3.7248-3.493c0-1.2343,0.6404-2.3177,1.6074-2.939c0.3799-0.2455,0.6144-0.6583,0.6487-1.104h-7.7856v-7.7348c0.4293,0.0452,0.8214,0.277,1.0574,0.6432c0.6226,0.9669,1.7047,1.6087,2.9405,1.6087c2.0078,0,3.6192-1.6909,3.493-3.7247c-0.1097-1.7513-1.5414-3.1721-3.2928-3.2694c-1.3221-0.0727-2.4919,0.5883-3.1461,1.6114c-0.2332,0.3648-0.6267,0.5911-1.0519,0.635V0.014h13.3494c2.6249,0,4.7533,2.1284,4.7533,4.7533V18.1167z"
+                  ></path>
+                  <path
+                    class="icon-fill-faint"
+                    d="M48,28.3833v13.3494c0,2.6249-2.1284,4.7533-4.7533,4.7533H29.8972v-7.78c-0.4252,0.0439-0.8187,0.2702-1.0519,0.635c-0.6542,1.0231-1.824,1.6841-3.1461,1.6101c-1.7513-0.0973-3.1831-1.5181-3.2927-3.2681c-0.1262-2.0352,1.4853-3.7248,3.493-3.7248c1.2356,0,2.3177,0.6405,2.9404,1.6074c0.2359,0.3676,0.6282,0.5979,1.0575,0.6432v-7.8253h7.7856c-0.0343,0.4457-0.2688,0.8585-0.6487,1.104c-0.9669,0.6213-1.6074,1.7047-1.6074,2.939c0,2.0078,1.6895,3.6206,3.7248,3.493c1.75-0.1097,3.1707-1.5414,3.2681-3.2928c0.0727-1.3206-0.5869-2.4919-1.6114-3.1461c-0.3758-0.24-0.6048-0.6528-0.6377-1.0972H48z"
+                  ></path>
+                </svg>
+              </span>
+              <div>
+                <h2 class="section-title">Integrations</h2>
+                <p class="section-sub">Enable where PromptForge should appear.</p>
+              </div>
+            </div>
+            <div class="toggle-grid">
+              <div class="toggle-row">
+                <label for="enableAI">Enable AI (global)</label>
+                <span class="switch">
+                  <input id="enableAI" name="enableAI" type="checkbox" />
+                  <span class="slider"></span>
+                </span>
+              </div>
+
+              <div class="toggle-row">
+                <label for="enableChatGPT">Enable on ChatGPT</label>
+                <span class="switch">
+                  <input id="enableChatGPT" name="enableChatGPT" type="checkbox" />
+                  <span class="slider"></span>
+                </span>
+              </div>
+
+              <div class="toggle-row">
+                <label for="enableGemini">Enable on Gemini</label>
+                <span class="switch">
+                  <input id="enableGemini" name="enableGemini" type="checkbox" />
+                  <span class="slider"></span>
+                </span>
+              </div>
+
+              <div class="toggle-row full">
+                <label for="analyticsOptIn">Share anonymous usage analytics (prompt text never sent)</label>
+                <span class="switch">
+                  <input id="analyticsOptIn" name="analyticsOptIn" type="checkbox" />
+                  <span class="slider"></span>
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <section id="section-custom" class="settings-section">
+            <div class="section-head">
+              <span class="section-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path class="icon-stroke" d="M16 8H8V16H16V8Z"></path>
+                  <path
+                    class="icon-stroke"
+                    d="M5 22C6.65 22 8 20.65 8 19V16H5C3.35 16 2 17.35 2 19C2 20.65 3.35 22 5 22Z"
+                  ></path>
+                  <path
+                    class="icon-stroke"
+                    d="M5 8H8V5C8 3.35 6.65 2 5 2C3.35 2 2 3.35 2 5C2 6.65 3.35 8 5 8Z"
+                    opacity="0.5"
+                  ></path>
+                  <path
+                    class="icon-stroke"
+                    d="M16 8H19C20.65 8 22 6.65 22 5C22 3.35 20.65 2 19 2C17.35 2 16 3.35 16 5V8Z"
+                  ></path>
+                  <path
+                    class="icon-stroke"
+                    d="M19 22C20.65 22 22 20.65 22 19C22 17.35 20.65 16 19 16H16V19C16 20.65 17.35 22 19 22Z"
+                    opacity="0.5"
+                  ></path>
+                </svg>
+              </span>
+              <div>
+                <h2 class="section-title">Custom Prompt Additions</h2>
+                <p class="section-sub">Add reusable instructions that can be integrated in future optimization passes.</p>
+              </div>
+            </div>
+            <div class="grid">
+              <div class="field full">
+                <label for="customPromptAdditions">Reusable additions</label>
+                <textarea
+                  id="customPromptAdditions"
+                  placeholder="Example: Always keep a professional tone. Include concrete acceptance criteria."
+                ></textarea>
+                <p class="inline-note">Saved automatically. Not sent anywhere by itself.</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="section-security" class="settings-section">
+            <div class="section-head">
+              <span class="section-badge" aria-hidden="true">
+                <svg viewBox="0 0 468.125 512">
+                  <path
+                    class="icon-fill"
+                    d="M468.125,128.73C304.284,99.474,234.069,0,234.069,0S163.848,99.474,0.013,128.73c0,64.367-5.858,277.944,234.057,383.27C473.977,406.675,468.125,193.098,468.125,128.73z"
+                  ></path>
+                  <path
+                    class="icon-fill-soft"
+                    d="M234.069,466.88C63.977,384.073,43.61,240.378,41.256,161.786c95.349-23.792,158.067-69.25,192.814-101.558c34.746,32.308,97.458,77.766,192.807,101.558C424.528,240.378,404.155,384.073,234.069,466.88z"
+                  ></path>
+                  <path
+                    class="icon-fill-faint"
+                    d="M410.284,169.867c-1.813,70.95-19.134,203.716-176.214,279.583c-29.05-14.015-53.306-29.989-73.583-47.191c-27.411-23.173-47.513-48.568-62.293-74.285c-33.346-58.164-39.32-118.025-40.346-158.106c88.156-21.531,145.384-63.78,176.221-92.92c15.328,14.483,37.185,32.21,66.118,49.035c26.16,15.183,58.132,29.637,96.284,40.256C400.981,167.525,405.6,168.725,410.284,169.867z"
+                  ></path>
+                </svg>
+              </span>
+              <div>
+                <h2 class="section-title">Security</h2>
+                <p class="section-sub">Verify key once. After verification, key editing is locked.</p>
+              </div>
+            </div>
+            <div class="grid">
+              <div class="field full">
+                <label for="apiKey">API key</label>
+                <div id="apiKeyEditor">
+                  <input id="apiKey" name="apiKey" type="password" autocomplete="off" placeholder="sk-..." />
+                  <div class="sub-actions">
+                    <button type="button" id="testKeyBtn">Test key</button>
+                    <span id="testKeyStatus"></span>
+                    <a
+                      id="generateKeyLink"
+                      class="help-link"
+                      href="https://platform.openai.com/api-keys"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      hidden
+                    >
+                      Generate API key
+                    </a>
+                  </div>
+                </div>
+                <div id="keyLockedBanner" class="key-locked-banner" hidden>
+                  API key verified and saved. Editing is locked. Use clear data to reset key setup.
+                </div>
+              </div>
+              <div class="field full">
+                <button type="button" id="clearDataBtn">Clear stored key/data</button>
+                <p class="note">Clears local settings and usage stats from this browser profile.</p>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="options.js"></script>
+  </body>
+</html>
+

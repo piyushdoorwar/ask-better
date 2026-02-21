@@ -1,11 +1,4 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PromptForge Settings</title>
-    <style>
-      :root {
+:root {
         color-scheme: dark;
         --purple: #6739b7;
         --purple-light: #8b5cf6;
@@ -68,6 +61,12 @@
         margin-bottom: 14px;
       }
 
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
       .brand {
         display: flex;
         align-items: center;
@@ -111,6 +110,27 @@
         justify-content: center;
         text-align: center;
         box-shadow: var(--shadow-sm);
+      }
+
+      .help-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        border: 1px solid var(--border-light);
+        background: var(--bg-elevated);
+        color: var(--text-secondary);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        font-size: 18px;
+        font-weight: 700;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .help-btn:hover {
+        color: var(--yellow);
+        border-color: rgba(255, 215, 0, 0.45);
       }
 
       .ok {
@@ -163,6 +183,54 @@
         cursor: pointer;
         transition: all 0.2s ease;
         position: relative;
+        display: grid;
+        grid-template-columns: 30px 1fr;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .nav-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+        border: 1px solid var(--border);
+        background: var(--bg-elevated);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+      }
+
+      .nav-icon svg {
+        width: 18px;
+        height: 18px;
+        display: block;
+      }
+
+      .icon-fill {
+        fill: currentColor;
+      }
+
+      .icon-fill-soft {
+        fill: currentColor;
+        opacity: 0.6;
+      }
+
+      .icon-fill-faint {
+        fill: currentColor;
+        opacity: 0.35;
+      }
+
+      .icon-stroke {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .nav-label {
+        font-weight: 600;
       }
 
       .nav-btn:hover {
@@ -177,6 +245,12 @@
         background: linear-gradient(135deg, var(--purple), var(--purple-dark));
         color: var(--text);
         box-shadow: var(--shadow-purple);
+      }
+
+      .nav-btn.active .nav-icon {
+        border-color: rgba(255, 215, 0, 0.45);
+        color: var(--yellow-light);
+        background: rgba(255, 255, 255, 0.08);
       }
 
       .nav-btn.active::before {
@@ -202,8 +276,35 @@
         display: block;
       }
 
+      .section-head {
+        display: grid;
+        grid-template-columns: 52px 1fr;
+        gap: 12px;
+        align-items: start;
+        margin-bottom: 10px;
+      }
+
+      .section-badge {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        border: 1px solid var(--border-light);
+        background: linear-gradient(135deg, rgba(103, 57, 183, 0.25), rgba(103, 57, 183, 0.08));
+        color: var(--yellow-light);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-purple);
+      }
+
+      .section-badge svg {
+        width: 26px;
+        height: 26px;
+        display: block;
+      }
+
       .section-title {
-        margin: 0 0 6px;
+        margin: 2px 0 6px;
         font-size: 22px;
       }
 
@@ -443,166 +544,15 @@
           align-items: flex-start;
         }
 
+        .top-actions {
+          width: 100%;
+        }
+
         #statusMsg {
           width: 100%;
         }
+
+        .help-btn {
+          display: none;
+        }
       }
-    </style>
-  </head>
-  <body>
-    <div class="wrap">
-      <div class="top">
-        <div class="brand">
-          <img class="brand-icon" src="assets/promptforge-icon.svg" alt="PromptForge icon" />
-          <div class="title-group">
-            <h1>PromptForge Settings</h1>
-            <p class="subtitle">Organized sections with auto-save enabled.</p>
-          </div>
-        </div>
-        <div id="statusMsg">Auto-save ready</div>
-      </div>
-
-      <div class="layout">
-        <aside class="sidebar card">
-          <p class="menu-title">Menu</p>
-          <button class="nav-btn active" data-section="section-models" type="button">Models</button>
-          <button class="nav-btn" data-section="section-presets" type="button">Presets</button>
-          <button class="nav-btn" data-section="section-integrations" type="button">Integrations</button>
-          <button class="nav-btn" data-section="section-custom" type="button">Custom Prompt Additions</button>
-          <button class="nav-btn" data-section="section-security" type="button">Security</button>
-        </aside>
-
-        <main class="content card">
-          <section id="section-models" class="settings-section active">
-            <h2 class="section-title">Models</h2>
-            <p class="section-sub">Choose provider and the OpenAI model used for optimization.</p>
-            <div class="grid">
-              <div class="field">
-                <label for="provider">Provider</label>
-                <select id="provider" name="provider">
-                  <option value="openai">OpenAI</option>
-                  <option value="anthropic" disabled>Anthropic (TODO)</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="openaiModel">OpenAI model</label>
-                <select id="openaiModel" name="openaiModel">
-                  <option value="gpt-4.1-mini">gpt-4.1-mini</option>
-                  <option value="gpt-4.1">gpt-4.1</option>
-                  <option value="gpt-4o-mini">gpt-4o-mini</option>
-                  <option value="gpt-4o">gpt-4o</option>
-                </select>
-              </div>
-            </div>
-          </section>
-
-          <section id="section-presets" class="settings-section">
-            <h2 class="section-title">Presets</h2>
-            <p class="section-sub">Set the default rewrite behavior used by the Optimize button.</p>
-            <div class="grid">
-              <div class="field">
-                <label for="defaultPreset">Default preset</label>
-                <select id="defaultPreset" name="defaultPreset">
-                  <option value="structured">Structured</option>
-                  <option value="concise">Concise</option>
-                  <option value="grammar">Fix grammar</option>
-                  <option value="clarity">Improve clarity</option>
-                </select>
-                <p class="inline-note">Keep user voice toggle: TODO.</p>
-              </div>
-            </div>
-          </section>
-
-          <section id="section-integrations" class="settings-section">
-            <h2 class="section-title">Integrations</h2>
-            <p class="section-sub">Enable where PromptForge should appear.</p>
-            <div class="toggle-grid">
-              <div class="toggle-row">
-                <label for="enableAI">Enable AI (global)</label>
-                <span class="switch">
-                  <input id="enableAI" name="enableAI" type="checkbox" />
-                  <span class="slider"></span>
-                </span>
-              </div>
-
-              <div class="toggle-row">
-                <label for="enableChatGPT">Enable on ChatGPT</label>
-                <span class="switch">
-                  <input id="enableChatGPT" name="enableChatGPT" type="checkbox" />
-                  <span class="slider"></span>
-                </span>
-              </div>
-
-              <div class="toggle-row">
-                <label for="enableGemini">Enable on Gemini</label>
-                <span class="switch">
-                  <input id="enableGemini" name="enableGemini" type="checkbox" />
-                  <span class="slider"></span>
-                </span>
-              </div>
-
-              <div class="toggle-row full">
-                <label for="analyticsOptIn">Share anonymous usage analytics (prompt text never sent)</label>
-                <span class="switch">
-                  <input id="analyticsOptIn" name="analyticsOptIn" type="checkbox" />
-                  <span class="slider"></span>
-                </span>
-              </div>
-            </div>
-          </section>
-
-          <section id="section-custom" class="settings-section">
-            <h2 class="section-title">Custom Prompt Additions</h2>
-            <p class="section-sub">Add reusable instructions that can be integrated in future optimization passes.</p>
-            <div class="grid">
-              <div class="field full">
-                <label for="customPromptAdditions">Reusable additions</label>
-                <textarea
-                  id="customPromptAdditions"
-                  placeholder="Example: Always keep a professional tone. Include concrete acceptance criteria."
-                ></textarea>
-                <p class="inline-note">Saved automatically. Not sent anywhere by itself.</p>
-              </div>
-            </div>
-          </section>
-
-          <section id="section-security" class="settings-section">
-            <h2 class="section-title">Security</h2>
-            <p class="section-sub">Verify key once. After verification, key editing is locked.</p>
-            <div class="grid">
-              <div class="field full">
-                <label for="apiKey">API key</label>
-                <div id="apiKeyEditor">
-                  <input id="apiKey" name="apiKey" type="password" autocomplete="off" placeholder="sk-..." />
-                  <div class="sub-actions">
-                    <button type="button" id="testKeyBtn">Test key</button>
-                    <span id="testKeyStatus"></span>
-                    <a
-                      id="generateKeyLink"
-                      class="help-link"
-                      href="https://platform.openai.com/api-keys"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      hidden
-                    >
-                      Generate API key
-                    </a>
-                  </div>
-                </div>
-                <div id="keyLockedBanner" class="key-locked-banner" hidden>
-                  API key verified and saved. Editing is locked. Use clear data to reset key setup.
-                </div>
-              </div>
-              <div class="field full">
-                <button type="button" id="clearDataBtn">Clear stored key/data</button>
-                <p class="note">Clears local settings and usage stats from this browser profile.</p>
-              </div>
-            </div>
-          </section>
-        </main>
-      </div>
-    </div>
-
-    <script src="options.js"></script>
-  </body>
-</html>

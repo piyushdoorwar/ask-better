@@ -1,7 +1,11 @@
 const DEFAULT_SETTINGS = {
   provider: "openai",
   openaiApiKey: "",
+  geminiApiKey: "",
   openaiModel: "gpt-4.1-mini",
+  geminiModel: "gemini-2.5-flash",
+  openaiKeyVerified: false,
+  geminiKeyVerified: false,
   defaultPreset: "structured",
   enableChatGPT: true,
   enableGemini: true,
@@ -11,8 +15,11 @@ const DEFAULT_SETTINGS = {
   keyVerified: false,
   customPromptAdditions: ""
 };
+
 const OPENAI_KEY_URL = "https://platform.openai.com/api-keys";
+const GEMINI_KEY_URL = "https://aistudio.google.com/apikey";
 const OPENAI_MODELS = ["gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini", "gpt-4o"];
+const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"];
 
 const statusBox = document.getElementById("statusBox");
 const statusText = document.getElementById("statusText");
@@ -32,7 +39,9 @@ async function init() {
   const settings = await readSettings();
   renderStatus(settings);
   defaultPresetEl.value = normalizePreset(settings.defaultPreset);
-  applyModelValue(settings.openaiModel || DEFAULT_SETTINGS.openaiModel);
+  const provider = normalizeProvider(settings.provider);
+  const model = getProviderModel(settings, provider);
+  renderModelOptions(provider, model);
   enableChatGPTEl.checked = !!settings.enableChatGPT;
   enableGeminiEl.checked = !!settings.enableGemini;
 
@@ -49,7 +58,10 @@ async function init() {
   });
 
   openaiModelEl.addEventListener("change", async () => {
-    await updateSettings({ openaiModel: normalizeModel(openaiModelEl.value) });
+    const current = await readSettings();
+    const currentProvider = normalizeProvider(current.provider);
+    const meta = getProviderMeta(currentProvider);
+    await updateSettings({ [meta.modelField]: normalizeModel(openaiModelEl.value, meta.defaultModel) });
   });
 
   openSettingsBtn.addEventListener("click", () => {
@@ -58,14 +70,18 @@ async function init() {
 }
 
 function renderStatus(settings) {
-  const hasKey = !!(settings.openaiApiKey && settings.openaiApiKey.trim());
+  const provider = normalizeProvider(settings.provider);
+  const meta = getProviderMeta(provider);
+  const hasKey = !!String(settings[meta.keyField] || "").trim();
+
   if (missingKeyLinkEl) {
-    missingKeyLinkEl.href = OPENAI_KEY_URL;
+    missingKeyLinkEl.href = meta.keyUrl;
     missingKeyLinkEl.hidden = true;
   }
   if (statusBox) {
     statusBox.classList.remove("state-ok", "state-warn");
   }
+
   if (!settings.enableAI) {
     statusText.textContent = "AI disabled";
     statusText.className = "status-warn";
@@ -74,21 +90,23 @@ function renderStatus(settings) {
     }
     return;
   }
+
   if (hasKey) {
-    statusText.textContent = "API key: Connected";
+    statusText.textContent = `${meta.providerName} key: Connected`;
     statusText.className = "status-ok";
     if (statusBox) {
       statusBox.classList.add("state-ok");
     }
-  } else {
-    statusText.textContent = "API key: Missing";
-    statusText.className = "status-warn";
-    if (statusBox) {
-      statusBox.classList.add("state-warn");
-    }
-    if (missingKeyLinkEl) {
-      missingKeyLinkEl.hidden = false;
-    }
+    return;
+  }
+
+  statusText.textContent = `${meta.providerName} key: Missing`;
+  statusText.className = "status-warn";
+  if (statusBox) {
+    statusBox.classList.add("state-warn");
+  }
+  if (missingKeyLinkEl) {
+    missingKeyLinkEl.hidden = false;
   }
 }
 
@@ -114,33 +132,55 @@ function normalizePreset(value) {
   return DEFAULT_SETTINGS.defaultPreset;
 }
 
-function applyModelValue(model) {
-  const normalized = normalizeModel(model);
-  if (!hasModelOption(normalized)) {
+function renderModelOptions(provider, selectedModel) {
+  const meta = getProviderMeta(provider);
+  openaiModelEl.textContent = "";
+  for (const model of meta.models) {
     const option = document.createElement("option");
-    option.value = normalized;
-    option.textContent = `${normalized} (custom)`;
+    option.value = model;
+    option.textContent = model;
     openaiModelEl.appendChild(option);
   }
-  openaiModelEl.value = normalized;
+  if (!meta.models.includes(selectedModel)) {
+    const option = document.createElement("option");
+    option.value = selectedModel;
+    option.textContent = `${selectedModel} (custom)`;
+    openaiModelEl.appendChild(option);
+  }
+  openaiModelEl.value = selectedModel;
 }
 
-function hasModelOption(model) {
-  for (const option of openaiModelEl.options) {
-    if (option.value === model) {
-      return true;
-    }
+function getProviderMeta(provider) {
+  if (provider === "gemini") {
+    return {
+      providerName: "Gemini",
+      keyField: "geminiApiKey",
+      modelField: "geminiModel",
+      defaultModel: DEFAULT_SETTINGS.geminiModel,
+      models: GEMINI_MODELS,
+      keyUrl: GEMINI_KEY_URL
+    };
   }
-  return false;
+  return {
+    providerName: "OpenAI",
+    keyField: "openaiApiKey",
+    modelField: "openaiModel",
+    defaultModel: DEFAULT_SETTINGS.openaiModel,
+    models: OPENAI_MODELS,
+    keyUrl: OPENAI_KEY_URL
+  };
 }
 
-function normalizeModel(model) {
-  const value = String(model || "").trim();
-  if (!value) {
-    return DEFAULT_SETTINGS.openaiModel;
-  }
-  if (OPENAI_MODELS.includes(value)) {
-    return value;
-  }
-  return value;
+function getProviderModel(settings, provider) {
+  const meta = getProviderMeta(provider);
+  return normalizeModel(settings[meta.modelField], meta.defaultModel);
+}
+
+function normalizeProvider(value) {
+  return String(value || "").toLowerCase() === "gemini" ? "gemini" : "openai";
+}
+
+function normalizeModel(value, fallback) {
+  const model = String(value || "").trim();
+  return model || fallback;
 }
