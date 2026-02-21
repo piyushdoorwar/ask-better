@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PromptForge</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        width: 320px;
+        margin: 0;
+        padding: 14px;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: #070b19;
+        color: #e2e8f0;
+      }
+      .header {
+        margin-bottom: 12px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .brand-icon {
+        width: 24px;
+        height: 24px;
+        display: block;
+      }
+      h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .status {
+        border: 1px solid #1f2937;
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 12px;
+        background: #0b1224;
+      }
+      .status-ok {
+        color: #22c55e;
+      }
+      .status-warn {
+        color: #f59e0b;
+      }
+      .row {
+        margin-bottom: 10px;
+      }
+      label {
+        font-size: 13px;
+        display: block;
+        margin-bottom: 6px;
+      }
+      select,
+      button {
+        width: 100%;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        background: #111827;
+        color: #e2e8f0;
+        padding: 9px 10px;
+        font-size: 14px;
+      }
+      .toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      .toggle input {
+        width: 18px;
+        height: 18px;
+      }
+      .open-settings {
+        margin-top: 6px;
+        background: #7c3aed;
+        border-color: #8b5cf6;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .foot {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #94a3b8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="brand">
+        <img class="brand-icon" src="assets/promptforge-icon.svg" alt="PromptForge icon" />
+        <h1>PromptForge</h1>
+      </div>
+    </div>
+
+    <div class="status" id="statusBox">
+      <div>Connection</div>
+      <div id="statusText"></div>
+    </div>
+
+    <div class="row">
+      <label for="defaultPreset">Default optimization style</label>
+      <select id="defaultPreset">
+        <option value="structured">Structured</option>
+        <option value="concise">Concise</option>
+        <option value="grammar">Fix grammar</option>
+        <option value="clarity">Improve clarity</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <div class="toggle">
+        <label for="enableChatGPT">Enable on ChatGPT</label>
+        <input type="checkbox" id="enableChatGPT" />
+      </div>
+      <div class="toggle">
+        <label for="enableGemini">Enable on Gemini</label>
+        <input type="checkbox" id="enableGemini" />
+      </div>
+    </div>
+
+    <button class="open-settings" id="openSettingsBtn">Open settings</button>
+    <div class="foot">Runs locally. Your prompt text is never logged by the extension.</div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

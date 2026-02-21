@@ -1,0 +1,50 @@
+.pf-optimize-btn {
+  position: fixed;
+  z-index: 2147483000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: rgba(15, 23, 42, 0.94);
+  color: #f5f3ff;
+  font: 600 12px/1.2 "Segoe UI", Arial, sans-serif;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.35);
+  transition: transform 120ms ease, opacity 120ms ease, border-color 120ms ease;
+}
+
+.pf-optimize-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(167, 139, 250, 0.8);
+}
+
+.pf-optimize-btn:disabled,
+.pf-optimize-btn.pf-is-busy {
+  opacity: 0.78;
+  cursor: wait;
+}
+
+.pf-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%) translateY(8px);
+  z-index: 2147483001;
+  opacity: 0;
+  pointer-events: none;
+  border-radius: 10px;
+  background: rgba(2, 6, 23, 0.92);
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  padding: 8px 12px;
+  font: 500 12px/1.25 "Segoe UI", Arial, sans-serif;
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.pf-toast.pf-toast-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

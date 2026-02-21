@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "PromptForge",
+  "description": "Local prompt optimizer for ChatGPT and Gemini.",
+  "version": "0.1.0",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://api.openai.com/*",
+    "https://chat.openai.com/*",
+    "https://chatgpt.com/*",
+    "https://gemini.google.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "PromptForge",
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chat.openai.com/*",
+        "https://chatgpt.com/*"
+      ],
+      "js": [
+        "content/chatgpt.js"
+      ],
+      "css": [
+        "injected/styles.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://gemini.google.com/*"
+      ],
+      "js": [
+        "content/gemini.js"
+      ],
+      "css": [
+        "injected/styles.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

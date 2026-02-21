@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PromptForge Settings</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: #050816;
+        color: #e2e8f0;
+      }
+      .wrap {
+        max-width: 840px;
+        margin: 24px auto;
+        padding: 0 16px 24px;
+      }
+      h1 {
+        margin: 0 0 14px;
+        font-size: 24px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 14px;
+      }
+      .brand h1 {
+        margin: 0;
+      }
+      .brand-icon {
+        width: 30px;
+        height: 30px;
+        display: block;
+      }
+      .card {
+        background: #0b1224;
+        border: 1px solid #1f2937;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 14px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .full {
+        grid-column: 1 / -1;
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 6px;
+      }
+      input[type="text"],
+      input[type="password"],
+      select {
+        width: 100%;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        background: #111827;
+        color: #e2e8f0;
+        padding: 9px 10px;
+        font-size: 14px;
+      }
+      .toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .toggle input {
+        width: 18px;
+        height: 18px;
+      }
+      .toggle label {
+        margin: 0;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 14px;
+        flex-wrap: wrap;
+      }
+      button {
+        border: 1px solid #334155;
+        border-radius: 8px;
+        background: #111827;
+        color: #e2e8f0;
+        padding: 9px 12px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .primary {
+        background: #7c3aed;
+        border-color: #8b5cf6;
+        font-weight: 600;
+      }
+      .danger {
+        border-color: #7f1d1d;
+        background: #3f1010;
+      }
+      #statusMsg {
+        min-height: 20px;
+        margin-top: 10px;
+        font-size: 13px;
+      }
+      .ok {
+        color: #22c55e;
+      }
+      .warn {
+        color: #f59e0b;
+      }
+      .muted {
+        color: #94a3b8;
+        font-size: 12px;
+      }
+      @media (max-width: 760px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="brand">
+        <img class="brand-icon" src="assets/promptforge-icon.svg" alt="PromptForge icon" />
+        <h1>PromptForge Settings</h1>
+      </div>
+
+      <form id="settingsForm" class="card">
+        <div class="grid">
+          <div>
+            <label for="provider">Provider</label>
+            <select id="provider" name="provider">
+              <option value="openai">OpenAI</option>
+              <option value="anthropic" disabled>Anthropic (TODO)</option>
+            </select>
+          </div>
+          <div>
+            <label for="openaiModel">OpenAI model</label>
+            <input id="openaiModel" name="openaiModel" type="text" placeholder="gpt-4.1-mini" />
+          </div>
+          <div class="full">
+            <label for="apiKey">API key</label>
+            <input id="apiKey" name="apiKey" type="password" autocomplete="off" placeholder="sk-..." />
+            <div class="actions">
+              <button type="button" id="testKeyBtn">Test key</button>
+              <span class="muted" id="testKeyStatus"></span>
+            </div>
+          </div>
+          <div>
+            <label for="defaultPreset">Default preset</label>
+            <select id="defaultPreset" name="defaultPreset">
+              <option value="structured">Structured</option>
+              <option value="concise">Concise</option>
+              <option value="grammar">Fix grammar</option>
+              <option value="clarity">Improve clarity</option>
+            </select>
+          </div>
+          <div class="toggle">
+            <input id="enableAI" name="enableAI" type="checkbox" />
+            <label for="enableAI">Enable AI (global)</label>
+          </div>
+          <div class="toggle">
+            <input id="enableChatGPT" name="enableChatGPT" type="checkbox" />
+            <label for="enableChatGPT">Enable on ChatGPT</label>
+          </div>
+          <div class="toggle">
+            <input id="enableGemini" name="enableGemini" type="checkbox" />
+            <label for="enableGemini">Enable on Gemini</label>
+          </div>
+          <div class="toggle full">
+            <input id="analyticsOptIn" name="analyticsOptIn" type="checkbox" />
+            <label for="analyticsOptIn">Share anonymous usage analytics (prompt text never sent)</label>
+          </div>
+          <div class="full muted">Keep user voice toggle: TODO (planned for a future version).</div>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="primary">Save settings</button>
+          <button type="button" class="danger" id="clearDataBtn">Clear stored key/data</button>
+        </div>
+        <div id="statusMsg"></div>
+      </form>
+    </div>
+
+    <script src="options.js"></script>
+  </body>
+</html>

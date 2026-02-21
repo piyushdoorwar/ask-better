@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="PromptForge icon">
+  <defs>
+    <linearGradient id="pfg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#6366f1" />
+    </linearGradient>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="1.8" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#0b1022" />
+  <rect x="4" y="4" width="56" height="56" rx="12" fill="url(#pfg)" opacity="0.92" />
+
+  <g filter="url(#glow)" transform-origin="32 32">
+    <animateTransform attributeName="transform" type="rotate" values="-3 32 32;3 32 32;-3 32 32" dur="2.8s" repeatCount="indefinite" />
+    <path d="M27 42l14-14" stroke="#ffffff" stroke-width="4.4" stroke-linecap="round" />
+    <rect x="21" y="36" width="10" height="10" rx="3" fill="#ffffff" />
+    <path d="M39.4 20.2l3.1 0.9 0.9 3.1 0.9-3.1 3.1-0.9-3.1-0.9-0.9-3.1-0.9 3.1z" fill="#ffffff" />
+    <circle cx="47.5" cy="15.5" r="1.6" fill="#ffffff">
+      <animate attributeName="opacity" values="0.2;1;0.2" dur="1.8s" repeatCount="indefinite" />
+    </circle>
+  </g>
+
+  <g opacity="0.9">
+    <circle cx="32" cy="32" r="24" fill="none" stroke="#c4b5fd" stroke-opacity="0.35">
+      <animate attributeName="r" values="20;25;20" dur="2.2s" repeatCount="indefinite" />
+      <animate attributeName="stroke-opacity" values="0.18;0.45;0.18" dur="2.2s" repeatCount="indefinite" />
+    </circle>
+  </g>
+
+</svg>
