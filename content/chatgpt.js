@@ -23,12 +23,20 @@
 })();
 
 function startAskBetter(site, siteToggleKey, selectors) {
+  const BUTTON_LABEL = "\u2728 Optimize";
+  const DEFAULT_OFFSET = { x: 0, y: 0 };
+
   let button = null;
   let activeInput = null;
   let settingsCache = null;
   let settingsLoadedAt = 0;
   let rafToken = 0;
   let observer = null;
+  let buttonOffset = { ...DEFAULT_OFFSET };
+  let offsetLoaded = false;
+  let offsetSaveTimer = 0;
+  let dragState = null;
+  let suppressNextClick = false;
 
   ensureButton();
   scheduleSync();
@@ -50,8 +58,12 @@ function startAskBetter(site, siteToggleKey, selectors) {
     button = document.createElement("button");
     button.type = "button";
     button.className = "pf-optimize-btn";
-    button.textContent = "✨ Optimize";
+    button.textContent = BUTTON_LABEL;
     button.style.display = "none";
+    button.addEventListener("pointerdown", onPointerDown);
+    button.addEventListener("pointermove", onPointerMove);
+    button.addEventListener("pointerup", onPointerUp);
+    button.addEventListener("pointercancel", onPointerUp);
     button.addEventListener("click", onOptimizeClick);
     document.body.appendChild(button);
   }
@@ -79,6 +91,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
       return;
     }
 
+    await ensureOffsetLoaded();
     activeInput = input;
     placeButtonNearInput(input);
     button.style.display = "inline-flex";
@@ -92,14 +105,31 @@ function startAskBetter(site, siteToggleKey, selectors) {
   }
 
   function placeButtonNearInput(input) {
+    if (!button) {
+      return;
+    }
+
     const rect = input.getBoundingClientRect();
-    const top = Math.max(8, rect.top - 36);
-    const left = Math.max(8, Math.min(window.innerWidth - 132, rect.right - 128));
+    const btnRect = button.getBoundingClientRect();
+    const buttonWidth = Math.max(96, Math.round(btnRect.width || 116));
+    const buttonHeight = Math.max(30, Math.round(btnRect.height || 32));
+
+    const baseTop = rect.top - buttonHeight - 6;
+    const baseLeft = rect.right - buttonWidth - 6;
+
+    const top = clamp(baseTop + buttonOffset.y, 8, Math.max(8, window.innerHeight - buttonHeight - 8));
+    const left = clamp(baseLeft + buttonOffset.x, 8, Math.max(8, window.innerWidth - buttonWidth - 8));
+
     button.style.top = `${top}px`;
     button.style.left = `${left}px`;
   }
 
   async function onOptimizeClick() {
+    if (suppressNextClick) {
+      suppressNextClick = false;
+      return;
+    }
+
     const targetInput = activeInput && document.contains(activeInput) ? activeInput : findPromptInput(selectors);
     if (!targetInput) {
       return;
@@ -152,13 +182,107 @@ function startAskBetter(site, siteToggleKey, selectors) {
     return settingsCache;
   }
 
+  async function ensureOffsetLoaded() {
+    if (offsetLoaded) {
+      return;
+    }
+    offsetLoaded = true;
+    const response = await sendMessage({ type: "ASKBETTER_GET_BUTTON_OFFSET", site });
+    if (response && response.ok && response.offset) {
+      buttonOffset = normalizeOffset(response.offset);
+    }
+  }
+
+  function onPointerDown(event) {
+    if (!button || button.disabled || event.button !== 0) {
+      return;
+    }
+
+    dragState = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startOffsetX: buttonOffset.x,
+      startOffsetY: buttonOffset.y,
+      moved: false
+    };
+
+    button.classList.add("pf-is-dragging");
+    if (typeof button.setPointerCapture === "function") {
+      button.setPointerCapture(event.pointerId);
+    }
+    event.preventDefault();
+  }
+
+  function onPointerMove(event) {
+    if (!dragState || !button || event.pointerId !== dragState.pointerId) {
+      return;
+    }
+
+    const dx = event.clientX - dragState.startX;
+    const dy = event.clientY - dragState.startY;
+
+    if (!dragState.moved && Math.abs(dx) + Math.abs(dy) < 3) {
+      return;
+    }
+
+    dragState.moved = true;
+    buttonOffset = normalizeOffset({
+      x: dragState.startOffsetX + dx,
+      y: dragState.startOffsetY + dy
+    });
+
+    if (activeInput) {
+      placeButtonNearInput(activeInput);
+    }
+
+    scheduleOffsetSave(false);
+  }
+
+  function onPointerUp(event) {
+    if (!dragState || event.pointerId !== dragState.pointerId) {
+      return;
+    }
+
+    const didMove = dragState.moved;
+    dragState = null;
+
+    if (button) {
+      button.classList.remove("pf-is-dragging");
+      if (typeof button.releasePointerCapture === "function") {
+        try {
+          button.releasePointerCapture(event.pointerId);
+        } catch (_error) {
+          // ignore release errors
+        }
+      }
+    }
+
+    if (didMove) {
+      suppressNextClick = true;
+      scheduleOffsetSave(true);
+    }
+  }
+
+  function scheduleOffsetSave(forceNow) {
+    window.clearTimeout(offsetSaveTimer);
+    const delay = forceNow ? 0 : 180;
+    offsetSaveTimer = window.setTimeout(() => {
+      void sendMessage({
+        type: "ASKBETTER_SAVE_BUTTON_OFFSET",
+        site,
+        offset: buttonOffset
+      });
+    }, delay);
+  }
+
   function setBusy(isBusy) {
     if (!button) {
       return;
     }
     button.disabled = !!isBusy;
     button.classList.toggle("pf-is-busy", !!isBusy);
-    button.textContent = isBusy ? "Optimizing..." : "✨ Optimize";
+    button.textContent = isBusy ? "Optimizing..." : BUTTON_LABEL;
   }
 }
 
@@ -248,17 +372,48 @@ function writePromptText(node, value) {
 
 function sendMessage(payload) {
   return new Promise((resolve) => {
-    if (!chrome.runtime || !chrome.runtime.sendMessage) {
-      resolve({ ok: false, message: "Extension runtime unavailable." });
-      return;
-    }
-    chrome.runtime.sendMessage(payload, (response) => {
-      if (chrome.runtime.lastError) {
-        resolve({ ok: false, message: "Background worker unavailable." });
+    try {
+      if (
+        typeof chrome === "undefined" ||
+        !chrome.runtime ||
+        !chrome.runtime.id ||
+        typeof chrome.runtime.sendMessage !== "function"
+      ) {
+        resolve({ ok: false, message: "Extension runtime unavailable." });
         return;
       }
-      resolve(response);
-    });
+
+      chrome.runtime.sendMessage(payload, (response) => {
+        try {
+          const runtimeError = chrome.runtime && chrome.runtime.lastError;
+          if (runtimeError) {
+            const rawMessage = String(runtimeError.message || "");
+            const invalidated = /extension context invalidated/i.test(rawMessage);
+            resolve({
+              ok: false,
+              code: invalidated ? "EXTENSION_CONTEXT_INVALIDATED" : "RUNTIME_ERROR",
+              message: invalidated
+                ? "Extension was reloaded. Refresh this tab."
+                : "Background worker unavailable."
+            });
+            return;
+          }
+          resolve(response);
+        } catch (_error) {
+          resolve({ ok: false, message: "Extension runtime unavailable." });
+        }
+      });
+    } catch (error) {
+      const rawMessage = String((error && error.message) || "");
+      const invalidated = /extension context invalidated/i.test(rawMessage);
+      resolve({
+        ok: false,
+        code: invalidated ? "EXTENSION_CONTEXT_INVALIDATED" : "RUNTIME_ERROR",
+        message: invalidated
+          ? "Extension was reloaded. Refresh this tab."
+          : "Extension runtime unavailable."
+      });
+    }
   });
 }
 
@@ -276,4 +431,18 @@ function showToast(message) {
   showToast.timer = window.setTimeout(() => {
     toast.classList.remove("pf-toast-visible");
   }, 1800);
+}
+
+function normalizeOffset(rawOffset) {
+  return {
+    x: clamp(Number(rawOffset && rawOffset.x) || 0, -900, 900),
+    y: clamp(Number(rawOffset && rawOffset.y) || 0, -900, 900)
+  };
+}
+
+function clamp(value, min, max) {
+  if (!Number.isFinite(value)) {
+    return min;
+  }
+  return Math.min(max, Math.max(min, value));
 }

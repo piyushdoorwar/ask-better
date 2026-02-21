@@ -16,6 +16,13 @@ const DEFAULT_SETTINGS = {
   customPromptAdditions: ""
 };
 
+const DEFAULT_UI_PREFS = {
+  buttonOffsets: {
+    chatgpt: { x: 0, y: 0 },
+    gemini: { x: 0, y: 0 }
+  }
+};
+
 const PRESET_INSTRUCTIONS = {
   grammar: "Fix grammar and spelling with minimal rewrites. Preserve meaning.",
   clarity: "Improve clarity while preserving intent, requirements, and details.",
@@ -70,6 +77,19 @@ async function handleMessage(message) {
 
   if (message.type === "ASKBETTER_OPTIMIZE") {
     return await optimizePrompt(message);
+  }
+
+  if (message.type === "ASKBETTER_GET_BUTTON_OFFSET") {
+    const site = normalizeSite(message.site);
+    const offset = await getButtonOffset(site);
+    return { ok: true, site, offset };
+  }
+
+  if (message.type === "ASKBETTER_SAVE_BUTTON_OFFSET") {
+    const site = normalizeSite(message.site);
+    const offset = normalizeOffset(message.offset);
+    const savedOffset = await saveButtonOffset(site, offset);
+    return { ok: true, site, offset: savedOffset };
   }
 
   return { ok: false, code: "BAD_REQUEST", message: "Unknown request type." };
@@ -539,7 +559,8 @@ function isSiteEnabled(settings, site) {
 
 async function ensureDefaults() {
   const settings = await readSettings();
-  await chrome.storage.local.set({ settings });
+  const uiPrefs = await readUiPrefs();
+  await chrome.storage.local.set({ settings, uiPrefs });
 }
 
 async function readSettings() {
@@ -549,4 +570,54 @@ async function readSettings() {
     ...DEFAULT_SETTINGS,
     ...raw
   };
+}
+
+async function readUiPrefs() {
+  const stored = await chrome.storage.local.get(["uiPrefs"]);
+  const raw = stored.uiPrefs || {};
+  const buttonOffsets = raw.buttonOffsets || {};
+  return {
+    buttonOffsets: {
+      chatgpt: normalizeOffset(buttonOffsets.chatgpt),
+      gemini: normalizeOffset(buttonOffsets.gemini)
+    }
+  };
+}
+
+async function getButtonOffset(site) {
+  const uiPrefs = await readUiPrefs();
+  return uiPrefs.buttonOffsets[site] || { x: 0, y: 0 };
+}
+
+async function saveButtonOffset(site, offset) {
+  const uiPrefs = await readUiPrefs();
+  uiPrefs.buttonOffsets[site] = normalizeOffset(offset);
+  await chrome.storage.local.set({ uiPrefs });
+  return uiPrefs.buttonOffsets[site];
+}
+
+function normalizeSite(value) {
+  return String(value || "").toLowerCase() === "gemini" ? "gemini" : "chatgpt";
+}
+
+function normalizeOffset(rawOffset) {
+  const x = Number(rawOffset && rawOffset.x);
+  const y = Number(rawOffset && rawOffset.y);
+  return {
+    x: clampOffsetNumber(x),
+    y: clampOffsetNumber(y)
+  };
+}
+
+function clampOffsetNumber(value) {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+  if (value > 900) {
+    return 900;
+  }
+  if (value < -900) {
+    return -900;
+  }
+  return Math.round(value);
 }

@@ -12,7 +12,10 @@
   color: #ffffff;
   font: 600 12px/1.2 var(--pf-font-ui);
   letter-spacing: 0.01em;
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
   box-shadow: 0 8px 24px rgba(103, 57, 183, 0.3);
   transition: transform 120ms ease, opacity 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
 }
@@ -21,6 +24,13 @@
   transform: translateY(-2px);
   border-color: rgba(255, 215, 0, 0.85);
   box-shadow: 0 8px 24px rgba(103, 57, 183, 0.4), 0 8px 24px rgba(255, 215, 0, 0.2);
+}
+
+.pf-optimize-btn.pf-is-dragging {
+  cursor: grabbing;
+  transform: none;
+  border-color: rgba(255, 215, 0, 0.85);
+  box-shadow: 0 8px 24px rgba(103, 57, 183, 0.42), 0 8px 24px rgba(255, 215, 0, 0.22);
 }
 
 .pf-optimize-btn:disabled,
