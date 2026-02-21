@@ -305,6 +305,10 @@
         color: var(--yellow);
       }
 
+      .help-link[hidden] {
+        display: none !important;
+      }
+
       .key-locked-banner {
         border: 1px solid rgba(0, 208, 156, 0.4);
         border-radius: var(--radius-sm);
@@ -359,6 +363,7 @@
         inset: 0;
         opacity: 0;
         cursor: pointer;
+        z-index: 2;
       }
 
       .slider {
@@ -368,6 +373,7 @@
         background: #2d2d2d;
         border: 1px solid var(--border-light);
         transition: 130ms ease;
+        pointer-events: none;
       }
 
       .slider::before {
