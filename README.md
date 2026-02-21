@@ -35,8 +35,10 @@ It injects a lightweight `Optimize` button near the prompt input. Clicking it re
 - `content/chatgpt.js` (ChatGPT injection)
 - `content/gemini.js` (Gemini injection)
 - `injected/styles.css` (button + toast styles)
+- `ui/theme.css` (shared design tokens/base theme for popup and options)
 - `ui/popup.html`, `ui/popup.js`, `ui/popup.css` (quick controls/status/model switch)
 - `ui/options.html`, `ui/options.js`, `ui/options.css` (sectioned settings + auto-save)
+- `assets/icons/ui/*.svg` (menu/section icons for models, presets, integrations, custom prompt, security)
 
 ## Install (Unpacked)
 

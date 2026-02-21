@@ -1,57 +1,15 @@
-:root {
-        color-scheme: dark;
-        --purple: #6739b7;
-        --purple-light: #8b5cf6;
-        --purple-dark: #5b21b6;
-        --yellow: #ffd700;
-        --yellow-dark: #ffc700;
-        --yellow-light: #ffe55c;
-        --green: #00d09c;
-        --pink: #ff6b9d;
-        --blue: #5dade2;
-        --bg: #0d0d0d;
-        --bg-secondary: #1a1a1a;
-        --bg-panel: #1e1e1e;
-        --bg-elevated: #252525;
-        --text: #ffffff;
-        --text-secondary: #b8b8b8;
-        --text-muted: rgba(255, 255, 255, 0.6);
-        --border: rgba(255, 255, 255, 0.06);
-        --border-light: rgba(255, 255, 255, 0.1);
-        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-        --shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-        --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
-        --shadow-purple: 0 8px 24px rgba(103, 57, 183, 0.3);
-        --focus: rgba(103, 57, 183, 0.3);
-        --radius-sm: 10px;
-        --radius: 12px;
-        --radius-card: 24px;
-      }
+body {
+  width: 340px;
+  padding: 14px;
+}
 
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        width: 340px;
-        margin: 0;
-        padding: 14px;
-        font-family: "Inter", "Segoe UI", Arial, sans-serif;
-        color: var(--text);
-        background:
-          radial-gradient(120% 80% at 10% 0%, rgba(103, 57, 183, 0.15), transparent 60%),
-          radial-gradient(90% 60% at 90% 10%, rgba(255, 107, 157, 0.08), transparent 62%),
-          var(--bg);
-        -webkit-font-smoothing: antialiased;
-      }
-
-      .panel {
-        border: 1px solid var(--border);
-        border-radius: var(--radius-card);
-        padding: 14px;
-        background: linear-gradient(180deg, rgba(30, 30, 30, 0.95), rgba(20, 20, 20, 0.96));
-        box-shadow: var(--shadow-lg);
-      }
+.panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 14px;
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-lg);
+}
 
       .header {
         display: flex;
@@ -185,23 +143,6 @@
         color: var(--text-secondary);
       }
 
-      select {
-        width: 100%;
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-sm);
-        background: var(--bg-elevated);
-        color: var(--text);
-        padding: 10px 11px;
-        font-size: 15px;
-        outline: none;
-        box-shadow: var(--shadow-sm);
-      }
-
-      select:focus {
-        border-color: var(--purple-light);
-        box-shadow: 0 0 0 3px var(--focus), var(--shadow-purple);
-      }
-
       .toggles {
         border-top: 1px solid var(--border);
         padding-top: 11px;
@@ -224,8 +165,8 @@
 
       .switch {
         position: relative;
-        width: 38px;
-        height: 22px;
+        width: 44px;
+        height: 24px;
       }
 
       .switch input {
@@ -249,8 +190,8 @@
       .slider::before {
         content: "";
         position: absolute;
-        width: 16px;
-        height: 16px;
+        width: 18px;
+        height: 18px;
         left: 2px;
         top: 2px;
         border-radius: 50%;
@@ -265,7 +206,7 @@
       }
 
       .switch input:checked + .slider::before {
-        transform: translateX(16px);
+        transform: translateX(20px);
       }
 
       .switch input:focus-visible + .slider {

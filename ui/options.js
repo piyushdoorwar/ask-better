@@ -20,6 +20,54 @@ const OPENAI_KEY_URL = "https://platform.openai.com/api-keys";
 const GEMINI_KEY_URL = "https://aistudio.google.com/apikey";
 const OPENAI_MODELS = ["gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini", "gpt-4o"];
 const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"];
+const SECTION_INFO_CONTENT = {
+  models: {
+    title: "Models",
+    description: "This section controls which provider and model PromptForge calls when you press Optimize.",
+    points: [
+      "OpenAI and Google Gemini are supported right now.",
+      "Faster/lighter models usually respond quicker and cost less; larger models can improve rewrite quality.",
+      "Your key is stored locally and is only used by the background worker for direct provider calls."
+    ]
+  },
+  presets: {
+    title: "Presets",
+    description: "Presets define your default rewrite style for the Optimize button.",
+    points: [
+      "Structured: rewrites into clear sections (Context, Task, Constraints, Output Format, Questions).",
+      "Concise: shortens wording while preserving intent and requirements.",
+      "Fix grammar: corrects grammar/spelling with minimal rewrite.",
+      "Improve clarity: keeps meaning while making wording clearer."
+    ]
+  },
+  integrations: {
+    title: "Integrations",
+    description: "Integrations decide where PromptForge appears and whether optimization is enabled at all.",
+    points: [
+      "Enable AI (global) turns optimization on/off everywhere.",
+      "Enable on ChatGPT and Enable on Gemini control injection per site.",
+      "If AI is off or key is missing, clicking Optimize shows a friendly message and does nothing."
+    ]
+  },
+  custom: {
+    title: "Custom Prompt Additions",
+    description: "Use this for reusable instruction snippets you want available for future optimization behavior.",
+    points: [
+      "Keep additions short and reusable (tone, constraints, output preferences).",
+      "These values are stored locally in your browser profile.",
+      "Current version saves this content now and is designed for deeper use in future iterations."
+    ]
+  },
+  security: {
+    title: "Security",
+    description: "This section is for key setup, verification, and reset controls.",
+    points: [
+      "Test key checks the currently selected provider key before locking it.",
+      "After successful verification, key editing is locked for safety.",
+      "Use Clear stored key/data to reset local settings and unlock key setup again."
+    ]
+  }
+};
 
 const providerEl = document.getElementById("provider");
 const modelLabelEl = document.getElementById("modelLabel");
@@ -40,11 +88,17 @@ const keyLockedBannerEl = document.getElementById("keyLockedBanner");
 const apiKeyEditorEl = document.getElementById("apiKeyEditor");
 const navButtons = Array.from(document.querySelectorAll(".nav-btn"));
 const sections = Array.from(document.querySelectorAll(".settings-section"));
+const sectionInfoButtons = Array.from(document.querySelectorAll(".section-info-btn"));
+const sectionInfoModalEl = document.getElementById("sectionInfoModal");
+const sectionInfoTitleEl = document.getElementById("sectionInfoTitle");
+const sectionInfoBodyEl = document.getElementById("sectionInfoBody");
+const sectionInfoCloseEl = document.getElementById("sectionInfoClose");
 
 let currentSettings = null;
 let keyLocked = false;
 let customSaveTimer = 0;
 let statusResetTimer = 0;
+let lastInfoTriggerEl = null;
 
 init().catch(() => {
   setStatus("Unable to load settings.", "warn");
@@ -52,6 +106,7 @@ init().catch(() => {
 
 async function init() {
   bindNavigation();
+  bindSectionInfo();
   currentSettings = await readSettings();
   fillForm(currentSettings);
   bindAutoSave();
@@ -67,6 +122,74 @@ function bindNavigation() {
         activateSection(target);
       }
     });
+  }
+}
+
+function bindSectionInfo() {
+  if (!sectionInfoModalEl || !sectionInfoTitleEl || !sectionInfoBodyEl || !sectionInfoCloseEl) {
+    return;
+  }
+
+  for (const button of sectionInfoButtons) {
+    button.addEventListener("click", () => {
+      const key = String(button.getAttribute("data-info-section") || "").trim();
+      if (!key) {
+        return;
+      }
+      lastInfoTriggerEl = button;
+      openSectionInfoModal(key);
+    });
+  }
+
+  sectionInfoCloseEl.addEventListener("click", closeSectionInfoModal);
+  sectionInfoModalEl.addEventListener("click", (event) => {
+    if (event.target === sectionInfoModalEl) {
+      closeSectionInfoModal();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !sectionInfoModalEl.hidden) {
+      closeSectionInfoModal();
+    }
+  });
+}
+
+function openSectionInfoModal(sectionKey) {
+  const info = SECTION_INFO_CONTENT[sectionKey];
+  if (!info) {
+    return;
+  }
+
+  sectionInfoTitleEl.textContent = info.title;
+  sectionInfoBodyEl.textContent = "";
+
+  const paragraph = document.createElement("p");
+  paragraph.textContent = info.description;
+  sectionInfoBodyEl.appendChild(paragraph);
+
+  if (Array.isArray(info.points) && info.points.length) {
+    const list = document.createElement("ul");
+    list.className = "info-modal-list";
+    for (const point of info.points) {
+      const item = document.createElement("li");
+      item.textContent = point;
+      list.appendChild(item);
+    }
+    sectionInfoBodyEl.appendChild(list);
+  }
+
+  sectionInfoModalEl.hidden = false;
+  sectionInfoCloseEl.focus({ preventScroll: true });
+}
+
+function closeSectionInfoModal() {
+  if (!sectionInfoModalEl || sectionInfoModalEl.hidden) {
+    return;
+  }
+  sectionInfoModalEl.hidden = true;
+  if (lastInfoTriggerEl && typeof lastInfoTriggerEl.focus === "function") {
+    lastInfoTriggerEl.focus({ preventScroll: true });
   }
 }
 
