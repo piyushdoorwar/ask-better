@@ -93,12 +93,16 @@ const sectionInfoModalEl = document.getElementById("sectionInfoModal");
 const sectionInfoTitleEl = document.getElementById("sectionInfoTitle");
 const sectionInfoBodyEl = document.getElementById("sectionInfoBody");
 const sectionInfoCloseEl = document.getElementById("sectionInfoClose");
+const privacyInfoBtnEl = document.getElementById("privacyInfoBtn");
+const privacyInfoModalEl = document.getElementById("privacyInfoModal");
+const privacyInfoCloseEl = document.getElementById("privacyInfoClose");
 
 let currentSettings = null;
 let keyLocked = false;
 let customSaveTimer = 0;
 let statusResetTimer = 0;
 let lastInfoTriggerEl = null;
+let lastPrivacyTriggerEl = null;
 
 init().catch(() => {
   setStatus("Unable to load settings.", "warn");
@@ -107,6 +111,7 @@ init().catch(() => {
 async function init() {
   bindNavigation();
   bindSectionInfo();
+  bindPrivacyInfo();
   currentSettings = await readSettings();
   fillForm(currentSettings);
   bindAutoSave();
@@ -149,10 +154,50 @@ function bindSectionInfo() {
   });
 
   document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && privacyInfoModalEl && !privacyInfoModalEl.hidden) {
+      closePrivacyInfoModal();
+      return;
+    }
     if (event.key === "Escape" && !sectionInfoModalEl.hidden) {
       closeSectionInfoModal();
     }
   });
+}
+
+function bindPrivacyInfo() {
+  if (!privacyInfoBtnEl || !privacyInfoModalEl || !privacyInfoCloseEl) {
+    return;
+  }
+
+  privacyInfoBtnEl.addEventListener("click", () => {
+    lastPrivacyTriggerEl = privacyInfoBtnEl;
+    openPrivacyInfoModal();
+  });
+
+  privacyInfoCloseEl.addEventListener("click", closePrivacyInfoModal);
+  privacyInfoModalEl.addEventListener("click", (event) => {
+    if (event.target === privacyInfoModalEl) {
+      closePrivacyInfoModal();
+    }
+  });
+}
+
+function openPrivacyInfoModal() {
+  if (!privacyInfoModalEl || !privacyInfoCloseEl) {
+    return;
+  }
+  privacyInfoModalEl.hidden = false;
+  privacyInfoCloseEl.focus({ preventScroll: true });
+}
+
+function closePrivacyInfoModal() {
+  if (!privacyInfoModalEl || privacyInfoModalEl.hidden) {
+    return;
+  }
+  privacyInfoModalEl.hidden = true;
+  if (lastPrivacyTriggerEl && typeof lastPrivacyTriggerEl.focus === "function") {
+    lastPrivacyTriggerEl.focus({ preventScroll: true });
+  }
 }
 
 function openSectionInfoModal(sectionKey) {

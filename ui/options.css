@@ -68,24 +68,31 @@
       }
 
       .help-btn {
-        width: 38px;
-        height: 38px;
-        border-radius: 999px;
-        border: 1px solid var(--border-light);
-        background: var(--bg-elevated);
+        width: 24px;
+        height: 24px;
+        border: none;
+        background: transparent;
         color: var(--text-secondary);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         text-decoration: none;
-        font-size: 18px;
-        font-weight: 700;
-        box-shadow: var(--shadow-sm);
+        padding: 0;
+      }
+
+      .help-btn svg {
+        width: 20px;
+        height: 20px;
+        display: block;
       }
 
       .help-btn:hover {
         color: var(--yellow);
-        border-color: rgba(255, 215, 0, 0.45);
+      }
+
+      .help-btn:focus-visible {
+        outline: none;
+        color: var(--yellow-light);
       }
 
       .ok {
@@ -282,36 +289,33 @@
       }
 
       .section-info-btn {
-        width: 30px;
-        height: 30px;
-        border-radius: 999px;
-        border: 1px solid var(--border-light);
-        background: var(--bg-elevated);
+        width: 22px;
+        height: 22px;
+        border: none;
+        background: transparent;
         color: var(--text-secondary);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: all 0.2s ease;
-        margin-top: -2px;
+        transition: color 0.2s ease;
+        margin-top: 0;
+        padding: 0;
       }
 
       .section-info-btn svg {
-        width: 16px;
-        height: 16px;
+        width: 18px;
+        height: 18px;
         display: block;
       }
 
       .section-info-btn:hover {
         color: var(--yellow-light);
-        border-color: rgba(255, 215, 0, 0.45);
-        background: rgba(255, 215, 0, 0.08);
-        transform: translateY(-1px);
       }
 
       .section-info-btn:focus-visible {
         outline: none;
-        box-shadow: 0 0 0 3px var(--focus), var(--shadow-purple);
+        color: var(--yellow-light);
       }
 
       .section-sub {
@@ -529,64 +533,6 @@
         font-size: 14px;
       }
 
-      .page-footer {
-        padding: 16px 18px 14px;
-      }
-
-      .page-footer-title {
-        margin: 0;
-        font-size: 20px;
-      }
-
-      .page-footer-sub {
-        margin: 6px 0 0;
-        color: var(--text-secondary);
-        font-size: 14px;
-      }
-
-      .policy-grid {
-        margin-top: 14px;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
-      }
-
-      .policy-block {
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        background: var(--bg-elevated);
-        padding: 12px;
-      }
-
-      .policy-block h4 {
-        margin: 0 0 8px;
-        font-size: 15px;
-        color: var(--yellow-light);
-      }
-
-      .policy-block p {
-        margin: 0;
-        color: var(--text-secondary);
-        font-size: 14px;
-        line-height: 1.5;
-      }
-
-      .policy-list {
-        margin: 0;
-        padding-left: 18px;
-      }
-
-      .policy-list li {
-        margin-bottom: 6px;
-        color: var(--text-secondary);
-        font-size: 14px;
-        line-height: 1.45;
-      }
-
-      .policy-list li strong {
-        color: var(--text);
-      }
-
       .info-modal[hidden] {
         display: none !important;
       }
@@ -691,6 +637,12 @@
         line-height: 1.55;
       }
 
+      .privacy-modal-body h4 {
+        margin: 14px 0 8px;
+        color: var(--yellow-light);
+        font-size: 15px;
+      }
+
       .info-modal-list {
         margin: 12px 0 0;
         padding: 0 0 0 18px;
@@ -716,8 +668,7 @@
         }
 
         .grid,
-        .toggle-grid,
-        .policy-grid {
+        .toggle-grid {
           grid-template-columns: 1fr;
         }
 
@@ -734,7 +685,4 @@
           width: 100%;
         }
 
-        .help-btn {
-          display: none;
-        }
       }

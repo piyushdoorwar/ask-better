@@ -3,10 +3,19 @@
   const ENABLE_KEY = "enableChatGPT";
   const SELECTORS = [
     "textarea#prompt-textarea",
+    "div#prompt-textarea[contenteditable='true']",
+    "div#prompt-textarea.ProseMirror[contenteditable='true']",
+    "div[data-testid='composer-input'][contenteditable='true']",
+    "div[data-testid='prompt-textarea'][contenteditable='true']",
+    "textarea[placeholder*='Ask']",
     "textarea[placeholder*='Message']",
+    "textarea[aria-label*='Ask']",
     "textarea[aria-label*='Message']",
     "textarea[data-id='root']",
+    "div[contenteditable='true'][role='textbox'][aria-label*='Ask']",
     "div[contenteditable='true'][role='textbox'][aria-label*='Message']",
+    "div[contenteditable='true'][aria-label*='Ask']",
+    "div[contenteditable='true'][aria-label*='Message']",
     "div[contenteditable='true'][role='textbox']"
   ];
 
@@ -162,6 +171,27 @@ function findPromptInput(selectors) {
       }
     }
   }
+
+  const active = document.activeElement;
+  if (isEligiblePromptInput(active)) {
+    return active;
+  }
+
+  const fallbackSelectors = [
+    "form div[contenteditable='true']",
+    "main div[contenteditable='true']",
+    "form textarea",
+    "main textarea"
+  ];
+  for (const selector of fallbackSelectors) {
+    const nodes = document.querySelectorAll(selector);
+    for (const node of nodes) {
+      if (isEligiblePromptInput(node)) {
+        return node;
+      }
+    }
+  }
+
   return null;
 }
 

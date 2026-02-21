@@ -19,16 +19,13 @@
         </div>
         <div class="top-actions">
           <div id="statusMsg">Auto-save ready</div>
-          <a
-            class="help-btn"
-            href="https://help.openai.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Help"
-            title="Help"
-          >
-            ?
-          </a>
+          <button id="privacyInfoBtn" class="help-btn" type="button" aria-label="Privacy policy and data processing">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+              <path d="M12 10.3V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+              <circle cx="12" cy="7.6" r="1.1" fill="currentColor"></circle>
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -283,50 +280,6 @@
         </main>
       </div>
 
-      <footer class="page-footer card" id="privacyPolicy">
-        <h3 class="page-footer-title">Privacy Policy & Data Processing</h3>
-        <p class="page-footer-sub">
-          PromptForge is local-first. This summary explains what is stored, what is sent, and what is not sent.
-        </p>
-
-        <div class="policy-grid">
-          <section class="policy-block">
-            <h4>What Is Stored Locally</h4>
-            <ul class="policy-list">
-              <li><strong>Settings:</strong> provider, model, preset, integration toggles, and UI preferences.</li>
-              <li><strong>Keys:</strong> provider API keys are saved in <code>chrome.storage.local</code>.</li>
-              <li><strong>Optional stats:</strong> only usage counters when analytics opt-in is enabled.</li>
-            </ul>
-          </section>
-
-          <section class="policy-block">
-            <h4>What Is Sent Externally</h4>
-            <ul class="policy-list">
-              <li><strong>Optimize request:</strong> your current prompt is sent only to the selected provider API.</li>
-              <li><strong>Provider metadata:</strong> selected model and preset instruction are sent with the request.</li>
-              <li><strong>Key test:</strong> a direct provider key validation call is made when you click <em>Test key</em>.</li>
-            </ul>
-          </section>
-
-          <section class="policy-block">
-            <h4>What Is Not Sent</h4>
-            <ul class="policy-list">
-              <li>No PromptForge backend server receives your prompts or optimized outputs.</li>
-              <li>No prompt text is included in analytics counters.</li>
-              <li>API keys are not injected into webpage DOM by content scripts.</li>
-            </ul>
-          </section>
-
-          <section class="policy-block">
-            <h4>Liability & Compliance Notice</h4>
-            <p>
-              This section is an operational summary for users and is provided for informational purposes only. It is
-              not legal advice, does not create any warranty, and does not replace your own compliance review. You are
-              responsible for provider terms, data policies, and applicable laws in your jurisdiction.
-            </p>
-          </section>
-        </div>
-      </footer>
     </div>
 
     <div id="sectionInfoModal" class="info-modal" hidden>
@@ -350,6 +303,68 @@
           </button>
         </div>
         <div id="sectionInfoBody" class="info-modal-body"></div>
+      </div>
+    </div>
+
+    <div id="privacyInfoModal" class="info-modal" hidden>
+      <div
+        class="info-modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="privacyInfoTitle"
+        aria-describedby="privacyInfoBody"
+      >
+        <div class="info-modal-head">
+          <div class="info-modal-title-wrap">
+            <span class="info-modal-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+                <path d="M12 10.3V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                <circle cx="12" cy="7.6" r="1.1" fill="currentColor"></circle>
+              </svg>
+            </span>
+            <h3 id="privacyInfoTitle" class="info-modal-title">Privacy Policy & Data Processing</h3>
+          </div>
+          <button id="privacyInfoClose" type="button" class="info-modal-close" aria-label="Close privacy policy">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M6 6L18 18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
+              <path d="M18 6L6 18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
+            </svg>
+          </button>
+        </div>
+        <div id="privacyInfoBody" class="info-modal-body privacy-modal-body">
+          <p>
+            PromptForge is local-first. This summary explains what is stored, what is sent, and what is not sent.
+          </p>
+
+          <h4>What Is Stored Locally</h4>
+          <ul class="info-modal-list">
+            <li>Settings: provider, model, preset, integration toggles, and UI preferences.</li>
+            <li>Keys: provider API keys are saved in <code>chrome.storage.local</code>.</li>
+            <li>Optional stats: only usage counters when analytics opt-in is enabled.</li>
+          </ul>
+
+          <h4>What Is Sent Externally</h4>
+          <ul class="info-modal-list">
+            <li>Optimize request: your current prompt is sent only to the selected provider API.</li>
+            <li>Provider metadata: selected model and preset instruction are sent with the request.</li>
+            <li>Key test: a direct provider key validation call is made when you click Test key.</li>
+          </ul>
+
+          <h4>What Is Not Sent</h4>
+          <ul class="info-modal-list">
+            <li>No PromptForge backend server receives your prompts or optimized outputs.</li>
+            <li>No prompt text is included in analytics counters.</li>
+            <li>API keys are not injected into webpage DOM by content scripts.</li>
+          </ul>
+
+          <h4>Liability & Compliance Notice</h4>
+          <p>
+            This section is an operational summary for users and is provided for informational purposes only. It is
+            not legal advice, does not create any warranty, and does not replace your own compliance review. You are
+            responsible for provider terms, data policies, and applicable laws in your jurisdiction.
+          </p>
+        </div>
       </div>
     </div>
 

@@ -1,4 +1,5 @@
 .pf-optimize-btn {
+  --pf-font-ui: "Google Sans Text", "Google Sans", "Roboto", "Noto Sans", "Segoe UI", Arial, sans-serif;
   position: fixed;
   z-index: 2147483000;
   display: inline-flex;
@@ -9,7 +10,7 @@
   padding: 7px 12px;
   background: linear-gradient(135deg, rgba(103, 57, 183, 0.92), rgba(91, 33, 182, 0.92));
   color: #ffffff;
-  font: 600 12px/1.2 "Inter", "Segoe UI", Arial, sans-serif;
+  font: 600 12px/1.2 var(--pf-font-ui);
   letter-spacing: 0.01em;
   cursor: pointer;
   box-shadow: 0 8px 24px rgba(103, 57, 183, 0.3);
@@ -41,7 +42,7 @@
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 8px 12px;
-  font: 500 12px/1.25 "Inter", "Segoe UI", Arial, sans-serif;
+  font: 500 12px/1.25 var(--pf-font-ui);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   transition: opacity 140ms ease, transform 140ms ease;
 }
