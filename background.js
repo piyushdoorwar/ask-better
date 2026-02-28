@@ -1,5 +1,5 @@
 const DEFAULT_SETTINGS = {
-  provider: "openai",
+  provider: "gemini",
   openaiApiKey: "",
   geminiApiKey: "",
   openaiModel: "gpt-4.1-mini",
@@ -10,7 +10,6 @@ const DEFAULT_SETTINGS = {
   enableChatGPT: true,
   enableGemini: true,
   enableAI: true,
-  analyticsOptIn: false,
   keepUserVoice: false,
   keyVerified: false,
   customPromptAdditions: ""
@@ -99,7 +98,7 @@ async function optimizePrompt(message) {
   const rawPrompt = typeof message.prompt === "string" ? message.prompt : "";
   const prompt = rawPrompt.trim();
   const preset = normalizePreset(message.preset);
-  const site = message.site === "gemini" ? "gemini" : "chatgpt";
+  const site = normalizeSite(message.site);
   const settings = await readSettings();
   const provider = normalizeProvider(settings.provider);
   const apiKey = getApiKeyForProvider(settings, provider);
@@ -153,7 +152,6 @@ async function optimizePrompt(message) {
       };
     }
 
-    await maybeTrackUsage(settings);
     return { ok: true, optimizedPrompt };
   } catch (error) {
     return mapProviderError(error);
@@ -483,27 +481,11 @@ function mapProviderError(error) {
   };
 }
 
-async function maybeTrackUsage(settings) {
-  if (!settings.analyticsOptIn) {
-    return;
-  }
-  const stored = await chrome.storage.local.get(["usageStats"]);
-  const usage = stored.usageStats || {};
-  const optimizeCount = Number(usage.optimizeCount || 0) + 1;
-  await chrome.storage.local.set({
-    usageStats: {
-      optimizeCount,
-      lastUsedAt: Date.now()
-    }
-  });
-}
-
 function toPublicSettings(settings) {
   const provider = normalizeProvider(settings.provider);
   const hasApiKey = !!getApiKeyForProvider(settings, provider);
   return {
     provider,
-    openaiModel: settings.openaiModel,
     geminiModel: settings.geminiModel,
     activeModel: getModelForProvider(settings, provider),
     defaultPreset: normalizePreset(settings.defaultPreset),
@@ -511,7 +493,6 @@ function toPublicSettings(settings) {
     enableGemini: !!settings.enableGemini,
     enableAI: !!settings.enableAI,
     keepUserVoice: !!settings.keepUserVoice,
-    analyticsOptIn: !!settings.analyticsOptIn,
     hasApiKey
   };
 }
@@ -525,7 +506,7 @@ function normalizePreset(value) {
 }
 
 function normalizeProvider(value) {
-  return String(value || "").toLowerCase() === "gemini" ? "gemini" : "openai";
+  return "gemini";
 }
 
 function normalizeGeminiModel(model) {
@@ -568,7 +549,8 @@ async function readSettings() {
   const raw = stored.settings || {};
   return {
     ...DEFAULT_SETTINGS,
-    ...raw
+    ...raw,
+    provider: normalizeProvider(raw.provider)
   };
 }
 

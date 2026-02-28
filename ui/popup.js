@@ -1,5 +1,5 @@
 const DEFAULT_SETTINGS = {
-  provider: "openai",
+  provider: "gemini",
   openaiApiKey: "",
   geminiApiKey: "",
   openaiModel: "gpt-4.1-mini",
@@ -10,15 +10,12 @@ const DEFAULT_SETTINGS = {
   enableChatGPT: true,
   enableGemini: true,
   enableAI: true,
-  analyticsOptIn: false,
   keepUserVoice: false,
   keyVerified: false,
   customPromptAdditions: ""
 };
 
-const OPENAI_KEY_URL = "https://platform.openai.com/api-keys";
 const GEMINI_KEY_URL = "https://aistudio.google.com/apikey";
-const OPENAI_MODELS = ["gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini", "gpt-4o"];
 const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"];
 
 const statusBox = document.getElementById("statusBox");
@@ -172,23 +169,13 @@ function renderModelOptions(provider, selectedModel) {
 }
 
 function getProviderMeta(provider) {
-  if (provider === "gemini") {
-    return {
-      providerName: "Gemini",
-      keyField: "geminiApiKey",
-      modelField: "geminiModel",
-      defaultModel: DEFAULT_SETTINGS.geminiModel,
-      models: GEMINI_MODELS,
-      keyUrl: GEMINI_KEY_URL
-    };
-  }
   return {
-    providerName: "OpenAI",
-    keyField: "openaiApiKey",
-    modelField: "openaiModel",
-    defaultModel: DEFAULT_SETTINGS.openaiModel,
-    models: OPENAI_MODELS,
-    keyUrl: OPENAI_KEY_URL
+    providerName: "Gemini",
+    keyField: "geminiApiKey",
+    modelField: "geminiModel",
+    defaultModel: DEFAULT_SETTINGS.geminiModel,
+    models: GEMINI_MODELS,
+    keyUrl: GEMINI_KEY_URL
   };
 }
 
@@ -198,7 +185,7 @@ function getProviderModel(settings, provider) {
 }
 
 function normalizeProvider(value) {
-  return String(value || "").toLowerCase() === "gemini" ? "gemini" : "openai";
+  return "gemini";
 }
 
 function normalizeModel(value, fallback) {

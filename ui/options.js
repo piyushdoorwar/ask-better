@@ -1,5 +1,5 @@
 const DEFAULT_SETTINGS = {
-  provider: "openai",
+  provider: "gemini",
   openaiApiKey: "",
   geminiApiKey: "",
   openaiModel: "gpt-4.1-mini",
@@ -10,22 +10,19 @@ const DEFAULT_SETTINGS = {
   enableChatGPT: true,
   enableGemini: true,
   enableAI: true,
-  analyticsOptIn: false,
   keepUserVoice: false,
   keyVerified: false,
   customPromptAdditions: ""
 };
 
-const OPENAI_KEY_URL = "https://platform.openai.com/api-keys";
 const GEMINI_KEY_URL = "https://aistudio.google.com/apikey";
-const OPENAI_MODELS = ["gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini", "gpt-4o"];
 const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"];
 const SECTION_INFO_CONTENT = {
   models: {
     title: "Models",
-    description: "This section controls which provider and model AskBetter calls when you press Optimize.",
+    description: "This section controls which Gemini model AskBetter calls when you press Optimize.",
     points: [
-      "OpenAI and Google Gemini are supported right now.",
+      "AskBetter currently runs only with Google Gemini.",
       "Faster/lighter models usually respond quicker and cost less; larger models can improve rewrite quality.",
       "Your key is stored locally and is only used by the background worker for direct provider calls."
     ]
@@ -46,7 +43,7 @@ const SECTION_INFO_CONTENT = {
     description: "Integrations decide where AskBetter appears and whether optimization is enabled at all.",
     points: [
       "Enable AI (global) turns optimization on/off everywhere.",
-      "Enable on ChatGPT and Enable on Gemini control injection per site.",
+      "Enable on ChatGPT and Enable on Gemini control where the Optimize button appears.",
       "If AI is off or key is missing, clicking Optimize shows a friendly message and does nothing."
     ]
   },
@@ -81,7 +78,6 @@ const keepUserVoiceEl = document.getElementById("keepUserVoice");
 const enableAIEl = document.getElementById("enableAI");
 const enableChatGPTEl = document.getElementById("enableChatGPT");
 const enableGeminiEl = document.getElementById("enableGemini");
-const analyticsOptInEl = document.getElementById("analyticsOptIn");
 const customPromptAdditionsEl = document.getElementById("customPromptAdditions");
 const customAdditionsListEl = document.getElementById("customAdditionsList");
 const customAdditionsEmptyEl = document.getElementById("customAdditionsEmpty");
@@ -293,10 +289,6 @@ function bindAutoSave() {
 
   enableGeminiEl.addEventListener("change", async () => {
     await savePartial({ enableGemini: !!enableGeminiEl.checked });
-  });
-
-  analyticsOptInEl.addEventListener("change", async () => {
-    await savePartial({ analyticsOptIn: !!analyticsOptInEl.checked });
   });
 }
 
@@ -519,7 +511,7 @@ function bindSecurityActions() {
   });
 
   clearDataBtn.addEventListener("click", async () => {
-    const confirmed = window.confirm("Clear all stored AskBetter settings and local usage data?");
+    const confirmed = window.confirm("Clear all stored AskBetter settings and local data?");
     if (!confirmed) {
       return;
     }
@@ -558,7 +550,6 @@ function fillForm(settings) {
   enableAIEl.checked = !!normalized.enableAI;
   enableChatGPTEl.checked = !!normalized.enableChatGPT;
   enableGeminiEl.checked = !!normalized.enableGemini;
-  analyticsOptInEl.checked = !!normalized.analyticsOptIn;
   customAdditions = splitAdditionsLines(normalized.customPromptAdditions || "");
   customPromptAdditionsEl.value = customAdditions.join("\n");
   if (customAdditionInputEl) {
@@ -629,29 +620,16 @@ function getActiveProvider() {
 }
 
 function getProviderMeta(provider) {
-  if (provider === "gemini") {
-    return {
-      providerName: "Gemini",
-      keyField: "geminiApiKey",
-      verifiedField: "geminiKeyVerified",
-      modelField: "geminiModel",
-      defaultModel: DEFAULT_SETTINGS.geminiModel,
-      models: GEMINI_MODELS,
-      keyUrl: GEMINI_KEY_URL,
-      keyPlaceholder: "AIza...",
-      modelLabel: "Gemini model"
-    };
-  }
   return {
-    providerName: "OpenAI",
-    keyField: "openaiApiKey",
-    verifiedField: "openaiKeyVerified",
-    modelField: "openaiModel",
-    defaultModel: DEFAULT_SETTINGS.openaiModel,
-    models: OPENAI_MODELS,
-    keyUrl: OPENAI_KEY_URL,
-    keyPlaceholder: "sk-...",
-    modelLabel: "OpenAI model"
+    providerName: "Gemini",
+    keyField: "geminiApiKey",
+    verifiedField: "geminiKeyVerified",
+    modelField: "geminiModel",
+    defaultModel: DEFAULT_SETTINGS.geminiModel,
+    models: GEMINI_MODELS,
+    keyUrl: GEMINI_KEY_URL,
+    keyPlaceholder: "AIza...",
+    modelLabel: "Gemini model"
   };
 }
 
@@ -680,7 +658,7 @@ function migrateSettings(rawSettings) {
 }
 
 function normalizeProvider(value) {
-  return String(value || "").toLowerCase() === "gemini" ? "gemini" : "openai";
+  return "gemini";
 }
 
 function normalizePreset(value) {

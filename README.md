@@ -1,6 +1,6 @@
 # AskBetter (Chrome Extension, MV3)
 
-AskBetter is a local-first prompt optimizer for:
+AskBetter is a local-first prompt optimizer that uses Google Gemini and works on:
 
 - ChatGPT (`chat.openai.com` and `chatgpt.com`)
 - Google Gemini (`gemini.google.com`)
@@ -15,7 +15,7 @@ It injects a lightweight `Optimize` button near the prompt input. Clicking it re
 - Content scripts never read or store the API key.
 - Prompt text is never logged by the extension.
 - If `Custom Prompt Additions` is set, it is sent only with optimize requests to your selected provider.
-- Analytics is opt-in and local-only in this v0 (no prompt text sent anywhere).
+- No analytics or telemetry are collected in this version.
 - Full privacy policy: `https://piyushdoorwar.github.io/policy/`
 
 ## Presets
@@ -41,7 +41,7 @@ It injects a lightweight `Optimize` button near the prompt input. Clicking it re
 ## Files
 
 - `manifest.json` (MV3 config)
-- `background.js` (secure API handling + provider API calls)
+- `background.js` (secure API handling + Gemini API calls)
 - `content/chatgpt.js` (ChatGPT injection)
 - `content/gemini.js` (Gemini injection)
 - `injected/styles.css` (button + toast styles)
@@ -69,9 +69,8 @@ It injects a lightweight `Optimize` button near the prompt input. Clicking it re
    - Custom Prompt Additions
    - Security
 4. Set:
-   - Provider: `OpenAI` or `Google Gemini`
    - API key
-   - Model
+   - Gemini model
    - Default preset
    - Keep user voice toggle (preserve tone/style during rewrites)
    - Toggles (Global AI, ChatGPT, Gemini)
@@ -90,15 +89,14 @@ If AI is off or no key is set, AskBetter shows:
 
 - `AI disabled or key missing`
 
-## API Key Links
+## API Key Link
 
-- OpenAI key: `https://platform.openai.com/api-keys`
 - Gemini key: `https://aistudio.google.com/apikey`
 
 ## Notes
 
-- Provider support includes OpenAI and Google Gemini.
-- Anthropic remains TODO in settings.
+- AskBetter currently uses Google Gemini only as the model provider.
+- The Optimize button can appear on both ChatGPT and Gemini pages.
 
 ## Legal Notice
 
@@ -118,7 +116,7 @@ inability to use, AskBetter.
 - [ ] Works on Gemini (`gemini.google.com`).
 - [ ] Missing key shows helpful toast (`AI disabled or key missing`).
 - [ ] Optimize replaces textbox content.
-- [ ] OpenAI model switch persists and is used by optimization requests.
+- [ ] Gemini model switch persists and is used by optimization requests.
 - [ ] Options page left menu switches sections correctly.
 - [ ] Changes auto-save without clicking a Save button.
 - [ ] Settings persist after extension/page reload.

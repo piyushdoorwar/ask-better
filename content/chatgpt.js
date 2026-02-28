@@ -91,95 +91,162 @@ function startAskBetter(site, siteToggleKey, selectors) {
       return;
     }
 
-    await ensureOffsetLoaded();
     activeInput = input;
-    placeButtonNearInput(input);
+    await ensureOffsetLoaded();
+    positionButton(input);
     button.style.display = "inline-flex";
   }
 
-  function hideButton() {
-    if (button) {
-      button.style.display = "none";
+  function findPromptInput(candidates) {
+    for (const selector of candidates) {
+      const elements = Array.from(document.querySelectorAll(selector));
+      for (const element of elements) {
+        if (isUsableInput(element)) {
+          return element;
+        }
+      }
     }
-    activeInput = null;
+    return null;
   }
 
-  function placeButtonNearInput(input) {
+  function isUsableInput(element) {
+    if (!(element instanceof HTMLElement)) {
+      return false;
+    }
+    const rect = element.getBoundingClientRect();
+    if (rect.width < 120 || rect.height < 24) {
+      return false;
+    }
+    const style = window.getComputedStyle(element);
+    if (style.visibility === "hidden" || style.display === "none") {
+      return false;
+    }
+    return true;
+  }
+
+  function positionButton(input) {
     if (!button) {
       return;
     }
-
     const rect = input.getBoundingClientRect();
-    const btnRect = button.getBoundingClientRect();
-    const buttonWidth = Math.max(96, Math.round(btnRect.width || 116));
-    const buttonHeight = Math.max(30, Math.round(btnRect.height || 32));
-
-    const baseTop = rect.top - buttonHeight - 6;
-    const baseLeft = rect.right - buttonWidth - 6;
-
-    const top = clamp(baseTop + buttonOffset.y, 8, Math.max(8, window.innerHeight - buttonHeight - 8));
-    const left = clamp(baseLeft + buttonOffset.x, 8, Math.max(8, window.innerWidth - buttonWidth - 8));
-
-    button.style.top = `${top}px`;
-    button.style.left = `${left}px`;
+    const buttonRect = button.getBoundingClientRect();
+    const top = window.scrollY + rect.bottom - buttonRect.height - 10 + buttonOffset.y;
+    const left = window.scrollX + rect.right - buttonRect.width - 10 + buttonOffset.x;
+    button.style.top = `${Math.max(8, top)}px`;
+    button.style.left = `${Math.max(8, left)}px`;
   }
 
-  async function onOptimizeClick() {
+  function hideButton() {
+    activeInput = null;
+    if (button) {
+      button.style.display = "none";
+    }
+  }
+
+  async function onOptimizeClick(event) {
     if (suppressNextClick) {
       suppressNextClick = false;
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    if (!activeInput || !button) {
       return;
     }
 
-    const targetInput = activeInput && document.contains(activeInput) ? activeInput : findPromptInput(selectors);
-    if (!targetInput) {
+    const prompt = readInputValue(activeInput);
+    if (!prompt.trim()) {
+      showToast("Prompt is empty.");
       return;
     }
 
     const settings = await getPublicSettings(true);
-    if (!settings || !settings.enableAI || !settings.hasApiKey || !settings[siteToggleKey]) {
-      showToast("AI disabled or key missing");
-      return;
-    }
-
-    const prompt = readPromptText(targetInput).trim();
-    if (!prompt) {
-      showToast("Type a prompt first");
-      return;
-    }
+    const preset = settings && settings.defaultPreset ? settings.defaultPreset : "structured";
 
     setBusy(true);
     const response = await sendMessage({
       type: "ASKBETTER_OPTIMIZE",
       prompt,
-      preset: settings.defaultPreset,
+      preset,
       site
     });
     setBusy(false);
 
     if (!response || !response.ok) {
-      const message = response && response.code === "DISABLED_OR_MISSING_KEY"
-        ? "AI disabled or key missing"
-        : (response && response.message) || "Optimization failed";
-      showToast(message);
+      showToast((response && response.message) || "Unable to optimize.");
       return;
     }
 
-    writePromptText(targetInput, response.optimizedPrompt);
-    showToast("Prompt optimized");
+    writeInputValue(activeInput, response.optimizedPrompt || "");
+    showToast("Prompt optimized.");
   }
 
-  async function getPublicSettings(forceRefresh) {
-    const now = Date.now();
-    if (!forceRefresh && settingsCache && now - settingsLoadedAt < 5000) {
-      return settingsCache;
+  function setBusy(busy) {
+    if (!button) {
+      return;
     }
-    const response = await sendMessage({ type: "ASKBETTER_GET_PUBLIC_SETTINGS" });
-    if (response && response.ok && response.settings) {
-      settingsCache = response.settings;
-      settingsLoadedAt = now;
-      return settingsCache;
+    button.disabled = !!busy;
+    button.classList.toggle("is-busy", !!busy);
+    button.textContent = busy ? "Optimizing..." : BUTTON_LABEL;
+  }
+
+  function onPointerDown(event) {
+    if (!button || event.button !== 0) {
+      return;
     }
-    return settingsCache;
+    dragState = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: buttonOffset.x,
+      originY: buttonOffset.y,
+      moved: false
+    };
+    button.setPointerCapture(event.pointerId);
+  }
+
+  function onPointerMove(event) {
+    if (!dragState || !button || dragState.pointerId !== event.pointerId) {
+      return;
+    }
+    const deltaX = event.clientX - dragState.startX;
+    const deltaY = event.clientY - dragState.startY;
+    if (!dragState.moved && Math.abs(deltaX) + Math.abs(deltaY) < 6) {
+      return;
+    }
+    dragState.moved = true;
+    buttonOffset = {
+      x: clampOffset(dragState.originX + deltaX),
+      y: clampOffset(dragState.originY + deltaY)
+    };
+    if (activeInput) {
+      positionButton(activeInput);
+    }
+  }
+
+  function onPointerUp(event) {
+    if (!dragState || dragState.pointerId !== event.pointerId) {
+      return;
+    }
+    if (button && button.hasPointerCapture(event.pointerId)) {
+      button.releasePointerCapture(event.pointerId);
+    }
+    suppressNextClick = dragState.moved;
+    if (dragState.moved) {
+      scheduleOffsetSave();
+    }
+    dragState = null;
+  }
+
+  function scheduleOffsetSave() {
+    window.clearTimeout(offsetSaveTimer);
+    offsetSaveTimer = window.setTimeout(async () => {
+      await sendMessage({
+        type: "ASKBETTER_SAVE_BUTTON_OFFSET",
+        site,
+        offset: buttonOffset
+      });
+    }, 180);
   }
 
   async function ensureOffsetLoaded() {
@@ -187,262 +254,82 @@ function startAskBetter(site, siteToggleKey, selectors) {
       return;
     }
     offsetLoaded = true;
-    const response = await sendMessage({ type: "ASKBETTER_GET_BUTTON_OFFSET", site });
-    if (response && response.ok && response.offset) {
-      buttonOffset = normalizeOffset(response.offset);
-    }
-  }
-
-  function onPointerDown(event) {
-    if (!button || button.disabled || event.button !== 0) {
-      return;
-    }
-
-    dragState = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      startOffsetX: buttonOffset.x,
-      startOffsetY: buttonOffset.y,
-      moved: false
-    };
-
-    button.classList.add("pf-is-dragging");
-    if (typeof button.setPointerCapture === "function") {
-      button.setPointerCapture(event.pointerId);
-    }
-    event.preventDefault();
-  }
-
-  function onPointerMove(event) {
-    if (!dragState || !button || event.pointerId !== dragState.pointerId) {
-      return;
-    }
-
-    const dx = event.clientX - dragState.startX;
-    const dy = event.clientY - dragState.startY;
-
-    if (!dragState.moved && Math.abs(dx) + Math.abs(dy) < 3) {
-      return;
-    }
-
-    dragState.moved = true;
-    buttonOffset = normalizeOffset({
-      x: dragState.startOffsetX + dx,
-      y: dragState.startOffsetY + dy
+    const response = await sendMessage({
+      type: "ASKBETTER_GET_BUTTON_OFFSET",
+      site
     });
-
-    if (activeInput) {
-      placeButtonNearInput(activeInput);
+    if (response && response.ok && response.offset) {
+      buttonOffset = {
+        x: clampOffset(response.offset.x),
+        y: clampOffset(response.offset.y)
+      };
     }
-
-    scheduleOffsetSave(false);
   }
 
-  function onPointerUp(event) {
-    if (!dragState || event.pointerId !== dragState.pointerId) {
+  async function getPublicSettings(force) {
+    const now = Date.now();
+    if (!force && settingsCache && now - settingsLoadedAt < 1500) {
+      return settingsCache;
+    }
+    const response = await sendMessage({ type: "ASKBETTER_GET_PUBLIC_SETTINGS" });
+    settingsCache = response && response.ok ? response.settings : null;
+    settingsLoadedAt = now;
+    return settingsCache;
+  }
+
+  function readInputValue(input) {
+    if (input instanceof HTMLTextAreaElement || input instanceof HTMLInputElement) {
+      return input.value || "";
+    }
+    return input.textContent || "";
+  }
+
+  function writeInputValue(input, value) {
+    const text = String(value || "");
+    if (input instanceof HTMLTextAreaElement || input instanceof HTMLInputElement) {
+      input.focus();
+      input.value = text;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
       return;
     }
 
-    const didMove = dragState.moved;
-    dragState = null;
-
-    if (button) {
-      button.classList.remove("pf-is-dragging");
-      if (typeof button.releasePointerCapture === "function") {
-        try {
-          button.releasePointerCapture(event.pointerId);
-        } catch (_error) {
-          // ignore release errors
-        }
-      }
-    }
-
-    if (didMove) {
-      suppressNextClick = true;
-      scheduleOffsetSave(true);
-    }
+    input.focus();
+    input.textContent = text;
+    input.dispatchEvent(new InputEvent("input", { bubbles: true, data: text, inputType: "insertText" }));
   }
 
-  function scheduleOffsetSave(forceNow) {
-    window.clearTimeout(offsetSaveTimer);
-    const delay = forceNow ? 0 : 180;
-    offsetSaveTimer = window.setTimeout(() => {
-      void sendMessage({
-        type: "ASKBETTER_SAVE_BUTTON_OFFSET",
-        site,
-        offset: buttonOffset
-      });
-    }, delay);
-  }
-
-  function setBusy(isBusy) {
-    if (!button) {
-      return;
-    }
-    button.disabled = !!isBusy;
-    button.classList.toggle("pf-is-busy", !!isBusy);
-    button.textContent = isBusy ? "Optimizing..." : BUTTON_LABEL;
-  }
-}
-
-function findPromptInput(selectors) {
-  for (const selector of selectors) {
-    const nodes = document.querySelectorAll(selector);
-    for (const node of nodes) {
-      if (isEligiblePromptInput(node)) {
-        return node;
-      }
-    }
-  }
-
-  const active = document.activeElement;
-  if (isEligiblePromptInput(active)) {
-    return active;
-  }
-
-  const fallbackSelectors = [
-    "form div[contenteditable='true']",
-    "main div[contenteditable='true']",
-    "form textarea",
-    "main textarea"
-  ];
-  for (const selector of fallbackSelectors) {
-    const nodes = document.querySelectorAll(selector);
-    for (const node of nodes) {
-      if (isEligiblePromptInput(node)) {
-        return node;
-      }
-    }
-  }
-
-  return null;
-}
-
-function isEligiblePromptInput(node) {
-  if (!(node instanceof HTMLElement)) {
-    return false;
-  }
-  const rect = node.getBoundingClientRect();
-  if (!rect || rect.width < 160 || rect.height < 24) {
-    return false;
-  }
-  if (rect.bottom < 0 || rect.top > window.innerHeight) {
-    return false;
-  }
-  if (node instanceof HTMLInputElement) {
-    return node.type === "text" && !node.disabled && !node.readOnly;
-  }
-  if (node instanceof HTMLTextAreaElement) {
-    return !node.disabled && !node.readOnly;
-  }
-  return node.isContentEditable;
-}
-
-function readPromptText(node) {
-  if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) {
-    return node.value || "";
-  }
-  if (node.isContentEditable) {
-    return node.innerText || "";
-  }
-  return "";
-}
-
-function writePromptText(node, value) {
-  if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) {
-    const prototype = Object.getPrototypeOf(node);
-    const descriptor = Object.getOwnPropertyDescriptor(prototype, "value");
-    if (descriptor && typeof descriptor.set === "function") {
-      descriptor.set.call(node, value);
-    } else {
-      node.value = value;
-    }
-    node.dispatchEvent(new Event("input", { bubbles: true }));
-    node.dispatchEvent(new Event("change", { bubbles: true }));
-    return;
-  }
-
-  if (node.isContentEditable) {
-    node.focus();
-    node.textContent = value;
-    node.dispatchEvent(new InputEvent("input", { bubbles: true, data: value, inputType: "insertText" }));
-  }
-}
-
-function sendMessage(payload) {
-  return new Promise((resolve) => {
-    try {
-      if (
-        typeof chrome === "undefined" ||
-        !chrome.runtime ||
-        !chrome.runtime.id ||
-        typeof chrome.runtime.sendMessage !== "function"
-      ) {
-        resolve({ ok: false, message: "Extension runtime unavailable." });
-        return;
-      }
-
-      chrome.runtime.sendMessage(payload, (response) => {
-        try {
-          const runtimeError = chrome.runtime && chrome.runtime.lastError;
-          if (runtimeError) {
-            const rawMessage = String(runtimeError.message || "");
-            const invalidated = /extension context invalidated/i.test(rawMessage);
-            resolve({
-              ok: false,
-              code: invalidated ? "EXTENSION_CONTEXT_INVALIDATED" : "RUNTIME_ERROR",
-              message: invalidated
-                ? "Extension was reloaded. Refresh this tab."
-                : "Background worker unavailable."
-            });
-            return;
-          }
-          resolve(response);
-        } catch (_error) {
-          resolve({ ok: false, message: "Extension runtime unavailable." });
-        }
-      });
-    } catch (error) {
-      const rawMessage = String((error && error.message) || "");
-      const invalidated = /extension context invalidated/i.test(rawMessage);
-      resolve({
-        ok: false,
-        code: invalidated ? "EXTENSION_CONTEXT_INVALIDATED" : "RUNTIME_ERROR",
-        message: invalidated
-          ? "Extension was reloaded. Refresh this tab."
-          : "Extension runtime unavailable."
-      });
-    }
-  });
-}
-
-function showToast(message) {
-  let toast = document.getElementById("pf-toast");
-  if (!toast) {
-    toast = document.createElement("div");
-    toast.id = "pf-toast";
-    toast.className = "pf-toast";
+  function showToast(message) {
+    const toast = document.createElement("div");
+    toast.className = "pf-optimize-toast";
+    toast.textContent = String(message || "");
     document.body.appendChild(toast);
+    window.setTimeout(() => {
+      toast.classList.add("is-visible");
+    }, 10);
+    window.setTimeout(() => {
+      toast.classList.remove("is-visible");
+      window.setTimeout(() => toast.remove(), 180);
+    }, 2200);
   }
-  toast.textContent = message;
-  toast.classList.add("pf-toast-visible");
-  window.clearTimeout(showToast.timer);
-  showToast.timer = window.setTimeout(() => {
-    toast.classList.remove("pf-toast-visible");
-  }, 1800);
-}
 
-function normalizeOffset(rawOffset) {
-  return {
-    x: clamp(Number(rawOffset && rawOffset.x) || 0, -900, 900),
-    y: clamp(Number(rawOffset && rawOffset.y) || 0, -900, 900)
-  };
-}
-
-function clamp(value, min, max) {
-  if (!Number.isFinite(value)) {
-    return min;
+  function clampOffset(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) {
+      return 0;
+    }
+    return Math.max(-900, Math.min(900, Math.round(number)));
   }
-  return Math.min(max, Math.max(min, value));
+
+  function sendMessage(payload) {
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage(payload, (response) => {
+        if (chrome.runtime.lastError) {
+          resolve({ ok: false, message: "Extension unavailable." });
+          return;
+        }
+        resolve(response);
+      });
+    });
+  }
 }
