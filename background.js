@@ -1,10 +1,7 @@
 const DEFAULT_SETTINGS = {
   provider: "gemini",
-  openaiApiKey: "",
   geminiApiKey: "",
-  openaiModel: "gpt-4.1-mini",
   geminiModel: "gemini-2.5-flash",
-  openaiKeyVerified: false,
   geminiKeyVerified: false,
   defaultPreset: "structured",
   enableChatGPT: true,
@@ -100,9 +97,8 @@ async function optimizePrompt(message) {
   const preset = normalizePreset(message.preset);
   const site = normalizeSite(message.site);
   const settings = await readSettings();
-  const provider = normalizeProvider(settings.provider);
-  const apiKey = getApiKeyForProvider(settings, provider);
-  const model = getModelForProvider(settings, provider);
+  const apiKey = getApiKeyForProvider(settings);
+  const model = getModelForProvider(settings);
 
   if (!prompt) {
     return { ok: false, code: "EMPTY_PROMPT", message: "Prompt is empty." };
@@ -117,28 +113,17 @@ async function optimizePrompt(message) {
   }
 
   try {
-    let optimizedPrompt = provider === "gemini"
-      ? await callGemini({ apiKey, model, prompt, preset, settings })
-      : await callOpenAI({ apiKey, model, prompt, preset, settings });
+    let optimizedPrompt = await callGemini({ apiKey, model, prompt, preset, settings });
 
     if (isLikelyIncompleteOutput(optimizedPrompt)) {
-      const retry = provider === "gemini"
-        ? await callGemini({
-          apiKey,
-          model,
-          prompt,
-          preset,
-          settings,
-          completionPass: true
-        })
-        : await callOpenAI({
-          apiKey,
-          model,
-          prompt,
-          preset,
-          settings,
-          completionPass: true
-        });
+      const retry = await callGemini({
+        apiKey,
+        model,
+        prompt,
+        preset,
+        settings,
+        completionPass: true
+      });
       if (retry && retry.trim()) {
         optimizedPrompt = retry;
       }
@@ -156,49 +141,6 @@ async function optimizePrompt(message) {
   } catch (error) {
     return mapProviderError(error);
   }
-}
-
-async function callOpenAI({ apiKey, model, prompt, preset, settings, completionPass }) {
-  const systemText = buildSystemInstruction({ preset, settings, completionPass });
-
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: model || DEFAULT_SETTINGS.openaiModel,
-      temperature: 0.1,
-      max_output_tokens: 1200,
-      input: [
-        {
-          role: "system",
-          content: [{ type: "input_text", text: systemText }]
-        },
-        {
-          role: "user",
-          content: [{ type: "input_text", text: prompt }]
-        }
-      ]
-    })
-  });
-
-  if (!response.ok) {
-    let details = "";
-    try {
-      const body = await response.json();
-      details = readApiErrorMessage(body);
-    } catch (_error) {
-      details = "";
-    }
-    const error = new Error(details || `Provider request failed (${response.status})`);
-    error.status = response.status;
-    throw error;
-  }
-
-  const data = await response.json();
-  return extractOpenAIText(data).trim();
 }
 
 async function callGemini({ apiKey, model, prompt, preset, settings, completionPass }) {
@@ -250,43 +192,12 @@ async function callGemini({ apiKey, model, prompt, preset, settings, completionP
 
 async function testKey(payload) {
   const settings = await readSettings();
-  const provider = normalizeProvider(payload.provider || settings.provider);
-  const apiKey = String(payload.apiKey || getApiKeyForProvider(settings, provider) || "").trim();
+  const apiKey = String(payload.apiKey || getApiKeyForProvider(settings) || "").trim();
 
   if (!apiKey) {
     return { ok: false, code: "MISSING_KEY", message: "API key is missing." };
   }
-
-  if (provider === "gemini") {
-    return await testGeminiKey(apiKey);
-  }
-  return await testOpenAIKey(apiKey);
-}
-
-async function testOpenAIKey(apiKey) {
-  try {
-    const response = await fetch("https://api.openai.com/v1/models", {
-      method: "GET",
-      headers: { Authorization: `Bearer ${apiKey}` }
-    });
-
-    if (response.ok) {
-      return { ok: true, message: "API key is valid." };
-    }
-    if (response.status === 401) {
-      return { ok: false, code: "UNAUTHORIZED", message: "Invalid API key (401)." };
-    }
-    if (response.status === 429) {
-      return { ok: false, code: "RATE_LIMIT", message: "Rate limit reached (429)." };
-    }
-    return {
-      ok: false,
-      code: "PROVIDER_ERROR",
-      message: `Provider error (${response.status}).`
-    };
-  } catch (_error) {
-    return { ok: false, code: "NETWORK_ERROR", message: "Network error while testing key." };
-  }
+  return await testGeminiKey(apiKey);
 }
 
 async function testGeminiKey(apiKey) {
@@ -315,38 +226,6 @@ async function testGeminiKey(apiKey) {
   } catch (_error) {
     return { ok: false, code: "NETWORK_ERROR", message: "Network error while testing key." };
   }
-}
-
-function extractOpenAIText(data) {
-  if (!data) {
-    return "";
-  }
-
-  if (typeof data.output_text === "string" && data.output_text.trim()) {
-    return data.output_text;
-  }
-
-  if (Array.isArray(data.output)) {
-    const parts = [];
-    for (const item of data.output) {
-      if (!item || !Array.isArray(item.content)) {
-        continue;
-      }
-      for (const contentItem of item.content) {
-        if (!contentItem) {
-          continue;
-        }
-        if (typeof contentItem.text === "string") {
-          parts.push(contentItem.text);
-        } else if (typeof contentItem.output_text === "string") {
-          parts.push(contentItem.output_text);
-        }
-      }
-    }
-    return parts.join("\n").trim();
-  }
-
-  return "";
 }
 
 function extractGeminiText(data) {
@@ -482,12 +361,11 @@ function mapProviderError(error) {
 }
 
 function toPublicSettings(settings) {
-  const provider = normalizeProvider(settings.provider);
-  const hasApiKey = !!getApiKeyForProvider(settings, provider);
+  const hasApiKey = !!getApiKeyForProvider(settings);
   return {
-    provider,
+    provider: "gemini",
     geminiModel: settings.geminiModel,
-    activeModel: getModelForProvider(settings, provider),
+    activeModel: getModelForProvider(settings),
     defaultPreset: normalizePreset(settings.defaultPreset),
     enableChatGPT: !!settings.enableChatGPT,
     enableGemini: !!settings.enableGemini,
@@ -505,10 +383,6 @@ function normalizePreset(value) {
   return DEFAULT_SETTINGS.defaultPreset;
 }
 
-function normalizeProvider(value) {
-  return "gemini";
-}
-
 function normalizeGeminiModel(model) {
   const raw = String(model || "").trim();
   if (!raw) {
@@ -517,18 +391,12 @@ function normalizeGeminiModel(model) {
   return raw.startsWith("models/") ? raw.slice(7) : raw;
 }
 
-function getApiKeyForProvider(settings, provider) {
-  if (provider === "gemini") {
-    return String(settings.geminiApiKey || "").trim();
-  }
-  return String(settings.openaiApiKey || "").trim();
+function getApiKeyForProvider(settings) {
+  return String(settings.geminiApiKey || "").trim();
 }
 
-function getModelForProvider(settings, provider) {
-  if (provider === "gemini") {
-    return normalizeGeminiModel(settings.geminiModel || DEFAULT_SETTINGS.geminiModel);
-  }
-  return String(settings.openaiModel || DEFAULT_SETTINGS.openaiModel).trim() || DEFAULT_SETTINGS.openaiModel;
+function getModelForProvider(settings) {
+  return normalizeGeminiModel(settings.geminiModel || DEFAULT_SETTINGS.geminiModel);
 }
 
 function isSiteEnabled(settings, site) {
@@ -548,9 +416,17 @@ async function readSettings() {
   const stored = await chrome.storage.local.get(["settings"]);
   const raw = stored.settings || {};
   return {
-    ...DEFAULT_SETTINGS,
-    ...raw,
-    provider: normalizeProvider(raw.provider)
+    provider: "gemini",
+    geminiApiKey: String(raw.geminiApiKey || ""),
+    geminiModel: normalizeGeminiModel(raw.geminiModel || DEFAULT_SETTINGS.geminiModel),
+    geminiKeyVerified: !!raw.geminiKeyVerified,
+    defaultPreset: normalizePreset(raw.defaultPreset),
+    enableChatGPT: raw.enableChatGPT !== false,
+    enableGemini: raw.enableGemini !== false,
+    enableAI: raw.enableAI !== false,
+    keepUserVoice: !!raw.keepUserVoice,
+    keyVerified: !!raw.keyVerified,
+    customPromptAdditions: String(raw.customPromptAdditions || "")
   };
 }
 

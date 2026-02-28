@@ -1,10 +1,7 @@
 const DEFAULT_SETTINGS = {
   provider: "gemini",
-  openaiApiKey: "",
   geminiApiKey: "",
-  openaiModel: "gpt-4.1-mini",
   geminiModel: "gemini-2.5-flash",
-  openaiKeyVerified: false,
   geminiKeyVerified: false,
   defaultPreset: "structured",
   enableChatGPT: true,
@@ -24,7 +21,7 @@ const SECTION_INFO_CONTENT = {
     points: [
       "AskBetter currently runs only with Google Gemini.",
       "Faster/lighter models usually respond quicker and cost less; larger models can improve rewrite quality.",
-      "Your key is stored locally and is only used by the background worker for direct provider calls."
+      "Your key is stored locally and is only used by the background worker for direct Gemini API calls."
     ]
   },
   presets: {
@@ -55,23 +52,22 @@ const SECTION_INFO_CONTENT = {
       "Selected additions appear as removable chips, and you can add your own custom attributes.",
       "Keep additions short and reusable (tone, constraints, output preferences).",
       "These values are stored locally in your browser profile.",
-      "When you click Optimize, these additions are sent only to your selected provider along with the prompt."
+      "When you click Optimize, these additions are sent only to the Gemini API along with the prompt."
     ]
   },
   security: {
     title: "Security",
     description: "This section is for key setup, verification, and reset controls.",
     points: [
-      "Test key checks the currently selected provider key before locking it.",
+      "Test key checks your Gemini key before locking it.",
       "After successful verification, key editing is locked for safety.",
       "Use Clear stored key/data to reset local settings and unlock key setup again."
     ]
   }
 };
 
-const providerEl = document.getElementById("provider");
 const modelLabelEl = document.getElementById("modelLabel");
-const openaiModelEl = document.getElementById("openaiModel");
+const modelSelectEl = document.getElementById("modelSelect");
 const apiKeyEl = document.getElementById("apiKey");
 const defaultPresetEl = document.getElementById("defaultPreset");
 const keepUserVoiceEl = document.getElementById("keepUserVoice");
@@ -257,18 +253,9 @@ function activateSection(targetId) {
 }
 
 function bindAutoSave() {
-  providerEl.addEventListener("change", async () => {
-    const provider = normalizeProvider(providerEl.value);
-    await savePartial({ provider });
-    applyProviderUI();
-    testKeyStatus.textContent = "";
-    testKeyStatus.className = "";
-  });
-
-  openaiModelEl.addEventListener("change", async () => {
-    const provider = getActiveProvider();
-    const meta = getProviderMeta(provider);
-    await savePartial({ [meta.modelField]: normalizeModel(openaiModelEl.value, meta.defaultModel) });
+  modelSelectEl.addEventListener("change", async () => {
+    const meta = getProviderMeta();
+    await savePartial({ [meta.modelField]: normalizeModel(modelSelectEl.value, meta.defaultModel) });
   });
 
   defaultPresetEl.addEventListener("change", async () => {
@@ -465,8 +452,7 @@ function bindSecurityActions() {
       return;
     }
 
-    const provider = getActiveProvider();
-    const meta = getProviderMeta(provider);
+    const meta = getProviderMeta();
     const apiKey = apiKeyEl.value.trim();
 
     if (!apiKey) {
@@ -482,9 +468,8 @@ function bindSecurityActions() {
     const response = await sendMessage({
       type: "ASKBETTER_TEST_KEY",
       payload: {
-        provider,
         apiKey,
-        model: openaiModelEl.value
+        model: modelSelectEl.value
       }
     });
 
@@ -544,7 +529,6 @@ async function savePartial(partial, options) {
 function fillForm(settings) {
   const normalized = migrateSettings(settings);
   currentSettings = normalized;
-  providerEl.value = normalizeProvider(normalized.provider);
   defaultPresetEl.value = normalizePreset(normalized.defaultPreset);
   keepUserVoiceEl.checked = !!normalized.keepUserVoice;
   enableAIEl.checked = !!normalized.enableAI;
@@ -561,8 +545,7 @@ function fillForm(settings) {
 }
 
 function applyProviderUI() {
-  const provider = getActiveProvider();
-  const meta = getProviderMeta(provider);
+  const meta = getProviderMeta();
   const modelValue = String(currentSettings[meta.modelField] || meta.defaultModel).trim() || meta.defaultModel;
   renderModelOptions(meta.models, modelValue);
   if (modelLabelEl) {
@@ -591,35 +574,30 @@ function updateMissingKeyLinkVisibility() {
   if (!generateKeyLinkEl) {
     return;
   }
-  const provider = getActiveProvider();
-  const meta = getProviderMeta(provider);
+  const meta = getProviderMeta();
   generateKeyLinkEl.href = meta.keyUrl;
   const isMissingKey = !apiKeyEl.value.trim();
   generateKeyLinkEl.hidden = keyLocked || !isMissingKey;
 }
 
 function renderModelOptions(models, selected) {
-  openaiModelEl.textContent = "";
+  modelSelectEl.textContent = "";
   for (const model of models) {
     const option = document.createElement("option");
     option.value = model;
     option.textContent = model;
-    openaiModelEl.appendChild(option);
+    modelSelectEl.appendChild(option);
   }
   if (!models.includes(selected)) {
     const customOption = document.createElement("option");
     customOption.value = selected;
     customOption.textContent = `${selected} (custom)`;
-    openaiModelEl.appendChild(customOption);
+    modelSelectEl.appendChild(customOption);
   }
-  openaiModelEl.value = selected;
+  modelSelectEl.value = selected;
 }
 
-function getActiveProvider() {
-  return normalizeProvider(providerEl.value);
-}
-
-function getProviderMeta(provider) {
+function getProviderMeta() {
   return {
     providerName: "Gemini",
     keyField: "geminiApiKey",
@@ -639,26 +617,20 @@ async function readSettings() {
 }
 
 function migrateSettings(rawSettings) {
-  const settings = {
-    ...DEFAULT_SETTINGS,
-    ...(rawSettings || {})
+  const raw = rawSettings || {};
+  return {
+    provider: "gemini",
+    geminiApiKey: String(raw.geminiApiKey || ""),
+    geminiModel: normalizeModel(raw.geminiModel, DEFAULT_SETTINGS.geminiModel),
+    geminiKeyVerified: !!raw.geminiKeyVerified,
+    defaultPreset: normalizePreset(raw.defaultPreset),
+    enableChatGPT: raw.enableChatGPT !== false,
+    enableGemini: raw.enableGemini !== false,
+    enableAI: raw.enableAI !== false,
+    keepUserVoice: !!raw.keepUserVoice,
+    keyVerified: !!raw.keyVerified,
+    customPromptAdditions: String(raw.customPromptAdditions || "")
   };
-
-  const provider = normalizeProvider(settings.provider);
-  settings.provider = provider;
-
-  if (!settings.openaiKeyVerified && settings.keyVerified && String(settings.openaiApiKey || "").trim()) {
-    settings.openaiKeyVerified = true;
-  }
-
-  settings.openaiModel = normalizeModel(settings.openaiModel, DEFAULT_SETTINGS.openaiModel);
-  settings.geminiModel = normalizeModel(settings.geminiModel, DEFAULT_SETTINGS.geminiModel);
-  settings.customPromptAdditions = String(settings.customPromptAdditions || "");
-  return settings;
-}
-
-function normalizeProvider(value) {
-  return "gemini";
 }
 
 function normalizePreset(value) {
