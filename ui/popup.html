@@ -81,9 +81,9 @@
         <label for="providerSelect">Provider</label>
         <div class="csel">
           <select id="providerSelect" hidden>
-            <option value="gemini">Google Gemini</option>
-            <option value="openai">OpenAI</option>
-            <option value="anthropic">Anthropic Claude</option>
+            <option value="gemini" data-icon="icons/gemini-color.svg">Google Gemini</option>
+            <option value="openai" data-icon="icons/openai.svg">OpenAI</option>
+            <option value="anthropic" data-icon="icons/claude-color.svg">Anthropic Claude</option>
           </select>
         </div>
         <label id="modelLabel" for="modelSelect">Gemini model</label>
@@ -102,24 +102,6 @@
             <option value="gemini-2.5-pro">gemini-2.5-pro</option>
             <option value="gemini-2.0-flash">gemini-2.0-flash</option>
           </select>
-        </div>
-      </div>
-
-      <div class="toggles">
-        <p class="section-title">Integrations</p>
-        <div class="toggle-row">
-          <label for="enableChatGPT">Enable on ChatGPT</label>
-          <span class="switch">
-            <input type="checkbox" id="enableChatGPT" />
-            <span class="slider"></span>
-          </span>
-        </div>
-        <div class="toggle-row">
-          <label for="enableGemini">Enable on Gemini</label>
-          <span class="switch">
-            <input type="checkbox" id="enableGemini" />
-            <span class="slider"></span>
-          </span>
         </div>
       </div>
 

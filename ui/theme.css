@@ -312,6 +312,9 @@ body {
 }
 
 .csel-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 7px 10px;
   border-radius: var(--radius-sm);
   font-size: 13px;
@@ -331,6 +334,20 @@ body {
 
 .csel-item.is-selected:hover {
   background: var(--aubergine-light);
+}
+
+.csel-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.csel-sep {
+  width: 1px;
+  align-self: stretch;
+  background: rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
 }
 
 .csel + label {

@@ -45,8 +45,6 @@ const keepUserVoiceEl = document.getElementById("keepUserVoice");
 const providerSelectEl = document.getElementById("providerSelect");
 const modelLabelEl = document.getElementById("modelLabel");
 const modelSelectEl = document.getElementById("modelSelect");
-const enableChatGPTEl = document.getElementById("enableChatGPT");
-const enableGeminiEl = document.getElementById("enableGemini");
 const openSettingsBtn = document.getElementById("openSettingsBtn");
 const missingKeyLinkEl = document.getElementById("missingKeyLink");
 
@@ -63,8 +61,6 @@ async function init() {
   const model = getProviderModel(settings);
   renderModelOptions(model);
   keepUserVoiceEl.checked = !!settings.keepUserVoice;
-  enableChatGPTEl.checked = !!settings.enableChatGPT;
-  enableGeminiEl.checked = !!settings.enableGemini;
 
   initCustomSelects();
 
@@ -87,14 +83,6 @@ async function init() {
     const nextSettings = await readSettings();
     renderStatus(nextSettings);
     renderModelOptions(getProviderModel(nextSettings));
-  });
-
-  enableChatGPTEl.addEventListener("change", async () => {
-    await updateSettings({ enableChatGPT: !!enableChatGPTEl.checked });
-  });
-
-  enableGeminiEl.addEventListener("change", async () => {
-    await updateSettings({ enableGemini: !!enableGeminiEl.checked });
   });
 
   modelSelectEl.addEventListener("change", async () => {
@@ -334,7 +322,22 @@ function buildCustomSelect(shell) {
     item.className = 'csel-item';
     item.dataset.value = opt.value;
     item.setAttribute('role', 'option');
-    item.textContent = opt.textContent;
+    if (opt.dataset.icon) {
+      const img = document.createElement('img');
+      img.className = 'csel-icon';
+      img.src = opt.dataset.icon;
+      img.alt = '';
+      img.setAttribute('aria-hidden', 'true');
+      const sep = document.createElement('span');
+      sep.className = 'csel-sep';
+      const txt = document.createElement('span');
+      txt.textContent = opt.textContent;
+      item.appendChild(img);
+      item.appendChild(sep);
+      item.appendChild(txt);
+    } else {
+      item.textContent = opt.textContent;
+    }
     item.addEventListener('click', () => {
       select.value = opt.value;
       select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -348,6 +351,19 @@ function buildCustomSelect(shell) {
     const val = select.value;
     const selOpt = select.options[select.selectedIndex];
     trigger.querySelector('.csel-val').textContent = selOpt ? selOpt.textContent : '';
+    // Update icon + sep in trigger
+    trigger.querySelectorAll('.csel-icon, .csel-sep').forEach(el => el.remove());
+    if (selOpt && selOpt.dataset.icon) {
+      const sep = document.createElement('span');
+      sep.className = 'csel-sep';
+      const img = document.createElement('img');
+      img.className = 'csel-icon';
+      img.src = selOpt.dataset.icon;
+      img.alt = '';
+      img.setAttribute('aria-hidden', 'true');
+      trigger.prepend(sep);
+      trigger.prepend(img);
+    }
     panel.querySelectorAll('.csel-item').forEach(item => {
       const active = item.dataset.value === val;
       item.classList.toggle('is-selected', active);
