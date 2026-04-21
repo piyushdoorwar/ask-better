@@ -15,7 +15,13 @@ const DEFAULT_SETTINGS = {
 };
 
 const GEMINI_KEY_URL = "https://aistudio.google.com/apikey";
-const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"];
+const GEMINI_MODELS = [
+  "gemini-3-flash-preview",
+  "gemini-3-pro-preview",
+  "gemini-2.5-flash",
+  "gemini-2.5-pro",
+  "gemini-2.0-flash"
+];
 const SECTION_INFO_CONTENT = {
   models: {
     title: "Models",
