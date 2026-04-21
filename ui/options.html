@@ -222,7 +222,16 @@
                   </select>
                 </div>
                 <div class="toggle-row preset-toggle-row">
-                  <label for="keepUserVoice">Keep user voice</label>
+                  <label for="keepUserVoice" class="toggle-label-icon">
+                    <svg class="csel-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="9" y="2" width="6" height="11" rx="3" stroke="currentColor" stroke-width="1.7"/>
+                      <path d="M5 10a7 7 0 0 0 14 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                      <line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                      <line x1="9" y1="21" x2="15" y2="21" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                    </svg>
+                    <span class="csel-sep"></span>
+                    Keep user voice
+                  </label>
                   <span class="switch">
                     <input id="keepUserVoice" name="keepUserVoice" type="checkbox" />
                     <span class="slider"></span>
@@ -259,7 +268,11 @@
             </div>
             <div class="toggle-grid">
               <div class="toggle-row">
-                <label for="enableAI">Enable AI (global)</label>
+                <label for="enableAI" class="toggle-label-icon">
+                  <svg class="csel-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5c-.28 0-.5.16-.59.41l-1.6 4.55-4.55 1.6a.625.625 0 000 1.18l4.55 1.6 1.6 4.55c.09.25.31.41.59.41s.5-.16.59-.41l1.6-4.55 4.55-1.6a.625.625 0 000-1.18l-4.55-1.6-1.6-4.55A.625.625 0 0012 2.5z" fill="currentColor" opacity=".9"/><path d="M5.5 14.5c-.18 0-.33.1-.39.27l-.9 2.56-2.56.9a.415.415 0 000 .78l2.56.9.9 2.56c.06.17.21.27.39.27s.33-.1.39-.27l.9-2.56 2.56-.9a.415.415 0 000-.78l-2.56-.9-.9-2.56A.415.415 0 005.5 14.5z" fill="currentColor" opacity=".6"/></svg>
+                  <span class="csel-sep"></span>
+                  Enable AI (global)
+                </label>
                 <span class="switch">
                   <input id="enableAI" name="enableAI" type="checkbox" />
                   <span class="slider"></span>
@@ -267,7 +280,11 @@
               </div>
 
               <div class="toggle-row">
-                <label for="enableChatGPT">Enable on ChatGPT</label>
+                <label for="enableChatGPT" class="toggle-label-icon">
+                  <img class="csel-icon" src="icons/openai.svg" alt="" aria-hidden="true" />
+                  <span class="csel-sep"></span>
+                  Enable on ChatGPT
+                </label>
                 <span class="switch">
                   <input id="enableChatGPT" name="enableChatGPT" type="checkbox" />
                   <span class="slider"></span>
@@ -275,7 +292,11 @@
               </div>
 
               <div class="toggle-row">
-                <label for="enableGemini">Enable on Gemini</label>
+                <label for="enableGemini" class="toggle-label-icon">
+                  <img class="csel-icon" src="icons/gemini-color.svg" alt="" aria-hidden="true" />
+                  <span class="csel-sep"></span>
+                  Enable on Gemini
+                </label>
                 <span class="switch">
                   <input id="enableGemini" name="enableGemini" type="checkbox" />
                   <span class="slider"></span>

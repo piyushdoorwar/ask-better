@@ -137,7 +137,6 @@ const privacyInfoCloseEl = document.getElementById("privacyInfoClose");
 
 let currentSettings = null;
 let keyLocked = false;
-let modelCache = {};
 let customSaveTimer = 0;
 let statusResetTimer = 0;
 let lastInfoTriggerEl = null;
@@ -154,8 +153,7 @@ async function init() {
   bindPrivacyInfo();
   bindQuickAdditions();
   bindCustomAdditionsEditor();
-  const stored = await chrome.storage.local.get(["settings", "modelCache"]);
-  modelCache = stored.modelCache || {};
+  const stored = await chrome.storage.local.get(["settings"]);
   currentSettings = migrateSettings(stored.settings || {});
   fillForm(currentSettings);
   bindAutoSave();
@@ -545,20 +543,9 @@ function bindSecurityActions() {
       keyLocked = true;
       applyKeyLockState();
       updateMissingKeyLinkVisibility();
-      testKeyStatus.textContent = "Valid key — fetching models\u2026";
+      testKeyStatus.textContent = "Valid key.";
       testKeyStatus.className = "ok";
       setStatus(`${meta.providerName} key verified and saved.`, "ok");
-      const modelsResponse = await sendMessage({
-        type: "ASKBETTER_FETCH_MODELS",
-        payload: { provider, apiKey }
-      });
-      if (modelsResponse && modelsResponse.ok && Array.isArray(modelsResponse.models) && modelsResponse.models.length) {
-        modelCache[provider] = modelsResponse.models;
-        await chrome.storage.local.set({ modelCache });
-        const currentModel = String((currentSettings && currentSettings[meta.modelField]) || meta.defaultModel);
-        renderModelOptions(modelsResponse.models, currentModel);
-      }
-      testKeyStatus.textContent = "Valid key.";
       return;
     }
 
@@ -573,7 +560,6 @@ function bindSecurityActions() {
       return;
     }
     await chrome.storage.local.clear();
-    modelCache = {};
     const defaults = { ...DEFAULT_SETTINGS };
     await chrome.storage.local.set({ settings: defaults });
     currentSettings = defaults;
@@ -627,8 +613,7 @@ function applyProviderUI() {
   providerSelectEl.value = provider;
   const meta = getProviderMeta(provider);
   const modelValue = String(currentSettings[meta.modelField] || meta.defaultModel).trim() || meta.defaultModel;
-  const liveModels = (modelCache && modelCache[provider]) || null;
-  renderModelOptions(liveModels || meta.models, modelValue);
+  renderModelOptions(meta.models, modelValue);
   if (modelLabelEl) {
     modelLabelEl.textContent = meta.modelLabel;
   }
