@@ -6,6 +6,9 @@ const DEFAULT_SETTINGS = {
   openaiApiKey: "",
   openaiModel: "gpt-5.2",
   openaiKeyVerified: false,
+  anthropicApiKey: "",
+  anthropicModel: "claude-sonnet-4-20250514",
+  anthropicKeyVerified: false,
   defaultPreset: "structured",
   enableChatGPT: true,
   enableGemini: true,
@@ -19,6 +22,7 @@ const DEFAULT_SETTINGS = {
 
 const GEMINI_KEY_URL = "https://aistudio.google.com/apikey";
 const OPENAI_KEY_URL = "https://platform.openai.com/api-keys";
+const ANTHROPIC_KEY_URL = "https://console.anthropic.com/settings/keys";
 const GEMINI_MODELS = [
   "gemini-3-flash-preview",
   "gemini-3-pro-preview",
@@ -27,6 +31,12 @@ const GEMINI_MODELS = [
   "gemini-2.0-flash"
 ];
 const OPENAI_MODELS = ["gpt-5.2", "gpt-5-mini", "gpt-4.1"];
+const ANTHROPIC_MODELS = [
+  "claude-sonnet-4-20250514",
+  "claude-opus-4-1-20250805",
+  "claude-3-7-sonnet-latest",
+  "claude-3-5-haiku-latest"
+];
 
 const statusBox = document.getElementById("statusBox");
 const statusText = document.getElementById("statusText");
@@ -146,6 +156,9 @@ async function readSettings() {
     openaiApiKey: String(raw.openaiApiKey || ""),
     openaiModel: normalizeModel(raw.openaiModel, DEFAULT_SETTINGS.openaiModel),
     openaiKeyVerified: !!raw.openaiKeyVerified,
+    anthropicApiKey: String(raw.anthropicApiKey || ""),
+    anthropicModel: normalizeModel(raw.anthropicModel, DEFAULT_SETTINGS.anthropicModel),
+    anthropicKeyVerified: !!raw.anthropicKeyVerified,
     defaultPreset: normalizePreset(raw.defaultPreset),
     enableChatGPT: raw.enableChatGPT !== false,
     enableGemini: raw.enableGemini !== false,
@@ -209,7 +222,8 @@ function renderModelOptions(selectedModel) {
 }
 
 function getProviderMeta(provider) {
-  if (normalizeProvider(provider) === "openai") {
+  const normalized = normalizeProvider(provider);
+  if (normalized === "openai") {
     return {
       providerName: "OpenAI",
       keyField: "openaiApiKey",
@@ -218,6 +232,17 @@ function getProviderMeta(provider) {
       models: OPENAI_MODELS,
       keyUrl: OPENAI_KEY_URL,
       modelLabel: "OpenAI model"
+    };
+  }
+  if (normalized === "anthropic") {
+    return {
+      providerName: "Anthropic",
+      keyField: "anthropicApiKey",
+      modelField: "anthropicModel",
+      defaultModel: DEFAULT_SETTINGS.anthropicModel,
+      models: ANTHROPIC_MODELS,
+      keyUrl: ANTHROPIC_KEY_URL,
+      modelLabel: "Claude model"
     };
   }
   return {
@@ -237,7 +262,11 @@ function getProviderModel(settings) {
 }
 
 function normalizeProvider(value) {
-  return String(value || "").toLowerCase() === "openai" ? "openai" : "gemini";
+  const provider = String(value || "").toLowerCase();
+  if (provider === "openai" || provider === "anthropic") {
+    return provider;
+  }
+  return "gemini";
 }
 
 function normalizeModel(value, fallback) {

@@ -6,6 +6,9 @@ const DEFAULT_SETTINGS = {
   openaiApiKey: "",
   openaiModel: "gpt-5.2",
   openaiKeyVerified: false,
+  anthropicApiKey: "",
+  anthropicModel: "claude-sonnet-4-20250514",
+  anthropicKeyVerified: false,
   defaultPreset: "structured",
   enableChatGPT: true,
   enableGemini: true,
@@ -100,6 +103,10 @@ async function handleMessage(message) {
     return await optimizePrompt(message);
   }
 
+  if (message.type === "ASKBETTER_FETCH_MODELS") {
+    return await fetchModelsForProvider(message.payload || {});
+  }
+
   if (message.type === "ASKBETTER_GET_BUTTON_OFFSET") {
     const site = normalizeSite(message.site);
     const offset = await getButtonOffset(site);
@@ -185,6 +192,9 @@ async function callProvider({ provider, apiKey, model, prompt, preset, settings,
   if (provider === "openai") {
     return await callOpenAI({ apiKey, model, prompt, preset, settings, mode, completionPass });
   }
+  if (provider === "anthropic") {
+    return await callAnthropic({ apiKey, model, prompt, preset, settings, mode, completionPass });
+  }
   return await callGemini({ apiKey, model, prompt, preset, settings, mode, completionPass });
 }
 
@@ -269,19 +279,168 @@ async function callOpenAI({ apiKey, model, prompt, preset, settings, mode, compl
   return extractOpenAIText(data).trim();
 }
 
-async function testKey(payload) {
+async function callAnthropic({ apiKey, model, prompt, preset, settings, mode, completionPass }) {
+  const system = buildSystemInstruction({ preset, settings, mode, completionPass });
+  const normalizedModel = normalizeAnthropicModel(model || DEFAULT_SETTINGS.anthropicModel);
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+      "x-api-key": apiKey
+    },
+    body: JSON.stringify({
+      model: normalizedModel,
+      system,
+      max_tokens: 1200,
+      messages: [
+        {
+          role: "user",
+          content: prompt
+        }
+      ]
+    })
+  });
+
+  if (!response.ok) {
+    let details = "";
+    try {
+      const body = await response.json();
+      details = readApiErrorMessage(body);
+    } catch (_error) {
+      details = "";
+    }
+    const error = new Error(details || `Provider request failed (${response.status})`);
+    error.status = response.status;
+    throw error;
+  }
+
+  const data = await response.json();
+  return extractAnthropicText(data).trim();
+}
+
+async function fetchModelsForProvider(payload) {
   const settings = await readSettings();
   const provider = normalizeProvider(payload.provider || settings.provider);
   const apiKey = String(
     payload.apiKey
-    || (provider === "openai" ? settings.openaiApiKey : settings.geminiApiKey)
+    || (
+      provider === "openai"
+        ? settings.openaiApiKey
+        : provider === "anthropic"
+          ? settings.anthropicApiKey
+          : settings.geminiApiKey
+    )
     || ""
   ).trim();
 
   if (!apiKey) {
     return { ok: false, code: "MISSING_KEY", message: "API key is missing." };
   }
-  return provider === "openai" ? await testOpenAIKey(apiKey) : await testGeminiKey(apiKey);
+  try {
+    if (provider === "openai") {
+      return await fetchOpenAIModels(apiKey);
+    }
+    if (provider === "anthropic") {
+      return await fetchAnthropicModels(apiKey);
+    }
+    return await fetchGeminiModels(apiKey);
+  } catch (error) {
+    return mapProviderError(error);
+  }
+}
+
+async function fetchGeminiModels(apiKey) {
+  const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models", {
+    method: "GET",
+    headers: { "x-goog-api-key": apiKey }
+  });
+  if (!response.ok) {
+    const error = new Error(`Provider request failed (${response.status})`);
+    error.status = response.status;
+    throw error;
+  }
+  const data = await response.json();
+  const all = Array.isArray(data.models) ? data.models : [];
+  const ids = all
+    .filter((m) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes("generateContent"))
+    .map((m) => String(m.name || "").replace(/^models\//, ""))
+    .filter(Boolean)
+    .sort()
+    .reverse();
+  return { ok: true, models: ids.length ? ids : DEFAULT_SETTINGS.geminiModel ? [DEFAULT_SETTINGS.geminiModel] : [] };
+}
+
+async function fetchOpenAIModels(apiKey) {
+  const response = await fetch("https://api.openai.com/v1/models", {
+    method: "GET",
+    headers: { Authorization: `Bearer ${apiKey}` }
+  });
+  if (!response.ok) {
+    const error = new Error(`Provider request failed (${response.status})`);
+    error.status = response.status;
+    throw error;
+  }
+  const data = await response.json();
+  const items = Array.isArray(data.data) ? data.data : [];
+  const ids = items
+    .map((m) => String(m.id || ""))
+    .filter((id) => /^gpt-/i.test(id))
+    .sort()
+    .reverse();
+  return { ok: true, models: ids.length ? ids : DEFAULT_SETTINGS.openaiModel ? [DEFAULT_SETTINGS.openaiModel] : [] };
+}
+
+async function fetchAnthropicModels(apiKey) {
+  const response = await fetch("https://api.anthropic.com/v1/models", {
+    method: "GET",
+    headers: {
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+      "x-api-key": apiKey
+    }
+  });
+  if (!response.ok) {
+    const error = new Error(`Provider request failed (${response.status})`);
+    error.status = response.status;
+    throw error;
+  }
+  const data = await response.json();
+  const items = Array.isArray(data.data) ? data.data : [];
+  const ids = items
+    .map((m) => String(m.id || ""))
+    .filter(Boolean)
+    .sort()
+    .reverse();
+  return { ok: true, models: ids.length ? ids : DEFAULT_SETTINGS.anthropicModel ? [DEFAULT_SETTINGS.anthropicModel] : [] };
+}
+
+async function testKey(payload) {
+  const settings = await readSettings();
+  const provider = normalizeProvider(payload.provider || settings.provider);
+  const apiKey = String(
+    payload.apiKey
+    || (
+      provider === "openai"
+        ? settings.openaiApiKey
+        : provider === "anthropic"
+          ? settings.anthropicApiKey
+          : settings.geminiApiKey
+    )
+    || ""
+  ).trim();
+
+  if (!apiKey) {
+    return { ok: false, code: "MISSING_KEY", message: "API key is missing." };
+  }
+  if (provider === "openai") {
+    return await testOpenAIKey(apiKey);
+  }
+  if (provider === "anthropic") {
+    return await testAnthropicKey(apiKey);
+  }
+  return await testGeminiKey(apiKey);
 }
 
 async function testGeminiKey(apiKey) {
@@ -340,6 +499,36 @@ async function testOpenAIKey(apiKey) {
   }
 }
 
+async function testAnthropicKey(apiKey) {
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/models", {
+      method: "GET",
+      headers: {
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+        "x-api-key": apiKey
+      }
+    });
+
+    if (response.ok) {
+      return { ok: true, message: "API key is valid." };
+    }
+    if (response.status === 401 || response.status === 403) {
+      return { ok: false, code: "UNAUTHORIZED", message: `Invalid API key (${response.status}).` };
+    }
+    if (response.status === 429) {
+      return { ok: false, code: "RATE_LIMIT", message: "Rate limit reached (429)." };
+    }
+    return {
+      ok: false,
+      code: "PROVIDER_ERROR",
+      message: `Provider error (${response.status}).`
+    };
+  } catch (_error) {
+    return { ok: false, code: "NETWORK_ERROR", message: "Network error while testing key." };
+  }
+}
+
 function extractGeminiText(data) {
   if (!data || !Array.isArray(data.candidates) || data.candidates.length === 0) {
     return "";
@@ -364,6 +553,16 @@ function extractOpenAIText(data) {
   return data.output
     .flatMap((item) => Array.isArray(item && item.content) ? item.content : [])
     .map((item) => (item && typeof item.text === "string" ? item.text : ""))
+    .join("\n")
+    .trim();
+}
+
+function extractAnthropicText(data) {
+  if (!data || !Array.isArray(data.content)) {
+    return "";
+  }
+  return data.content
+    .map((item) => (item && item.type === "text" && typeof item.text === "string" ? item.text : ""))
     .join("\n")
     .trim();
 }
@@ -510,6 +709,7 @@ function toPublicSettings(settings) {
     provider: normalizeProvider(settings.provider),
     geminiModel: settings.geminiModel,
     openaiModel: settings.openaiModel,
+    anthropicModel: settings.anthropicModel,
     activeModel: getModelForProvider(settings),
     defaultPreset: normalizePreset(settings.defaultPreset),
     enableChatGPT: !!settings.enableChatGPT,
@@ -543,20 +743,37 @@ function normalizeOpenAIModel(model) {
   return raw || DEFAULT_SETTINGS.openaiModel;
 }
 
+function normalizeAnthropicModel(model) {
+  const raw = String(model || "").trim();
+  return raw || DEFAULT_SETTINGS.anthropicModel;
+}
+
 function normalizeProvider(value) {
-  return String(value || "").toLowerCase() === "openai" ? "openai" : "gemini";
+  const provider = String(value || "").toLowerCase();
+  if (provider === "openai" || provider === "anthropic") {
+    return provider;
+  }
+  return "gemini";
 }
 
 function getApiKeyForProvider(settings) {
-  if (normalizeProvider(settings.provider) === "openai") {
+  const provider = normalizeProvider(settings.provider);
+  if (provider === "openai") {
     return String(settings.openaiApiKey || "").trim();
+  }
+  if (provider === "anthropic") {
+    return String(settings.anthropicApiKey || "").trim();
   }
   return String(settings.geminiApiKey || "").trim();
 }
 
 function getModelForProvider(settings) {
-  if (normalizeProvider(settings.provider) === "openai") {
+  const provider = normalizeProvider(settings.provider);
+  if (provider === "openai") {
     return normalizeOpenAIModel(settings.openaiModel || DEFAULT_SETTINGS.openaiModel);
+  }
+  if (provider === "anthropic") {
+    return normalizeAnthropicModel(settings.anthropicModel || DEFAULT_SETTINGS.anthropicModel);
   }
   return normalizeGeminiModel(settings.geminiModel || DEFAULT_SETTINGS.geminiModel);
 }
@@ -589,6 +806,9 @@ async function readSettings() {
     openaiApiKey: String(raw.openaiApiKey || ""),
     openaiModel: normalizeOpenAIModel(raw.openaiModel || DEFAULT_SETTINGS.openaiModel),
     openaiKeyVerified: !!raw.openaiKeyVerified,
+    anthropicApiKey: String(raw.anthropicApiKey || ""),
+    anthropicModel: normalizeAnthropicModel(raw.anthropicModel || DEFAULT_SETTINGS.anthropicModel),
+    anthropicKeyVerified: !!raw.anthropicKeyVerified,
     defaultPreset: normalizePreset(raw.defaultPreset),
     enableChatGPT: raw.enableChatGPT !== false,
     enableGemini: raw.enableGemini !== false,

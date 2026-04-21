@@ -1,6 +1,6 @@
 # AskBetter (Chrome Extension, MV3)
 
-AskBetter is a local-first prompt optimizer that uses Google Gemini or OpenAI and works on:
+AskBetter is a local-first prompt optimizer that uses Google Gemini, OpenAI, or Anthropic Claude and works on:
 
 - ChatGPT (`chat.openai.com` and `chatgpt.com`)
 - Google Gemini (`gemini.google.com`)
@@ -95,10 +95,11 @@ If AI is off or no key is set, AskBetter shows:
 
 - Gemini key: `https://aistudio.google.com/apikey`
 - OpenAI key: `https://platform.openai.com/api-keys`
+- Anthropic key: `https://console.anthropic.com/settings/keys`
 
 ## Notes
 
-- AskBetter supports Google Gemini and OpenAI as model providers.
+- AskBetter supports Google Gemini, OpenAI, and Anthropic Claude as model providers.
 - The Optimize button can appear on both ChatGPT and Gemini pages.
 
 ## Legal Notice

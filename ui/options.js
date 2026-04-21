@@ -6,6 +6,9 @@ const DEFAULT_SETTINGS = {
   openaiApiKey: "",
   openaiModel: "gpt-5.2",
   openaiKeyVerified: false,
+  anthropicApiKey: "",
+  anthropicModel: "claude-sonnet-4-20250514",
+  anthropicKeyVerified: false,
   defaultPreset: "structured",
   enableChatGPT: true,
   enableGemini: true,
@@ -19,6 +22,7 @@ const DEFAULT_SETTINGS = {
 
 const GEMINI_KEY_URL = "https://aistudio.google.com/apikey";
 const OPENAI_KEY_URL = "https://platform.openai.com/api-keys";
+const ANTHROPIC_KEY_URL = "https://console.anthropic.com/settings/keys";
 const GEMINI_MODELS = [
   "gemini-3-flash-preview",
   "gemini-3-pro-preview",
@@ -27,12 +31,18 @@ const GEMINI_MODELS = [
   "gemini-2.0-flash"
 ];
 const OPENAI_MODELS = ["gpt-5.2", "gpt-5-mini", "gpt-4.1"];
+const ANTHROPIC_MODELS = [
+  "claude-sonnet-4-20250514",
+  "claude-opus-4-1-20250805",
+  "claude-3-7-sonnet-latest",
+  "claude-3-5-haiku-latest"
+];
 const SECTION_INFO_CONTENT = {
   models: {
     title: "Models",
     description: "This section controls which provider and model AskBetter calls when you press Optimize.",
     points: [
-      "AskBetter supports Google Gemini and OpenAI.",
+      "AskBetter supports Google Gemini, OpenAI, and Anthropic Claude.",
       "Faster/lighter models usually respond quicker and cost less; larger models can improve rewrite quality.",
       "Your API keys are stored locally and used only by the background worker for direct provider API calls."
     ]
@@ -127,6 +137,7 @@ const privacyInfoCloseEl = document.getElementById("privacyInfoClose");
 
 let currentSettings = null;
 let keyLocked = false;
+let modelCache = {};
 let customSaveTimer = 0;
 let statusResetTimer = 0;
 let lastInfoTriggerEl = null;
@@ -143,7 +154,9 @@ async function init() {
   bindPrivacyInfo();
   bindQuickAdditions();
   bindCustomAdditionsEditor();
-  currentSettings = await readSettings();
+  const stored = await chrome.storage.local.get(["settings", "modelCache"]);
+  modelCache = stored.modelCache || {};
+  currentSettings = migrateSettings(stored.settings || {});
   fillForm(currentSettings);
   bindAutoSave();
   bindSecurityActions();
@@ -532,9 +545,20 @@ function bindSecurityActions() {
       keyLocked = true;
       applyKeyLockState();
       updateMissingKeyLinkVisibility();
-      testKeyStatus.textContent = "Valid key.";
+      testKeyStatus.textContent = "Valid key — fetching models\u2026";
       testKeyStatus.className = "ok";
       setStatus(`${meta.providerName} key verified and saved.`, "ok");
+      const modelsResponse = await sendMessage({
+        type: "ASKBETTER_FETCH_MODELS",
+        payload: { provider, apiKey }
+      });
+      if (modelsResponse && modelsResponse.ok && Array.isArray(modelsResponse.models) && modelsResponse.models.length) {
+        modelCache[provider] = modelsResponse.models;
+        await chrome.storage.local.set({ modelCache });
+        const currentModel = String((currentSettings && currentSettings[meta.modelField]) || meta.defaultModel);
+        renderModelOptions(modelsResponse.models, currentModel);
+      }
+      testKeyStatus.textContent = "Valid key.";
       return;
     }
 
@@ -549,6 +573,7 @@ function bindSecurityActions() {
       return;
     }
     await chrome.storage.local.clear();
+    modelCache = {};
     const defaults = { ...DEFAULT_SETTINGS };
     await chrome.storage.local.set({ settings: defaults });
     currentSettings = defaults;
@@ -601,7 +626,8 @@ function applyProviderUI() {
   providerSelectEl.value = provider;
   const meta = getProviderMeta(provider);
   const modelValue = String(currentSettings[meta.modelField] || meta.defaultModel).trim() || meta.defaultModel;
-  renderModelOptions(meta.models, modelValue);
+  const liveModels = (modelCache && modelCache[provider]) || null;
+  renderModelOptions(liveModels || meta.models, modelValue);
   if (modelLabelEl) {
     modelLabelEl.textContent = meta.modelLabel;
   }
@@ -662,7 +688,8 @@ function renderModelOptions(models, selected) {
 }
 
 function getProviderMeta(provider) {
-  if (normalizeProvider(provider) === "openai") {
+  const normalized = normalizeProvider(provider);
+  if (normalized === "openai") {
     return {
       providerName: "OpenAI",
       keyField: "openaiApiKey",
@@ -673,6 +700,19 @@ function getProviderMeta(provider) {
       keyUrl: OPENAI_KEY_URL,
       keyPlaceholder: "sk-...",
       modelLabel: "OpenAI model"
+    };
+  }
+  if (normalized === "anthropic") {
+    return {
+      providerName: "Anthropic",
+      keyField: "anthropicApiKey",
+      verifiedField: "anthropicKeyVerified",
+      modelField: "anthropicModel",
+      defaultModel: DEFAULT_SETTINGS.anthropicModel,
+      models: ANTHROPIC_MODELS,
+      keyUrl: ANTHROPIC_KEY_URL,
+      keyPlaceholder: "sk-ant-...",
+      modelLabel: "Claude model"
     };
   }
   return {
@@ -703,6 +743,9 @@ function migrateSettings(rawSettings) {
     openaiApiKey: String(raw.openaiApiKey || ""),
     openaiModel: normalizeModel(raw.openaiModel, DEFAULT_SETTINGS.openaiModel),
     openaiKeyVerified: !!raw.openaiKeyVerified,
+    anthropicApiKey: String(raw.anthropicApiKey || ""),
+    anthropicModel: normalizeModel(raw.anthropicModel, DEFAULT_SETTINGS.anthropicModel),
+    anthropicKeyVerified: !!raw.anthropicKeyVerified,
     defaultPreset: normalizePreset(raw.defaultPreset),
     enableChatGPT: raw.enableChatGPT !== false,
     enableGemini: raw.enableGemini !== false,
@@ -744,7 +787,11 @@ function normalizeModel(model, fallback) {
 }
 
 function normalizeProvider(value) {
-  return String(value || "").toLowerCase() === "openai" ? "openai" : "gemini";
+  const provider = String(value || "").toLowerCase();
+  if (provider === "openai" || provider === "anthropic") {
+    return provider;
+  }
+  return "gemini";
 }
 
 function setStatus(message, tone, resetToReady) {

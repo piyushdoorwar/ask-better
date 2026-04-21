@@ -34,11 +34,11 @@
         display: block;
         padding: 7px;
         border-radius: 12px;
-        border: 1px solid rgba(139, 92, 246, 0.5);
-        background: linear-gradient(160deg, rgba(103, 57, 183, 0.3), rgba(37, 37, 37, 0.92));
+        border: 1px solid rgba(139, 92, 246, 0.34);
+        background: linear-gradient(160deg, rgba(103, 57, 183, 0.22), rgba(29, 29, 33, 0.96));
         box-shadow:
-          0 10px 24px rgba(103, 57, 183, 0.24),
-          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+          0 10px 24px rgba(103, 57, 183, 0.18),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
       }
 
       .title-group h1 {
@@ -53,18 +53,18 @@
       }
 
       #statusMsg {
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius);
-        background: var(--bg-elevated);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
         min-height: 34px;
         min-width: 0;
-        padding: 6px 10px;
+        padding: 6px 12px;
         font-size: 13px;
         color: var(--text-muted);
         display: inline-flex;
         align-items: center;
         gap: 7px;
-        box-shadow: var(--shadow-sm);
+        box-shadow: var(--surface-gloss), var(--shadow-sm);
       }
 
       .status-chip-icon {
@@ -84,16 +84,16 @@
       .help-btn {
         width: 34px;
         height: 34px;
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius);
-        background: var(--bg-elevated);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.015));
         color: var(--text-secondary);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         text-decoration: none;
         padding: 0;
-        box-shadow: var(--shadow-sm);
+        box-shadow: var(--surface-gloss), var(--shadow-sm);
       }
 
       .help-btn svg {
@@ -130,14 +130,16 @@
       }
 
       .card {
-        border: 1px solid var(--border);
+        border: 1px solid rgba(255, 255, 255, 0.06);
         border-radius: var(--radius-card);
-        background: var(--bg-panel);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(255, 255, 255, 0.008)),
+          var(--bg-panel);
         box-shadow: var(--shadow-lg);
       }
 
       .sidebar {
-        padding: 12px;
+        padding: 14px;
         position: relative;
         top: auto;
         align-self: stretch;
@@ -159,11 +161,11 @@
       .nav-btn {
         width: 100%;
         text-align: left;
-        border: 1px solid transparent;
-        border-radius: var(--radius-sm);
+        border: 1px solid rgba(255, 255, 255, 0.02);
+        border-radius: 14px;
         background: transparent;
         color: var(--text);
-        padding: 10px 11px;
+        padding: 11px 12px;
         margin-bottom: 8px;
         font-size: 15px;
         cursor: pointer;
@@ -178,9 +180,9 @@
       .nav-icon {
         width: 30px;
         height: 30px;
-        border-radius: 9px;
-        border: 1px solid var(--border);
-        background: var(--bg-elevated);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -235,23 +237,25 @@
       }
 
       .nav-btn:hover {
-        background: var(--bg-elevated);
-        border-color: var(--border-light);
+        background: rgba(255, 255, 255, 0.02);
+        border-color: rgba(255, 255, 255, 0.07);
         transform: translateY(-2px);
         box-shadow: var(--shadow-sm);
       }
 
       .nav-btn.active {
-        border-color: var(--purple-light);
-        background: linear-gradient(135deg, var(--purple), var(--purple-dark));
+        border-color: rgba(139, 92, 246, 0.45);
+        background:
+          linear-gradient(180deg, rgba(139, 92, 246, 0.16), rgba(139, 92, 246, 0.08)),
+          rgba(255, 255, 255, 0.02);
         color: var(--text);
-        box-shadow: var(--shadow-purple);
+        box-shadow: 0 10px 26px rgba(103, 57, 183, 0.16);
       }
 
       .nav-btn.active .nav-icon {
-        border-color: rgba(255, 215, 0, 0.45);
-        color: var(--yellow-light);
-        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(139, 92, 246, 0.4);
+        color: #f0dcff;
+        background: rgba(139, 92, 246, 0.16);
       }
 
       .nav-btn.active::before {
@@ -266,7 +270,7 @@
       }
 
       .content {
-        padding: 14px;
+        padding: 18px;
         min-height: 0;
       }
 
@@ -296,13 +300,13 @@
         width: 52px;
         height: 52px;
         border-radius: 14px;
-        border: 1px solid var(--border-light);
-        background: linear-gradient(135deg, rgba(103, 57, 183, 0.25), rgba(103, 57, 183, 0.08));
-        color: var(--yellow-light);
+        border: 1px solid rgba(139, 92, 246, 0.28);
+        background: linear-gradient(135deg, rgba(103, 57, 183, 0.18), rgba(103, 57, 183, 0.05));
+        color: #f1ddff;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        box-shadow: var(--shadow-purple);
+        box-shadow: 0 12px 28px rgba(103, 57, 183, 0.16);
       }
 
       .section-badge .icon-mask {
@@ -312,7 +316,8 @@
 
       .section-title {
         margin: 2px 0 6px;
-        font-size: 22px;
+        font-size: 23px;
+        letter-spacing: -0.02em;
       }
 
       .section-info-btn {
@@ -377,28 +382,28 @@
 
       .readonly-field {
         width: 100%;
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-sm);
-        background: var(--bg-elevated);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.012));
         color: var(--text);
-        padding: 11px 12px;
+        padding: 12px 13px;
         font-size: 16px;
         line-height: 1.35;
-        box-shadow: var(--shadow-sm);
+        box-shadow: var(--surface-gloss), var(--shadow-sm);
       }
 
       input[type="password"],
       textarea {
         width: 100%;
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-sm);
-        background: var(--bg-elevated);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.012));
         color: var(--text);
-        padding: 11px 12px;
+        padding: 12px 13px;
         font-size: 16px;
         outline: none;
         font-family: inherit;
-        box-shadow: var(--shadow-sm);
+        box-shadow: var(--surface-gloss), var(--shadow-sm);
       }
 
       textarea {
@@ -421,10 +426,11 @@
 
       .quick-additions {
         margin-bottom: 12px;
-        padding: 10px;
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(103, 57, 183, 0.05));
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(103, 57, 183, 0.035));
+        box-shadow: var(--surface-gloss);
       }
 
       .quick-additions-title {
@@ -460,11 +466,11 @@
       }
 
       .quick-tag {
-        border: 1px solid var(--border-light);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 999px;
-        background: var(--bg-elevated);
+        background: rgba(255, 255, 255, 0.02);
         color: var(--text-secondary);
-        padding: 5px 10px;
+        padding: 6px 11px;
         font-size: 13px;
         line-height: 1.25;
         cursor: pointer;
@@ -480,9 +486,10 @@
       }
 
       .quick-tag.is-selected {
-        color: var(--yellow-light);
-        border-color: rgba(255, 215, 0, 0.46);
-        background: rgba(255, 215, 0, 0.08);
+        color: #efe0ff;
+        border-color: rgba(139, 92, 246, 0.5);
+        background: rgba(139, 92, 246, 0.18);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
       }
 
       .quick-tag:focus-visible {
@@ -491,12 +498,12 @@
       }
 
       .custom-editor {
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-sm);
-        background: var(--bg-elevated);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
         min-height: 94px;
-        padding: 10px;
-        box-shadow: var(--shadow-sm);
+        padding: 11px;
+        box-shadow: var(--surface-gloss), var(--shadow-sm);
       }
 
       .custom-chip-list {
@@ -512,7 +519,7 @@
         max-width: 100%;
         border: 1px solid rgba(139, 92, 246, 0.42);
         border-radius: 999px;
-        background: rgba(103, 57, 183, 0.15);
+        background: rgba(103, 57, 183, 0.18);
         color: var(--text);
         padding: 6px 8px 6px 10px;
       }
@@ -566,15 +573,15 @@
 
       .custom-addition-input {
         width: 100%;
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-sm);
-        background: var(--bg-elevated);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.012));
         color: var(--text);
-        padding: 10px 11px;
+        padding: 12px 13px;
         font-size: 15px;
         outline: none;
         font-family: inherit;
-        box-shadow: var(--shadow-sm);
+        box-shadow: var(--surface-gloss), var(--shadow-sm);
       }
 
       .custom-addition-input:focus {
@@ -583,20 +590,23 @@
       }
 
       .add-custom-btn {
-        border: 1px solid var(--purple-light);
-        border-radius: var(--radius-sm);
-        background: linear-gradient(135deg, var(--purple), var(--purple-dark));
+        border: 1px solid rgba(139, 92, 246, 0.42);
+        border-radius: 14px;
+        background:
+          linear-gradient(180deg, rgba(139, 92, 246, 0.22), rgba(103, 57, 183, 0.14)),
+          rgba(255, 255, 255, 0.02);
         color: var(--text);
-        padding: 0 14px;
-        min-height: 40px;
+        padding: 0 15px;
+        min-height: 44px;
         font-size: 14px;
         font-weight: 600;
         cursor: pointer;
-        box-shadow: var(--shadow-purple);
+        box-shadow: var(--surface-gloss), 0 10px 26px rgba(103, 57, 183, 0.18);
       }
 
       .add-custom-btn:hover {
-        filter: brightness(1.08);
+        transform: translateY(-1px);
+        border-color: rgba(139, 92, 246, 0.65);
       }
 
       .add-custom-btn:focus-visible {
@@ -625,20 +635,24 @@
       }
 
       #testKeyBtn {
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-sm);
-        background: var(--bg-elevated);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.01));
         color: var(--text);
-        padding: 8px 14px;
+        padding: 10px 14px;
         font-size: 15px;
         cursor: pointer;
         transition: all 0.2s ease;
+        box-shadow: var(--surface-gloss), var(--shadow-sm);
       }
 
       #testKeyBtn:hover {
-        background: var(--purple);
-        border-color: var(--purple-light);
-        box-shadow: var(--shadow-purple);
+        background:
+          linear-gradient(180deg, rgba(139, 92, 246, 0.18), rgba(139, 92, 246, 0.1)),
+          rgba(255, 255, 255, 0.02);
+        border-color: rgba(139, 92, 246, 0.52);
+        box-shadow: 0 12px 28px rgba(103, 57, 183, 0.16);
+        transform: translateY(-1px);
       }
 
       #testKeyStatus {
@@ -662,11 +676,11 @@
       }
 
       .key-locked-banner {
-        border: 1px solid rgba(0, 208, 156, 0.4);
-        border-radius: var(--radius-sm);
-        background: rgba(0, 208, 156, 0.12);
+        border: 1px solid rgba(0, 208, 156, 0.28);
+        border-radius: 16px;
+        background: linear-gradient(180deg, rgba(0, 208, 156, 0.12), rgba(0, 208, 156, 0.07));
         color: #a7f3d0;
-        padding: 11px 12px;
+        padding: 12px 13px;
         font-size: 14px;
       }
 
@@ -681,16 +695,20 @@
         align-items: center;
         justify-content: space-between;
         gap: 10px;
-        padding: 11px;
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        background: var(--bg-elevated);
+        padding: 13px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 18px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(255, 255, 255, 0.008)),
+          var(--bg-elevated);
         transition: all 0.2s ease;
+        box-shadow: var(--surface-gloss);
       }
 
       .toggle-row:hover {
-        border-color: var(--border-light);
+        border-color: rgba(255, 255, 255, 0.1);
         transform: translateY(-1px);
+        box-shadow: var(--surface-gloss), var(--shadow-sm);
       }
 
       .toggle-row.full {
@@ -726,10 +744,11 @@
         position: absolute;
         inset: 0;
         border-radius: 999px;
-        background: #2d2d2d;
-        border: 1px solid var(--border-light);
+        background: #2b2b31;
+        border: 1px solid rgba(255, 255, 255, 0.08);
         transition: 130ms ease;
         pointer-events: none;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
       }
 
       .slider::before {
@@ -745,9 +764,9 @@
       }
 
       .switch input:checked + .slider {
-        background: linear-gradient(90deg, var(--purple), var(--purple-light));
-        border-color: var(--purple-light);
-        box-shadow: var(--shadow-purple);
+        background: linear-gradient(90deg, rgba(103, 57, 183, 0.92), rgba(139, 92, 246, 0.92));
+        border-color: rgba(139, 92, 246, 0.72);
+        box-shadow: 0 10px 22px rgba(103, 57, 183, 0.24);
       }
 
       .switch input:checked + .slider::before {
@@ -760,13 +779,14 @@
 
       #clearDataBtn {
         border: 1px solid rgba(255, 107, 157, 0.5);
-        border-radius: var(--radius);
-        color: #fecaca;
-        background: rgba(255, 107, 157, 0.12);
-        padding: 10px 15px;
+        border-radius: 14px;
+        color: #ffe4ea;
+        background: linear-gradient(180deg, rgba(255, 107, 157, 0.14), rgba(255, 107, 157, 0.08));
+        padding: 11px 15px;
         font-size: 15px;
         font-weight: 650;
         cursor: pointer;
+        box-shadow: var(--surface-gloss);
       }
 
       #clearDataBtn:hover {
@@ -797,10 +817,10 @@
 
       .info-modal-card {
         width: min(580px, 100%);
-        border: 1px solid var(--border-light);
-        border-radius: 18px;
-        background: linear-gradient(180deg, #212126 0%, #1b1b20 100%);
-        box-shadow: var(--shadow-lg), var(--shadow-purple);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 24px;
+        background: linear-gradient(180deg, #1f1f24 0%, #17171b 100%);
+        box-shadow: var(--shadow-lg);
         overflow: hidden;
       }
 
@@ -809,9 +829,9 @@
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        padding: 14px 16px;
+        padding: 16px 18px;
         border-bottom: 1px solid var(--border);
-        background: rgba(103, 57, 183, 0.12);
+        background: linear-gradient(180deg, rgba(103, 57, 183, 0.12), rgba(103, 57, 183, 0.05));
       }
 
       .info-modal-title-wrap {
@@ -846,9 +866,9 @@
       .info-modal-close {
         width: 34px;
         height: 34px;
-        border-radius: 10px;
-        border: 1px solid var(--border-light);
-        background: var(--bg-elevated);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.024), rgba(255, 255, 255, 0.012));
         color: var(--text-secondary);
         display: inline-flex;
         align-items: center;
@@ -864,8 +884,8 @@
 
       .info-modal-close:hover {
         color: var(--text);
-        border-color: var(--purple-light);
-        background: rgba(103, 57, 183, 0.2);
+        border-color: rgba(139, 92, 246, 0.5);
+        background: rgba(103, 57, 183, 0.14);
       }
 
       .info-modal-close:focus-visible {

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AskBetter",
-  "description": "Prompt optimizer and text rephraser for ChatGPT, Gemini, and editable text on the web.",
+  "description": "Prompt optimizer and text rephraser for ChatGPT, Gemini, Claude, and editable text on the web.",
   "version": "0.1.2",
   "permissions": [
     "activeTab",
@@ -11,7 +11,8 @@
   ],
   "host_permissions": [
     "https://generativelanguage.googleapis.com/*",
-    "https://api.openai.com/*"
+    "https://api.openai.com/*",
+    "https://api.anthropic.com/*"
   ],
   "background": {
     "service_worker": "background.js"
