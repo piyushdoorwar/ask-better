@@ -665,7 +665,11 @@
       #testKeyStatus {
         min-height: 16px;
         font-size: 13px;
+        font-weight: 500;
       }
+
+      #testKeyStatus.ok  { color: var(--green); }
+      #testKeyStatus.warn { color: var(--amber); }
 
       .help-link {
         color: var(--orange-light);
@@ -682,13 +686,59 @@
         display: none !important;
       }
 
-      .key-locked-banner {
-        border: 1px solid rgba(38, 162, 105, 0.3);
+      .gen-key-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        border: 1px solid var(--border);
         border-radius: var(--radius);
-        background: rgba(38, 162, 105, 0.08);
-        color: #88e0b4;
-        padding: 10px 12px;
+        background: var(--bg-elevated);
+        color: var(--text-secondary);
+        padding: 9px 14px;
         font-size: 13px;
+        font-weight: 500;
+        font-family: inherit;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 120ms, border-color 120ms, color 120ms;
+        box-shadow: var(--shadow-sm);
+        line-height: 1;
+      }
+
+      .gen-key-btn:hover {
+        background: var(--bg-elevated-2);
+        border-color: var(--border-light);
+        color: var(--text);
+      }
+
+      .gen-key-btn:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--focus);
+      }
+
+      .gen-key-btn[hidden] {
+        display: none !important;
+      }
+
+      .key-locked-banner {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        color: var(--text-secondary);
+        padding: 9px 12px;
+        font-size: 13px;
+      }
+
+      .key-locked-banner[hidden] {
+        display: none !important;
+      }
+
+      .key-locked-banner svg {
+        flex-shrink: 0;
+        opacity: 0.6;
       }
 
       .toggle-grid {
@@ -789,25 +839,26 @@
       }
 
       #clearDataBtn {
-        border: 1px solid rgba(192, 28, 40, 0.45);
+        border: 1px solid rgba(192, 28, 40, 0.28);
         border-radius: var(--radius);
-        color: #f4a4aa;
-        background: rgba(192, 28, 40, 0.1);
+        color: var(--text-secondary);
+        background: var(--bg-elevated);
         padding: 9px 14px;
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;
-        transition: background 120ms, border-color 120ms;
+        transition: background 120ms, border-color 120ms, color 120ms;
       }
 
       #clearDataBtn:hover {
-        background: rgba(192, 28, 40, 0.2);
-        border-color: rgba(192, 28, 40, 0.75);
+        background: rgba(192, 28, 40, 0.1);
+        border-color: rgba(192, 28, 40, 0.5);
+        color: #f4a4aa;
       }
 
       #clearDataBtn:focus-visible {
         outline: none;
-        box-shadow: 0 0 0 2px rgba(192, 28, 40, 0.4);
+        box-shadow: 0 0 0 2px rgba(192, 28, 40, 0.35);
       }
 
       .note {

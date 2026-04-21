@@ -801,6 +801,7 @@ function buildCustomSelect(shell) {
   trigger.setAttribute('aria-expanded', 'false');
   trigger.innerHTML =
     '<span class="csel-val"></span>' +
+    '<span class="csel-chevron-sep"></span>' +
     '<svg class="csel-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
     '<path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>' +
     '</svg>';

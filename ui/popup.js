@@ -46,7 +46,6 @@ const providerSelectEl = document.getElementById("providerSelect");
 const modelLabelEl = document.getElementById("modelLabel");
 const modelSelectEl = document.getElementById("modelSelect");
 const openSettingsBtn = document.getElementById("openSettingsBtn");
-const missingKeyLinkEl = document.getElementById("missingKeyLink");
 
 init().catch(() => {
   statusText.textContent = "Unable to load settings.";
@@ -99,10 +98,7 @@ function renderStatus(settings) {
   const meta = getProviderMeta(settings.provider);
   const hasKey = !!String(settings[meta.keyField] || "").trim();
 
-  if (missingKeyLinkEl) {
-    missingKeyLinkEl.href = meta.keyUrl;
-    missingKeyLinkEl.hidden = true;
-  }
+  
   if (statusBox) {
     statusBox.classList.remove("state-ok", "state-warn");
   }
@@ -130,9 +126,7 @@ function renderStatus(settings) {
   if (statusBox) {
     statusBox.classList.add("state-warn");
   }
-  if (missingKeyLinkEl) {
-    missingKeyLinkEl.hidden = false;
-  }
+  
 }
 
 async function readSettings() {
@@ -287,6 +281,7 @@ function buildCustomSelect(shell) {
   trigger.setAttribute('aria-expanded', 'false');
   trigger.innerHTML =
     '<span class="csel-val"></span>' +
+    '<span class="csel-chevron-sep"></span>' +
     '<svg class="csel-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
     '<path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>' +
     '</svg>';
