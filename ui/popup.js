@@ -66,6 +66,8 @@ async function init() {
   enableChatGPTEl.checked = !!settings.enableChatGPT;
   enableGeminiEl.checked = !!settings.enableGemini;
 
+  initCustomSelects();
+
   defaultPresetEl.addEventListener("change", async () => {
     await updateSettings({ defaultPreset: normalizePreset(defaultPresetEl.value) });
   });
@@ -219,6 +221,10 @@ function renderModelOptions(selectedModel) {
     modelSelectEl.appendChild(option);
   }
   modelSelectEl.value = selectedModel;
+  const modelShell = modelSelectEl.closest('.csel');
+  if (modelShell && modelShell._rebuildCustomSelect) {
+    modelShell._rebuildCustomSelect();
+  }
 }
 
 function getProviderMeta(provider) {
@@ -272,4 +278,112 @@ function normalizeProvider(value) {
 function normalizeModel(value, fallback) {
   const model = String(value || "").trim();
   return model || fallback;
+}
+
+function initCustomSelects() {
+  document.querySelectorAll('.csel').forEach(shell => buildCustomSelect(shell));
+}
+
+function buildCustomSelect(shell) {
+  const select = shell.querySelector('select');
+  if (!select) return;
+
+  // Remove any previously injected UI
+  shell.querySelectorAll('.csel-trigger, .csel-panel').forEach(el => el.remove());
+
+  // Trigger button
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'csel-trigger';
+  trigger.setAttribute('aria-haspopup', 'listbox');
+  trigger.setAttribute('aria-expanded', 'false');
+  trigger.innerHTML =
+    '<span class="csel-val"></span>' +
+    '<svg class="csel-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
+    '<path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '</svg>';
+
+  // Panel
+  const panel = document.createElement('div');
+  panel.className = 'csel-panel';
+  panel.setAttribute('role', 'listbox');
+  panel.hidden = true;
+
+  shell.insertBefore(trigger, select);
+  shell.insertBefore(panel, select);
+
+  function buildOptions() {
+    panel.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    for (const child of select.children) {
+      if (child.tagName === 'OPTGROUP') {
+        const grp = document.createElement('div');
+        grp.className = 'csel-group';
+        grp.textContent = child.label;
+        frag.appendChild(grp);
+        for (const opt of child.children) frag.appendChild(makeItem(opt));
+      } else if (child.tagName === 'OPTION') {
+        frag.appendChild(makeItem(child));
+      }
+    }
+    panel.appendChild(frag);
+  }
+
+  function makeItem(opt) {
+    const item = document.createElement('div');
+    item.className = 'csel-item';
+    item.dataset.value = opt.value;
+    item.setAttribute('role', 'option');
+    item.textContent = opt.textContent;
+    item.addEventListener('click', () => {
+      select.value = opt.value;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      syncSelected();
+      close();
+    });
+    return item;
+  }
+
+  function syncSelected() {
+    const val = select.value;
+    const selOpt = select.options[select.selectedIndex];
+    trigger.querySelector('.csel-val').textContent = selOpt ? selOpt.textContent : '';
+    panel.querySelectorAll('.csel-item').forEach(item => {
+      const active = item.dataset.value === val;
+      item.classList.toggle('is-selected', active);
+      item.setAttribute('aria-selected', String(active));
+    });
+  }
+
+  function open() {
+    panel.hidden = false;
+    trigger.setAttribute('aria-expanded', 'true');
+    shell.classList.add('is-open');
+    const sel = panel.querySelector('.csel-item.is-selected');
+    if (sel) sel.scrollIntoView({ block: 'nearest' });
+  }
+
+  function close() {
+    panel.hidden = true;
+    trigger.setAttribute('aria-expanded', 'false');
+    shell.classList.remove('is-open');
+  }
+
+  trigger.addEventListener('click', e => {
+    e.stopPropagation();
+    panel.hidden ? open() : close();
+  });
+
+  document.addEventListener('click', e => {
+    if (!shell.contains(e.target)) close();
+  });
+
+  buildOptions();
+  syncSelected();
+
+  // Expose for external rebuild (e.g. after renderModelOptions repopulates options)
+  shell._rebuildCustomSelect = () => {
+    buildOptions();
+    syncSelected();
+  };
 }

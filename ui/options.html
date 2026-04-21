@@ -100,18 +100,18 @@
             <div class="grid">
               <div class="field">
                 <label for="providerSelect">Provider</label>
-                <div class="select-shell">
-                  <select id="providerSelect" name="providerSelect">
+                <div class="csel">
+                  <select id="providerSelect" name="providerSelect" hidden>
                     <option value="gemini">Google Gemini</option>
-                    <option value="openai">OpenAI</option>
+                    <option value="openai">OpenAI ChatGPT</option>
                     <option value="anthropic">Anthropic Claude</option>
                   </select>
                 </div>
               </div>
               <div class="field">
                 <label id="modelLabel" for="modelSelect">Gemini model</label>
-                <div class="select-shell">
-                  <select id="modelSelect" name="modelSelect">
+                <div class="csel">
+                  <select id="modelSelect" name="modelSelect" hidden>
                     <option value="gpt-5.2">gpt-5.2</option>
                     <option value="gpt-5-mini">gpt-5-mini</option>
                     <option value="gpt-4.1">gpt-4.1</option>
@@ -196,8 +196,8 @@
             <div class="grid">
               <div class="field full">
                 <label for="defaultPreset">Default preset</label>
-                <div class="select-shell">
-                  <select id="defaultPreset" name="defaultPreset">
+                <div class="csel">
+                  <select id="defaultPreset" name="defaultPreset" hidden>
                     <optgroup label="Core Rewrite">
                       <option value="structured">Story structured (2-3 paragraphs)</option>
                       <option value="concise">Concise</option>

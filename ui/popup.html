@@ -38,8 +38,8 @@
       <div class="field">
         <p class="section-title">Default Optimization Style</p>
         <label for="defaultPreset">Preset</label>
-        <div class="select-shell">
-          <select id="defaultPreset">
+        <div class="csel">
+          <select id="defaultPreset" hidden>
             <optgroup label="Core">
               <option value="structured">Story structured</option>
               <option value="concise">Concise</option>
@@ -79,16 +79,16 @@
       <div class="field">
         <p class="section-title">Model</p>
         <label for="providerSelect">Provider</label>
-        <div class="select-shell">
-          <select id="providerSelect">
+        <div class="csel">
+          <select id="providerSelect" hidden>
             <option value="gemini">Google Gemini</option>
             <option value="openai">OpenAI</option>
             <option value="anthropic">Anthropic Claude</option>
           </select>
         </div>
         <label id="modelLabel" for="modelSelect">Gemini model</label>
-        <div class="select-shell">
-          <select id="modelSelect">
+        <div class="csel">
+          <select id="modelSelect" hidden>
             <option value="gpt-5.2">gpt-5.2</option>
             <option value="gpt-5-mini">gpt-5-mini</option>
             <option value="gpt-4.1">gpt-4.1</option>
