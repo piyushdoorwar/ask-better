@@ -1,6 +1,6 @@
 # AskBetter (Chrome Extension, MV3)
 
-AskBetter is a local-first prompt optimizer that uses Google Gemini and works on:
+AskBetter is a local-first prompt optimizer that uses Google Gemini or OpenAI and works on:
 
 - ChatGPT (`chat.openai.com` and `chatgpt.com`)
 - Google Gemini (`gemini.google.com`)
@@ -41,7 +41,7 @@ It injects a lightweight `Optimize` button near the prompt input. Clicking it re
 ## Files
 
 - `manifest.json` (MV3 config)
-- `background.js` (secure API handling + Gemini API calls)
+- `background.js` (secure API handling + provider API calls)
 - `content/chatgpt.js` (ChatGPT injection)
 - `content/gemini.js` (Gemini injection)
 - `injected/styles.css` (button + toast styles)
@@ -64,13 +64,15 @@ It injects a lightweight `Optimize` button near the prompt input. Clicking it re
 2. Click `Open settings`.
 3. Use the left menu sections:
    - Models
+   - Mode
    - Presets
    - Integrations
    - Custom Prompt Additions
    - Security
 4. Set:
+   - Provider
    - API key
-   - Gemini model
+   - Model
    - Default preset
    - Keep user voice toggle (preserve tone/style during rewrites)
    - Toggles (Global AI, ChatGPT, Gemini)
@@ -89,13 +91,14 @@ If AI is off or no key is set, AskBetter shows:
 
 - `AI disabled or key missing`
 
-## API Key Link
+## API Key Links
 
 - Gemini key: `https://aistudio.google.com/apikey`
+- OpenAI key: `https://platform.openai.com/api-keys`
 
 ## Notes
 
-- AskBetter currently uses Google Gemini only as the model provider.
+- AskBetter supports Google Gemini and OpenAI as model providers.
 - The Optimize button can appear on both ChatGPT and Gemini pages.
 
 ## Legal Notice
@@ -116,7 +119,7 @@ inability to use, AskBetter.
 - [ ] Works on Gemini (`gemini.google.com`).
 - [ ] Missing key shows helpful toast (`AI disabled or key missing`).
 - [ ] Optimize replaces textbox content.
-- [ ] Gemini model switch persists and is used by optimization requests.
+- [ ] Provider/model switch persists and is used by optimization requests.
 - [ ] Options page left menu switches sections correctly.
 - [ ] Changes auto-save without clicking a Save button.
 - [ ] Settings persist after extension/page reload.

@@ -76,8 +76,16 @@
 
       <div class="field">
         <p class="section-title">Model</p>
-        <label for="modelSelect">Gemini model</label>
+        <label for="providerSelect">Provider</label>
+        <select id="providerSelect">
+          <option value="gemini">Google Gemini</option>
+          <option value="openai">OpenAI</option>
+        </select>
+        <label id="modelLabel" for="modelSelect">Gemini model</label>
         <select id="modelSelect">
+          <option value="gpt-5.2">gpt-5.2</option>
+          <option value="gpt-5-mini">gpt-5-mini</option>
+          <option value="gpt-4.1">gpt-4.1</option>
           <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
           <option value="gemini-3-pro-preview">gemini-3-pro-preview</option>
           <option value="gemini-2.5-flash">gemini-2.5-flash</option>

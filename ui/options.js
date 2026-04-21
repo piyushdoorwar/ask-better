@@ -3,6 +3,9 @@ const DEFAULT_SETTINGS = {
   geminiApiKey: "",
   geminiModel: "gemini-3-flash-preview",
   geminiKeyVerified: false,
+  openaiApiKey: "",
+  openaiModel: "gpt-5.2",
+  openaiKeyVerified: false,
   defaultPreset: "structured",
   enableChatGPT: true,
   enableGemini: true,
@@ -15,6 +18,7 @@ const DEFAULT_SETTINGS = {
 };
 
 const GEMINI_KEY_URL = "https://aistudio.google.com/apikey";
+const OPENAI_KEY_URL = "https://platform.openai.com/api-keys";
 const GEMINI_MODELS = [
   "gemini-3-flash-preview",
   "gemini-3-pro-preview",
@@ -22,14 +26,15 @@ const GEMINI_MODELS = [
   "gemini-2.5-pro",
   "gemini-2.0-flash"
 ];
+const OPENAI_MODELS = ["gpt-5.2", "gpt-5-mini", "gpt-4.1"];
 const SECTION_INFO_CONTENT = {
   models: {
     title: "Models",
-    description: "This section controls which Gemini model AskBetter calls when you press Optimize.",
+    description: "This section controls which provider and model AskBetter calls when you press Optimize.",
     points: [
-      "AskBetter currently runs only with Google Gemini.",
+      "AskBetter supports Google Gemini and OpenAI.",
       "Faster/lighter models usually respond quicker and cost less; larger models can improve rewrite quality.",
-      "Your key is stored locally and is only used by the background worker for direct Gemini API calls."
+      "Your API keys are stored locally and used only by the background worker for direct provider API calls."
     ]
   },
   modes: {
@@ -70,14 +75,14 @@ const SECTION_INFO_CONTENT = {
       "Selected additions appear as removable chips, and you can add your own custom attributes.",
       "Keep additions short and reusable (tone, constraints, output preferences).",
       "These values are stored locally in your browser profile.",
-      "When you click Optimize, these additions are sent only to the Gemini API along with the prompt."
+      "When you click Optimize, these additions are sent only to the selected provider API along with the prompt."
     ]
   },
   security: {
     title: "Security",
     description: "This section is for key setup, verification, and reset controls.",
     points: [
-      "Test key checks your Gemini key before locking it.",
+      "Test key checks the selected provider key before locking it.",
       "After successful verification, key editing is locked for safety.",
       "Use Clear stored key/data to reset local settings and unlock key setup again."
     ]
@@ -86,6 +91,7 @@ const SECTION_INFO_CONTENT = {
 
 const modelLabelEl = document.getElementById("modelLabel");
 const modelSelectEl = document.getElementById("modelSelect");
+const providerSelectEl = document.getElementById("providerSelect");
 const apiKeyEl = document.getElementById("apiKey");
 const defaultPresetEl = document.getElementById("defaultPreset");
 const keepUserVoiceEl = document.getElementById("keepUserVoice");
@@ -273,8 +279,20 @@ function activateSection(targetId) {
 }
 
 function bindAutoSave() {
+  providerSelectEl.addEventListener("change", async () => {
+    const provider = normalizeProvider(providerSelectEl.value);
+    const current = currentSettings || await readSettings();
+    const meta = getProviderMeta(provider);
+    await savePartial({
+      provider,
+      [meta.modelField]: normalizeModel(current[meta.modelField], meta.defaultModel)
+    });
+    applyProviderUI();
+    renderStatusSummary();
+  });
+
   modelSelectEl.addEventListener("change", async () => {
-    const meta = getProviderMeta();
+    const meta = getProviderMeta(providerSelectEl.value);
     await savePartial({ [meta.modelField]: normalizeModel(modelSelectEl.value, meta.defaultModel) });
   });
 
@@ -480,7 +498,8 @@ function bindSecurityActions() {
       return;
     }
 
-    const meta = getProviderMeta();
+    const provider = normalizeProvider((currentSettings && currentSettings.provider) || providerSelectEl.value);
+    const meta = getProviderMeta(provider);
     const apiKey = apiKeyEl.value.trim();
 
     if (!apiKey) {
@@ -496,6 +515,7 @@ function bindSecurityActions() {
     const response = await sendMessage({
       type: "ASKBETTER_TEST_KEY",
       payload: {
+        provider,
         apiKey,
         model: modelSelectEl.value
       }
@@ -557,6 +577,7 @@ async function savePartial(partial, options) {
 function fillForm(settings) {
   const normalized = migrateSettings(settings);
   currentSettings = normalized;
+  providerSelectEl.value = normalizeProvider(normalized.provider);
   defaultPresetEl.value = normalizePreset(normalized.defaultPreset);
   keepUserVoiceEl.checked = !!normalized.keepUserVoice;
   enableAIEl.checked = !!normalized.enableAI;
@@ -572,10 +593,13 @@ function fillForm(settings) {
   renderCustomAdditions();
   syncQuickTagState();
   applyProviderUI();
+  renderStatusSummary();
 }
 
 function applyProviderUI() {
-  const meta = getProviderMeta();
+  const provider = normalizeProvider((currentSettings && currentSettings.provider) || providerSelectEl.value);
+  providerSelectEl.value = provider;
+  const meta = getProviderMeta(provider);
   const modelValue = String(currentSettings[meta.modelField] || meta.defaultModel).trim() || meta.defaultModel;
   renderModelOptions(meta.models, modelValue);
   if (modelLabelEl) {
@@ -604,10 +628,20 @@ function updateMissingKeyLinkVisibility() {
   if (!generateKeyLinkEl) {
     return;
   }
-  const meta = getProviderMeta();
+  const meta = getProviderMeta((currentSettings && currentSettings.provider) || providerSelectEl.value);
   generateKeyLinkEl.href = meta.keyUrl;
   const isMissingKey = !apiKeyEl.value.trim();
   generateKeyLinkEl.hidden = keyLocked || !isMissingKey;
+}
+
+function renderStatusSummary() {
+  const meta = getProviderMeta((currentSettings && currentSettings.provider) || providerSelectEl.value);
+  const hasKey = !!String(currentSettings && currentSettings[meta.keyField] || "").trim();
+  if (!hasKey) {
+    setStatus(`${meta.providerName} key missing.`, "warn");
+    return;
+  }
+  setStatus(`${meta.providerName} ready.`, "ok", true);
 }
 
 function renderModelOptions(models, selected) {
@@ -627,7 +661,20 @@ function renderModelOptions(models, selected) {
   modelSelectEl.value = selected;
 }
 
-function getProviderMeta() {
+function getProviderMeta(provider) {
+  if (normalizeProvider(provider) === "openai") {
+    return {
+      providerName: "OpenAI",
+      keyField: "openaiApiKey",
+      verifiedField: "openaiKeyVerified",
+      modelField: "openaiModel",
+      defaultModel: DEFAULT_SETTINGS.openaiModel,
+      models: OPENAI_MODELS,
+      keyUrl: OPENAI_KEY_URL,
+      keyPlaceholder: "sk-...",
+      modelLabel: "OpenAI model"
+    };
+  }
   return {
     providerName: "Gemini",
     keyField: "geminiApiKey",
@@ -649,10 +696,13 @@ async function readSettings() {
 function migrateSettings(rawSettings) {
   const raw = rawSettings || {};
   return {
-    provider: "gemini",
+    provider: normalizeProvider(raw.provider),
     geminiApiKey: String(raw.geminiApiKey || ""),
     geminiModel: normalizeModel(raw.geminiModel, DEFAULT_SETTINGS.geminiModel),
     geminiKeyVerified: !!raw.geminiKeyVerified,
+    openaiApiKey: String(raw.openaiApiKey || ""),
+    openaiModel: normalizeModel(raw.openaiModel, DEFAULT_SETTINGS.openaiModel),
+    openaiKeyVerified: !!raw.openaiKeyVerified,
     defaultPreset: normalizePreset(raw.defaultPreset),
     enableChatGPT: raw.enableChatGPT !== false,
     enableGemini: raw.enableGemini !== false,
@@ -691,6 +741,10 @@ function normalizePreset(value) {
 function normalizeModel(model, fallback) {
   const value = String(model || "").trim();
   return value || fallback;
+}
+
+function normalizeProvider(value) {
+  return String(value || "").toLowerCase() === "openai" ? "openai" : "gemini";
 }
 
 function setStatus(message, tone, resetToReady) {

@@ -1,7 +1,7 @@
 # Codex Project Guide
 
 ## What This Project Is
-AskBetter is a Manifest V3 browser extension for rewriting prompts and selected text with Google Gemini.
+AskBetter is a Manifest V3 browser extension for rewriting prompts and selected text with Google Gemini or OpenAI.
 
 It currently has two user-facing modes:
 - `Ask Better`: the existing in-page Optimize button for ChatGPT and Gemini prompt boxes.
@@ -9,7 +9,7 @@ It currently has two user-facing modes:
 
 The extension is local-first:
 - settings are stored in `chrome.storage.local`
-- Gemini API calls are made directly from the background service worker
+- Provider API calls are made directly from the background service worker
 - there is no backend server in this repo
 
 ## Core Product Behavior
@@ -44,7 +44,7 @@ The extension is local-first:
 - Responsibilities:
   - read/migrate default settings
   - expose public settings to content scripts
-  - call Gemini API
+- call Gemini or OpenAI APIs
   - build system instructions
   - handle context menu creation and clicks
   - run Phrase Better replacement logic through `chrome.scripting.executeScript`
@@ -92,9 +92,13 @@ Important message types:
 Settings are stored under `chrome.storage.local.settings`.
 
 Important keys:
+- `provider`
 - `geminiApiKey`
 - `geminiModel`
+- `openaiApiKey`
+- `openaiModel`
 - `geminiKeyVerified`
+- `openaiKeyVerified`
 - `defaultPreset`
 - `enableAI`
 - `enableChatGPT`
@@ -119,7 +123,7 @@ Important UI pref:
    - selected preset
    - keep-user-voice toggle
    - custom prompt additions
-6. Gemini returns rewritten text.
+6. The selected provider returns rewritten text.
 7. Content script replaces the original prompt content.
 
 ### Phrase Better path
@@ -164,7 +168,7 @@ For Phrase Better, the effective behavior is intentionally closer to `grammar`, 
 - Prefer direct browser APIs over adding build tooling or frameworks.
 - Do not introduce a backend dependency unless the user explicitly wants one.
 - Preserve the current local-storage model and migration behavior.
-- Keep Gemini as the active provider unless the user explicitly asks for multi-provider support.
+- The repo now supports Gemini and OpenAI; when changing provider behavior, update settings, popup, and background together.
 - When changing site integrations, update both content script logic and any related settings copy.
 - When changing settings shape, update all three places together:
   - `background.js`
@@ -177,7 +181,7 @@ For Phrase Better, the effective behavior is intentionally closer to `grammar`, 
 - Phrase Better does not work in native desktop apps outside the browser.
 - Some complex custom editors may not preserve selection cleanly during replacement.
 - The popup does not currently expose every setting that exists in the full settings page.
-- The extension currently uses Gemini only, despite the product name being broader.
+- Provider selection now supports Gemini and OpenAI.
 
 ## Good Starting Assumptions For Future Requests
 - This repo is a browser extension, not a web app.

@@ -94,17 +94,23 @@
                     </svg>
                   </button>
                 </div>
-                <p class="section-sub">Choose the active Gemini model used for optimization.</p>
+                <p class="section-sub">Choose the active provider and model used for optimization.</p>
               </div>
             </div>
             <div class="grid">
               <div class="field">
-                <span class="field-label">Provider</span>
-                <div class="readonly-field" role="text" aria-label="Provider">Google Gemini</div>
+                <label for="providerSelect">Provider</label>
+                <select id="providerSelect" name="providerSelect">
+                  <option value="gemini">Google Gemini</option>
+                  <option value="openai">OpenAI</option>
+                </select>
               </div>
               <div class="field">
                 <label id="modelLabel" for="modelSelect">Gemini model</label>
                 <select id="modelSelect" name="modelSelect">
+                  <option value="gpt-5.2">gpt-5.2</option>
+                  <option value="gpt-5-mini">gpt-5-mini</option>
+                  <option value="gpt-4.1">gpt-4.1</option>
                   <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
                   <option value="gemini-3-pro-preview">gemini-3-pro-preview</option>
                   <option value="gemini-2.5-flash">gemini-2.5-flash</option>
@@ -486,16 +492,16 @@
 
           <h4>What Is Stored Locally</h4>
           <ul class="info-modal-list">
-            <li>Settings: Gemini model, preset, integration toggles, and UI preferences.</li>
-            <li>Keys: your Gemini API key is saved in <code>chrome.storage.local</code>.</li>
+            <li>Settings: provider, model, preset, integration toggles, and UI preferences.</li>
+            <li>Keys: your Gemini and/or OpenAI API keys are saved in <code>chrome.storage.local</code>.</li>
           </ul>
 
           <h4>What Is Sent Externally</h4>
           <ul class="info-modal-list">
-            <li>Optimize request: your current prompt is sent only to the Google Gemini API.</li>
-            <li>Request metadata: selected Gemini model and preset instruction are sent with the request.</li>
+            <li>Optimize request: your current prompt is sent only to the selected provider API, Google Gemini or OpenAI.</li>
+            <li>Request metadata: selected provider model and preset instruction are sent with the request.</li>
             <li>Custom Prompt Additions: if set, they are sent as additional guidance with optimize requests.</li>
-            <li>Key test: a direct Gemini key validation call is made when you click Test key.</li>
+            <li>Key test: a direct provider key validation call is made when you click Test key.</li>
           </ul>
 
           <h4>What Is Not Sent</h4>
