@@ -37,6 +37,8 @@ function startAskBetter(site, siteToggleKey, selectors) {
   let offsetSaveTimer = 0;
   let dragState = null;
   let suppressNextClick = false;
+  let isBusy = false;
+  let busyIndicator = null;
 
   scheduleSync();
   window.addEventListener("resize", scheduleSync, { passive: true });
@@ -94,6 +96,9 @@ function startAskBetter(site, siteToggleKey, selectors) {
     ensureButton();
     activeInput = input;
     placeButtonNearInput(input);
+    if (isBusy) {
+      placeBusyIndicatorNearInput(input);
+    }
     button.style.display = "inline-flex";
   }
 
@@ -101,6 +106,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
     if (button && button.isConnected) {
       button.style.display = "none";
     }
+    hideBusyIndicator();
     activeInput = null;
   }
 
@@ -147,14 +153,14 @@ function startAskBetter(site, siteToggleKey, selectors) {
       return;
     }
 
-    setBusy(true);
+    setBusy(true, targetInput);
     const response = await sendMessage({
       type: "ASKBETTER_OPTIMIZE",
       prompt,
       preset: settings.defaultPreset,
       site
     });
-    setBusy(false);
+    setBusy(false, targetInput);
 
     if (!response || !response.ok) {
       const message = response && response.code === "DISABLED_OR_MISSING_KEY"
@@ -276,13 +282,67 @@ function startAskBetter(site, siteToggleKey, selectors) {
     }, delay);
   }
 
-  function setBusy(isBusy) {
-    if (!button || !button.isConnected) {
+  function ensureBusyIndicator() {
+    if (busyIndicator && busyIndicator.isConnected) {
       return;
     }
-    button.disabled = !!isBusy;
-    button.classList.toggle("pf-is-busy", !!isBusy);
-    button.textContent = isBusy ? "Optimizing..." : BUTTON_LABEL;
+    busyIndicator = document.createElement("div");
+    busyIndicator.id = "pf-busy-indicator";
+    busyIndicator.className = "pf-busy-indicator";
+    busyIndicator.innerHTML = `
+      <span class="pf-busy-spinner" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+          <circle class="pf-busy-track" cx="12" cy="12" r="8.5"></circle>
+          <circle class="pf-busy-head pf-busy-head-top" cx="12" cy="3.5" r="2"></circle>
+          <circle class="pf-busy-head pf-busy-head-right" cx="20.5" cy="12" r="2"></circle>
+          <circle class="pf-busy-head pf-busy-head-bottom" cx="12" cy="20.5" r="2"></circle>
+          <circle class="pf-busy-head pf-busy-head-left" cx="3.5" cy="12" r="2"></circle>
+        </svg>
+      </span>
+      <span class="pf-busy-text">AskBetter is working…</span>
+    `;
+    busyIndicator.style.display = "none";
+    document.body.appendChild(busyIndicator);
+  }
+
+  function placeBusyIndicatorNearInput(input) {
+    if (!busyIndicator || !busyIndicator.isConnected || !input) {
+      return;
+    }
+    const rect = input.getBoundingClientRect();
+    const indicatorRect = busyIndicator.getBoundingClientRect();
+    const width = Math.max(160, Math.round(indicatorRect.width || 176));
+    const height = Math.max(30, Math.round(indicatorRect.height || 34));
+    const top = clamp(rect.top - height - 10, 8, Math.max(8, window.innerHeight - height - 8));
+    const left = clamp(rect.left, 8, Math.max(8, window.innerWidth - width - 8));
+    busyIndicator.style.top = `${top}px`;
+    busyIndicator.style.left = `${left}px`;
+  }
+
+  function showBusyIndicator(input) {
+    ensureBusyIndicator();
+    placeBusyIndicatorNearInput(input);
+    busyIndicator.style.display = "inline-flex";
+  }
+
+  function hideBusyIndicator() {
+    if (busyIndicator && busyIndicator.isConnected) {
+      busyIndicator.style.display = "none";
+    }
+  }
+
+  function setBusy(nextBusy, input) {
+    isBusy = !!nextBusy;
+    if (button && button.isConnected) {
+      button.disabled = isBusy;
+      button.classList.toggle("pf-is-busy", isBusy);
+      button.textContent = isBusy ? "Optimizing..." : BUTTON_LABEL;
+    }
+    if (isBusy) {
+      showBusyIndicator(input || activeInput);
+    } else {
+      hideBusyIndicator();
+    }
   }
 }
 

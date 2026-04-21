@@ -1,7 +1,7 @@
 const DEFAULT_SETTINGS = {
   provider: "gemini",
   geminiApiKey: "",
-  geminiModel: "gemini-2.5-flash",
+  geminiModel: "gemini-3-flash-preview",
   geminiKeyVerified: false,
   defaultPreset: "structured",
   enableChatGPT: true,
@@ -516,13 +516,19 @@ async function handlePhraseBetterContextMenu(info, tab) {
   }
 
   const settings = await readSettings();
-  const response = await rewriteText({
-    prompt: selectedText,
-    preset: "grammar",
-    site: "chatgpt",
-    settings,
-    mode: "phrase_better"
-  });
+  await showPageBusyIndicatorInTab(tab.id, info.frameId);
+  let response;
+  try {
+    response = await rewriteText({
+      prompt: selectedText,
+      preset: "grammar",
+      site: "chatgpt",
+      settings,
+      mode: "phrase_better"
+    });
+  } finally {
+    await hidePageBusyIndicatorInTab(tab.id, info.frameId);
+  }
 
   if (!response || !response.ok) {
     const message = response && response.code === "DISABLED_OR_MISSING_KEY"
@@ -569,6 +575,35 @@ async function showPageToastInTab(tabId, frameId, message) {
     });
   } catch (_error) {
     // Ignore toast injection errors on unsupported pages.
+  }
+}
+
+async function showPageBusyIndicatorInTab(tabId, frameId, message) {
+  try {
+    await chrome.scripting.executeScript({
+      target: {
+        tabId,
+        frameIds: typeof frameId === "number" ? [frameId] : undefined
+      },
+      func: showPageBusyIndicatorOnPage,
+      args: [String(message || "")]
+    });
+  } catch (_error) {
+    // Ignore busy indicator injection errors on unsupported pages.
+  }
+}
+
+async function hidePageBusyIndicatorInTab(tabId, frameId) {
+  try {
+    await chrome.scripting.executeScript({
+      target: {
+        tabId,
+        frameIds: typeof frameId === "number" ? [frameId] : undefined
+      },
+      func: hidePageBusyIndicatorOnPage
+    });
+  } catch (_error) {
+    // Ignore busy indicator cleanup errors on unsupported pages.
   }
 }
 
@@ -668,6 +703,93 @@ function showPageToastOnPage(message) {
     toast.style.transform = "translateX(-50%) translateY(8px)";
     window.setTimeout(() => toast.remove(), 180);
   }, 1800);
+}
+
+function showPageBusyIndicatorOnPage(message) {
+  const indicatorId = "askbetter-page-busy";
+  let indicator = document.getElementById(indicatorId);
+  if (!indicator) {
+    indicator = document.createElement("div");
+    indicator.id = indicatorId;
+    indicator.style.position = "fixed";
+    indicator.style.zIndex = "2147483647";
+    indicator.style.display = "inline-flex";
+    indicator.style.alignItems = "center";
+    indicator.style.gap = "8px";
+    indicator.style.minHeight = "32px";
+    indicator.style.padding = "7px 10px";
+    indicator.style.borderRadius = "999px";
+    indicator.style.border = "1px solid rgba(255, 255, 255, 0.12)";
+    indicator.style.background = "rgba(20, 20, 20, 0.96)";
+    indicator.style.color = "#ffffff";
+    indicator.style.font = '500 12px/1.2 "Google Sans Text", "Google Sans", "Segoe UI", Arial, sans-serif';
+    indicator.style.boxShadow = "0 10px 30px rgba(0, 0, 0, 0.36)";
+    indicator.style.pointerEvents = "none";
+    indicator.innerHTML = `
+      <span style="width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="width:16px;height:16px;display:block;animation:askbetter-page-busy-spin 900ms linear infinite;">
+          <circle cx="12" cy="12" r="8.5" fill="none" stroke="rgba(245,245,245,0.22)" stroke-width="3" stroke-linecap="round" stroke-dasharray="20 34"></circle>
+          <circle cx="12" cy="3.5" r="2" fill="#ff6a1a"></circle>
+          <circle cx="20.5" cy="12" r="2" fill="#ff6a1a" opacity="0.92"></circle>
+          <circle cx="12" cy="20.5" r="2" fill="#ff6a1a" opacity="0.72"></circle>
+          <circle cx="3.5" cy="12" r="2" fill="#ff6a1a" opacity="0.48"></circle>
+        </svg>
+      </span>
+      <span id="askbetter-page-busy-text"></span>
+    `;
+    document.documentElement.appendChild(indicator);
+  }
+
+  let styleTag = document.getElementById("askbetter-page-busy-style");
+  if (!styleTag) {
+    styleTag = document.createElement("style");
+    styleTag.id = "askbetter-page-busy-style";
+    styleTag.textContent = "@keyframes askbetter-page-busy-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }";
+    document.documentElement.appendChild(styleTag);
+  }
+
+  const textEl = indicator.querySelector("#askbetter-page-busy-text");
+  if (textEl) {
+    textEl.textContent = String(message || "Working…");
+  }
+
+  const placement = (() => {
+    const active = document.activeElement;
+    const isTextInput = active instanceof HTMLTextAreaElement
+      || (active instanceof HTMLInputElement && /^(text|search|url|email|tel|password)$/i.test(active.type || "text"));
+    if (isTextInput) {
+      return active.getBoundingClientRect();
+    }
+
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+      const rect = selection.getRangeAt(0).getBoundingClientRect();
+      if (rect && (rect.width > 0 || rect.height > 0)) {
+        return rect;
+      }
+    }
+    return null;
+  })();
+
+  const indicatorRect = indicator.getBoundingClientRect();
+  const width = Math.max(170, Math.round(indicatorRect.width || 184));
+  const height = Math.max(30, Math.round(indicatorRect.height || 34));
+  const top = placement
+    ? Math.min(Math.max(placement.top - height - 10, 8), Math.max(8, window.innerHeight - height - 8))
+    : 24;
+  const left = placement
+    ? Math.min(Math.max(placement.left, 8), Math.max(8, window.innerWidth - width - 8))
+    : Math.max(8, window.innerWidth - width - 24);
+
+  indicator.style.top = `${top}px`;
+  indicator.style.left = `${left}px`;
+}
+
+function hidePageBusyIndicatorOnPage() {
+  const indicator = document.getElementById("askbetter-page-busy");
+  if (indicator) {
+    indicator.remove();
+  }
 }
 
 async function readUiPrefs() {

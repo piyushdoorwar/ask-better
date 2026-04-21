@@ -1,7 +1,7 @@
 const DEFAULT_SETTINGS = {
   provider: "gemini",
   geminiApiKey: "",
-  geminiModel: "gemini-2.5-flash",
+  geminiModel: "gemini-3-flash-preview",
   geminiKeyVerified: false,
   defaultPreset: "structured",
   enableChatGPT: true,

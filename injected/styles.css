@@ -61,3 +61,72 @@
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+.pf-busy-indicator {
+  position: fixed;
+  z-index: 2147483002;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(20, 20, 20, 0.96);
+  color: #f8fafc;
+  font: 500 12px/1.2 var(--pf-font-ui);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.36);
+  pointer-events: none;
+}
+
+.pf-busy-spinner {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pf-busy-spinner svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+  animation: pf-busy-spin 900ms linear infinite;
+}
+
+.pf-busy-track {
+  fill: none;
+  stroke: rgba(245, 245, 245, 0.22);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 20 34;
+}
+
+.pf-busy-head {
+  fill: #ff6a1a;
+}
+
+.pf-busy-head-right {
+  opacity: 0.92;
+}
+
+.pf-busy-head-bottom {
+  opacity: 0.72;
+}
+
+.pf-busy-head-left {
+  opacity: 0.48;
+}
+
+.pf-busy-text {
+  white-space: nowrap;
+}
+
+@keyframes pf-busy-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
