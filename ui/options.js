@@ -134,6 +134,40 @@ const sectionInfoCloseEl = document.getElementById("sectionInfoClose");
 const privacyInfoBtnEl = document.getElementById("privacyInfoBtn");
 const privacyInfoModalEl = document.getElementById("privacyInfoModal");
 const privacyInfoCloseEl = document.getElementById("privacyInfoClose");
+const providerInfoEl = document.getElementById("providerInfo");
+
+const PROVIDER_INFO = {
+  gemini: {
+    free: true,
+    rows: [
+      { label: "Free API tier", value: "Available (rate-limited)", ok: true },
+      { label: "Requires billing", value: "No — free tier works out of the box", ok: true },
+      { label: "Rate limits", value: "15 req/min · 1 500 req/day on free tier" },
+      { label: "Paid usage", value: "Pay-as-you-go via Google AI Studio" },
+    ],
+    note: "Best starting point — no credit card needed.",
+  },
+  openai: {
+    free: false,
+    rows: [
+      { label: "Free API tier", value: "Not available", warn: true },
+      { label: "Requires billing", value: "Yes — prepaid credits required", warn: true },
+      { label: "Rate limits", value: "Tier-based; increases with usage history" },
+      { label: "Paid usage", value: "Credits purchased via platform.openai.com" },
+    ],
+    note: "Add credits at platform.openai.com before use.",
+  },
+  anthropic: {
+    free: false,
+    rows: [
+      { label: "Free API tier", value: "Not available", warn: true },
+      { label: "Requires billing", value: "Yes — prepaid credits required", warn: true },
+      { label: "Rate limits", value: "Tier-based; increases with usage history" },
+      { label: "Paid usage", value: "Credits purchased via console.anthropic.com" },
+    ],
+    note: "Add credits at console.anthropic.com before use.",
+  },
+};
 
 let currentSettings = null;
 let keyLocked = false;
@@ -627,6 +661,22 @@ function applyProviderUI() {
   generateKeyLinkEl.href = meta.keyUrl;
   applyKeyLockState();
   updateMissingKeyLinkVisibility();
+  renderProviderInfo(provider);
+}
+
+function renderProviderInfo(provider) {
+  if (!providerInfoEl) return;
+  const info = PROVIDER_INFO[provider];
+  if (!info) { providerInfoEl.innerHTML = ""; return; }
+  const rows = info.rows.map(r =>
+    `<div class="pi-row">` +
+    `<span class="pi-label">${r.label}</span>` +
+    `<span class="pi-val${r.ok ? " pi-ok" : r.warn ? " pi-warn" : ""}">${r.value}</span>` +
+    `</div>`
+  ).join("");
+  providerInfoEl.innerHTML =
+    `<div class="pi-rows">${rows}</div>` +
+    `<p class="pi-note">${info.note}</p>`;
 }
 
 function applyKeyLockState() {
