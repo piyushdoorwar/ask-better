@@ -2,8 +2,11 @@
   "manifest_version": 3,
   "name": "AskBetter",
   "description": "Local prompt optimizer for Google Gemini + OpenAI ChatGPT.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "permissions": [
+    "activeTab",
+    "contextMenus",
+    "scripting",
     "storage"
   ],
   "host_permissions": [

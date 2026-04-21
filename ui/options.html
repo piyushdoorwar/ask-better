@@ -45,6 +45,12 @@
             </span>
             <span class="nav-label">Models</span>
           </button>
+          <button class="nav-btn" data-section="section-mode" type="button">
+            <span class="nav-icon" aria-hidden="true">
+              <span class="icon-mask icon-mode"></span>
+            </span>
+            <span class="nav-label">Mode</span>
+          </button>
           <button class="nav-btn" data-section="section-presets" type="button">
             <span class="nav-icon" aria-hidden="true">
               <span class="icon-mask icon-presets"></span>
@@ -103,6 +109,50 @@
                   <option value="gemini-2.5-pro">gemini-2.5-pro</option>
                   <option value="gemini-2.0-flash">gemini-2.0-flash</option>
                 </select>
+              </div>
+            </div>
+          </section>
+
+          <section id="section-mode" class="settings-section">
+            <div class="section-head">
+              <span class="section-badge" aria-hidden="true">
+                <span class="icon-mask icon-mode"></span>
+              </span>
+              <div>
+                <div class="section-title-row">
+                  <h2 class="section-title">Mode</h2>
+                  <button type="button" class="section-info-btn" data-info-section="modes" aria-label="About Mode">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+                      <path d="M12 10.3V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                      <circle cx="12" cy="7.6" r="1.1" fill="currentColor"></circle>
+                    </svg>
+                  </button>
+                </div>
+                <p class="section-sub">Control which AskBetter rewriting experiences are available.</p>
+              </div>
+            </div>
+            <div class="toggle-grid">
+              <div class="toggle-row full">
+                <div>
+                  <label for="enableAskBetterMode">Ask Better</label>
+                  <p class="inline-note">Shows the existing Optimize flow on ChatGPT and Gemini for prompt rewrites.</p>
+                </div>
+                <span class="switch">
+                  <input id="enableAskBetterMode" name="enableAskBetterMode" type="checkbox" />
+                  <span class="slider"></span>
+                </span>
+              </div>
+
+              <div class="toggle-row full">
+                <div>
+                  <label for="enablePhraseBetterMode">Phrase Better</label>
+                  <p class="inline-note">Adds a right-click action for selected text that fixes grammar and spelling while preserving the original wording as much as possible.</p>
+                </div>
+                <span class="switch">
+                  <input id="enablePhraseBetterMode" name="enablePhraseBetterMode" type="checkbox" />
+                  <span class="slider"></span>
+                </span>
               </div>
             </div>
           </section>
@@ -468,4 +518,3 @@
     <script src="options.js"></script>
   </body>
 </html>
-

@@ -70,7 +70,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
 
   async function syncButton() {
     const settings = await getPublicSettings(false);
-    if (!settings || !settings.enableAI || !settings[siteToggleKey]) {
+    if (!settings || !settings.enableAI || !settings.enableAskBetterMode || !settings[siteToggleKey]) {
       hideButton();
       return;
     }
@@ -126,7 +126,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
     }
 
     const settings = await getPublicSettings(true);
-    if (!settings || !settings.enableAI || !settings.hasApiKey || !settings[siteToggleKey]) {
+    if (!settings || !settings.enableAI || !settings.enableAskBetterMode || !settings.hasApiKey || !settings[siteToggleKey]) {
       showToast("AI disabled or key missing");
       return;
     }

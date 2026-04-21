@@ -6,6 +6,8 @@ const DEFAULT_SETTINGS = {
   defaultPreset: "structured",
   enableChatGPT: true,
   enableGemini: true,
+  enableAskBetterMode: true,
+  enablePhraseBetterMode: true,
   enableAI: true,
   keepUserVoice: false,
   keyVerified: false,
@@ -22,6 +24,16 @@ const SECTION_INFO_CONTENT = {
       "AskBetter currently runs only with Google Gemini.",
       "Faster/lighter models usually respond quicker and cost less; larger models can improve rewrite quality.",
       "Your key is stored locally and is only used by the background worker for direct Gemini API calls."
+    ]
+  },
+  modes: {
+    title: "Mode",
+    description: "Modes control which AskBetter experiences are available across supported surfaces.",
+    points: [
+      "Ask Better powers the existing Optimize button on ChatGPT and Gemini.",
+      "Phrase Better adds a right-click action for selected text in editable fields.",
+      "Phrase Better focuses on grammar, spelling, and small wording fixes while preserving the original phrasing as much as possible.",
+      "Both modes are enabled by default and can be turned off independently."
     ]
   },
   presets: {
@@ -74,6 +86,8 @@ const keepUserVoiceEl = document.getElementById("keepUserVoice");
 const enableAIEl = document.getElementById("enableAI");
 const enableChatGPTEl = document.getElementById("enableChatGPT");
 const enableGeminiEl = document.getElementById("enableGemini");
+const enableAskBetterModeEl = document.getElementById("enableAskBetterMode");
+const enablePhraseBetterModeEl = document.getElementById("enablePhraseBetterMode");
 const customPromptAdditionsEl = document.getElementById("customPromptAdditions");
 const customAdditionsListEl = document.getElementById("customAdditionsList");
 const customAdditionsEmptyEl = document.getElementById("customAdditionsEmpty");
@@ -268,6 +282,14 @@ function bindAutoSave() {
 
   enableAIEl.addEventListener("change", async () => {
     await savePartial({ enableAI: !!enableAIEl.checked });
+  });
+
+  enableAskBetterModeEl.addEventListener("change", async () => {
+    await savePartial({ enableAskBetterMode: !!enableAskBetterModeEl.checked });
+  });
+
+  enablePhraseBetterModeEl.addEventListener("change", async () => {
+    await savePartial({ enablePhraseBetterMode: !!enablePhraseBetterModeEl.checked });
   });
 
   enableChatGPTEl.addEventListener("change", async () => {
@@ -532,6 +554,8 @@ function fillForm(settings) {
   defaultPresetEl.value = normalizePreset(normalized.defaultPreset);
   keepUserVoiceEl.checked = !!normalized.keepUserVoice;
   enableAIEl.checked = !!normalized.enableAI;
+  enableAskBetterModeEl.checked = normalized.enableAskBetterMode !== false;
+  enablePhraseBetterModeEl.checked = normalized.enablePhraseBetterMode !== false;
   enableChatGPTEl.checked = !!normalized.enableChatGPT;
   enableGeminiEl.checked = !!normalized.enableGemini;
   customAdditions = splitAdditionsLines(normalized.customPromptAdditions || "");
@@ -626,6 +650,8 @@ function migrateSettings(rawSettings) {
     defaultPreset: normalizePreset(raw.defaultPreset),
     enableChatGPT: raw.enableChatGPT !== false,
     enableGemini: raw.enableGemini !== false,
+    enableAskBetterMode: raw.enableAskBetterMode !== false,
+    enablePhraseBetterMode: raw.enablePhraseBetterMode !== false,
     enableAI: raw.enableAI !== false,
     keepUserVoice: !!raw.keepUserVoice,
     keyVerified: !!raw.keyVerified,

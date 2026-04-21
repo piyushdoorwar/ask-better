@@ -6,11 +6,16 @@ const DEFAULT_SETTINGS = {
   defaultPreset: "structured",
   enableChatGPT: true,
   enableGemini: true,
+  enableAskBetterMode: true,
+  enablePhraseBetterMode: true,
   enableAI: true,
   keepUserVoice: false,
   keyVerified: false,
   customPromptAdditions: ""
 };
+
+const PHRASE_BETTER_CONTEXT_MENU_ID = "askbetter-phrase-better";
+let phraseBetterMenuSyncToken = 0;
 
 const DEFAULT_UI_PREFS = {
   buttonOffsets: {
@@ -38,10 +43,27 @@ const PRESET_INSTRUCTIONS = {
 
 chrome.runtime.onInstalled.addListener(async () => {
   await ensureDefaults();
+  await syncPhraseBetterContextMenu();
 });
 
 chrome.runtime.onStartup.addListener(async () => {
   await ensureDefaults();
+  await syncPhraseBetterContextMenu();
+});
+
+chrome.storage.onChanged.addListener(async (changes, areaName) => {
+  if (areaName === "local" && changes.settings) {
+    await syncPhraseBetterContextMenu();
+  }
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId !== PHRASE_BETTER_CONTEXT_MENU_ID) {
+    return;
+  }
+  handlePhraseBetterContextMenu(info, tab).catch(() => {
+    // Ignore context-menu runtime failures.
+  });
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -94,9 +116,14 @@ async function handleMessage(message) {
 async function optimizePrompt(message) {
   const rawPrompt = typeof message.prompt === "string" ? message.prompt : "";
   const prompt = rawPrompt.trim();
-  const preset = normalizePreset(message.preset);
+  const mode = normalizeOptimizationMode(message.mode);
+  const preset = mode === "phrase_better" ? "grammar" : normalizePreset(message.preset);
   const site = normalizeSite(message.site);
   const settings = await readSettings();
+  return await rewriteText({ prompt, preset, site, settings, mode });
+}
+
+async function rewriteText({ prompt, preset, site, settings, mode }) {
   const apiKey = getApiKeyForProvider(settings);
   const model = getModelForProvider(settings);
 
@@ -104,7 +131,12 @@ async function optimizePrompt(message) {
     return { ok: false, code: "EMPTY_PROMPT", message: "Prompt is empty." };
   }
 
-  if (!settings.enableAI || !isSiteEnabled(settings, site) || !apiKey) {
+  const askBetterEnabled = settings.enableAskBetterMode !== false;
+  const phraseBetterEnabled = settings.enablePhraseBetterMode !== false;
+  const isModeEnabled = mode === "phrase_better" ? phraseBetterEnabled : askBetterEnabled;
+  const isAllowedOnSurface = mode === "phrase_better" ? true : isSiteEnabled(settings, site);
+
+  if (!settings.enableAI || !isModeEnabled || !isAllowedOnSurface || !apiKey) {
     return {
       ok: false,
       code: "DISABLED_OR_MISSING_KEY",
@@ -113,7 +145,7 @@ async function optimizePrompt(message) {
   }
 
   try {
-    let optimizedPrompt = await callGemini({ apiKey, model, prompt, preset, settings });
+    let optimizedPrompt = await callGemini({ apiKey, model, prompt, preset, settings, mode });
 
     if (isLikelyIncompleteOutput(optimizedPrompt)) {
       const retry = await callGemini({
@@ -122,6 +154,7 @@ async function optimizePrompt(message) {
         prompt,
         preset,
         settings,
+        mode,
         completionPass: true
       });
       if (retry && retry.trim()) {
@@ -143,8 +176,8 @@ async function optimizePrompt(message) {
   }
 }
 
-async function callGemini({ apiKey, model, prompt, preset, settings, completionPass }) {
-  const systemText = buildSystemInstruction({ preset, settings, completionPass });
+async function callGemini({ apiKey, model, prompt, preset, settings, mode, completionPass }) {
+  const systemText = buildSystemInstruction({ preset, settings, mode, completionPass });
 
   const normalizedModel = normalizeGeminiModel(model || DEFAULT_SETTINGS.geminiModel);
   const response = await fetch(
@@ -252,7 +285,25 @@ function readApiErrorMessage(body) {
   return "";
 }
 
-function buildSystemInstruction({ preset, settings, completionPass }) {
+function buildSystemInstruction({ preset, settings, mode, completionPass }) {
+  if (mode === "phrase_better") {
+    const parts = [
+      "You improve user-selected text with minimal edits.",
+      "Return only the corrected text as plain text.",
+      "Do not add commentary, labels, markdown, bullets, or explanations.",
+      "Fix grammar, spelling, punctuation, and obvious wording issues.",
+      "Preserve the original meaning, tone, wording, sentence order, and formatting as much as possible.",
+      "Make the smallest number of edits needed for the text to read cleanly and correctly.",
+      "Do not add new claims, examples, or instructions that were not present in the original."
+    ];
+
+    if (completionPass) {
+      parts.push("Previous output looked incomplete. Return the full corrected text from the original selection.");
+    }
+
+    return parts.join(" ");
+  }
+
   const instruction = PRESET_INSTRUCTIONS[preset] || PRESET_INSTRUCTIONS.structured;
   const customGuidance = String(settings && settings.customPromptAdditions ? settings.customPromptAdditions : "").trim();
   const keepUserVoice = !!(settings && settings.keepUserVoice);
@@ -369,6 +420,8 @@ function toPublicSettings(settings) {
     defaultPreset: normalizePreset(settings.defaultPreset),
     enableChatGPT: !!settings.enableChatGPT,
     enableGemini: !!settings.enableGemini,
+    enableAskBetterMode: settings.enableAskBetterMode !== false,
+    enablePhraseBetterMode: settings.enablePhraseBetterMode !== false,
     enableAI: !!settings.enableAI,
     keepUserVoice: !!settings.keepUserVoice,
     hasApiKey
@@ -399,6 +452,10 @@ function getModelForProvider(settings) {
   return normalizeGeminiModel(settings.geminiModel || DEFAULT_SETTINGS.geminiModel);
 }
 
+function normalizeOptimizationMode(value) {
+  return String(value || "").toLowerCase() === "phrase_better" ? "phrase_better" : "ask_better";
+}
+
 function isSiteEnabled(settings, site) {
   if (site === "gemini") {
     return !!settings.enableGemini;
@@ -423,11 +480,194 @@ async function readSettings() {
     defaultPreset: normalizePreset(raw.defaultPreset),
     enableChatGPT: raw.enableChatGPT !== false,
     enableGemini: raw.enableGemini !== false,
+    enableAskBetterMode: raw.enableAskBetterMode !== false,
+    enablePhraseBetterMode: raw.enablePhraseBetterMode !== false,
     enableAI: raw.enableAI !== false,
     keepUserVoice: !!raw.keepUserVoice,
     keyVerified: !!raw.keyVerified,
     customPromptAdditions: String(raw.customPromptAdditions || "")
   };
+}
+
+async function syncPhraseBetterContextMenu() {
+  const token = ++phraseBetterMenuSyncToken;
+  const settings = await readSettings();
+  await chrome.contextMenus.removeAll();
+
+  if (token !== phraseBetterMenuSyncToken) {
+    return;
+  }
+
+  if (!settings.enableAI || !settings.enablePhraseBetterMode) {
+    return;
+  }
+
+  chrome.contextMenus.create({
+    id: PHRASE_BETTER_CONTEXT_MENU_ID,
+    title: "Re-phrase with AskBetter",
+    contexts: ["selection"]
+  });
+}
+
+async function handlePhraseBetterContextMenu(info, tab) {
+  const selectedText = String(info.selectionText || "").trim();
+  if (!selectedText || !tab || typeof tab.id !== "number") {
+    return;
+  }
+
+  const settings = await readSettings();
+  const response = await rewriteText({
+    prompt: selectedText,
+    preset: "grammar",
+    site: "chatgpt",
+    settings,
+    mode: "phrase_better"
+  });
+
+  if (!response || !response.ok) {
+    const message = response && response.code === "DISABLED_OR_MISSING_KEY"
+      ? "Phrase Better is off or the Gemini key is missing."
+      : (response && response.message) || "Phrase Better failed.";
+    await showPageToastInTab(tab.id, info.frameId, message);
+    return;
+  }
+
+  const replaced = await replaceSelectedTextInTab(tab.id, info.frameId, response.optimizedPrompt);
+  if (!replaced) {
+    await showPageToastInTab(tab.id, info.frameId, "Phrase Better works in editable text fields.");
+    return;
+  }
+
+  await showPageToastInTab(tab.id, info.frameId, "Phrase Better applied");
+}
+
+async function replaceSelectedTextInTab(tabId, frameId, nextText) {
+  try {
+    const results = await chrome.scripting.executeScript({
+      target: {
+        tabId,
+        frameIds: typeof frameId === "number" ? [frameId] : undefined
+      },
+      func: replaceSelectedTextOnPage,
+      args: [String(nextText || "")]
+    });
+    return !!(results && results[0] && results[0].result && results[0].result.ok);
+  } catch (_error) {
+    return false;
+  }
+}
+
+async function showPageToastInTab(tabId, frameId, message) {
+  try {
+    await chrome.scripting.executeScript({
+      target: {
+        tabId,
+        frameIds: typeof frameId === "number" ? [frameId] : undefined
+      },
+      func: showPageToastOnPage,
+      args: [String(message || "")]
+    });
+  } catch (_error) {
+    // Ignore toast injection errors on unsupported pages.
+  }
+}
+
+function replaceSelectedTextOnPage(nextText) {
+  const dispatch = (target, type) => {
+    if (!target) {
+      return;
+    }
+    try {
+      target.dispatchEvent(new Event(type, { bubbles: true }));
+    } catch (_error) {
+      // Ignore event dispatch failures.
+    }
+  };
+
+  const active = document.activeElement;
+  const isTextInput = active instanceof HTMLTextAreaElement
+    || (active instanceof HTMLInputElement && /^(text|search|url|email|tel|password)$/i.test(active.type || "text"));
+
+  if (isTextInput && typeof active.selectionStart === "number" && typeof active.selectionEnd === "number") {
+    const start = active.selectionStart;
+    const end = active.selectionEnd;
+    if (end > start) {
+      active.setRangeText(nextText, start, end, "end");
+      dispatch(active, "input");
+      dispatch(active, "change");
+      return { ok: true, method: "input" };
+    }
+  }
+
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+    return { ok: false, reason: "NO_SELECTION" };
+  }
+
+  const range = selection.getRangeAt(0);
+  const anchorNode = range.commonAncestorContainer && range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
+    ? range.commonAncestorContainer
+    : range.commonAncestorContainer && range.commonAncestorContainer.parentElement;
+  const editableRoot = anchorNode && anchorNode.closest
+    ? anchorNode.closest("[contenteditable='true'], [contenteditable='plaintext-only']")
+    : null;
+
+  if (!editableRoot) {
+    return { ok: false, reason: "UNEDITABLE_SELECTION" };
+  }
+
+  range.deleteContents();
+  const textNode = document.createTextNode(nextText);
+  range.insertNode(textNode);
+
+  selection.removeAllRanges();
+  const nextRange = document.createRange();
+  nextRange.setStartAfter(textNode);
+  nextRange.collapse(true);
+  selection.addRange(nextRange);
+
+  dispatch(editableRoot, "input");
+  dispatch(editableRoot, "change");
+  return { ok: true, method: "contenteditable" };
+}
+
+function showPageToastOnPage(message) {
+  const toastId = "askbetter-page-toast";
+  const existing = document.getElementById(toastId);
+  if (existing) {
+    existing.remove();
+  }
+
+  const toast = document.createElement("div");
+  toast.id = toastId;
+  toast.textContent = String(message || "");
+  toast.style.position = "fixed";
+  toast.style.left = "50%";
+  toast.style.bottom = "24px";
+  toast.style.transform = "translateX(-50%)";
+  toast.style.zIndex = "2147483647";
+  toast.style.padding = "10px 14px";
+  toast.style.borderRadius = "12px";
+  toast.style.border = "1px solid rgba(255, 255, 255, 0.12)";
+  toast.style.background = "rgba(30, 30, 30, 0.96)";
+  toast.style.color = "#ffffff";
+  toast.style.font = '500 12px/1.3 "Google Sans Text", "Google Sans", "Segoe UI", Arial, sans-serif';
+  toast.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.35)";
+  toast.style.pointerEvents = "none";
+  toast.style.opacity = "0";
+  toast.style.transition = "opacity 120ms ease, transform 120ms ease";
+
+  document.documentElement.appendChild(toast);
+  requestAnimationFrame(() => {
+    toast.style.opacity = "1";
+    toast.style.transform = "translateX(-50%) translateY(0)";
+  });
+
+  window.setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateX(-50%) translateY(8px)";
+    window.setTimeout(() => toast.remove(), 180);
+  }, 1800);
 }
 
 async function readUiPrefs() {

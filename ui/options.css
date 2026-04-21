@@ -205,6 +205,11 @@
         mask-image: url("../assets/icons/ui/models.svg");
       }
 
+      .icon-mode {
+        -webkit-mask-image: url("../assets/icons/ui/custom.svg");
+        mask-image: url("../assets/icons/ui/custom.svg");
+      }
+
       .icon-presets {
         -webkit-mask-image: url("../assets/icons/ui/presets.svg");
         mask-image: url("../assets/icons/ui/presets.svg");
