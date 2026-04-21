@@ -28,7 +28,6 @@ function startAskBetter(site, siteToggleKey, selectors) {
   let dragState = null;
   let suppressNextClick = false;
 
-  ensureButton();
   scheduleSync();
   window.addEventListener("resize", scheduleSync, { passive: true });
   window.addEventListener("scroll", scheduleSync, { passive: true });
@@ -42,7 +41,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
   });
 
   function ensureButton() {
-    if (button) {
+    if (button && button.isConnected) {
       return;
     }
     button = document.createElement("button");
@@ -82,20 +81,21 @@ function startAskBetter(site, siteToggleKey, selectors) {
     }
 
     await ensureOffsetLoaded();
+    ensureButton();
     activeInput = input;
     placeButtonNearInput(input);
     button.style.display = "inline-flex";
   }
 
   function hideButton() {
-    if (button) {
+    if (button && button.isConnected) {
       button.style.display = "none";
     }
     activeInput = null;
   }
 
   function placeButtonNearInput(input) {
-    if (!button) {
+    if (!button || !button.isConnected) {
       return;
     }
 
@@ -267,7 +267,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
   }
 
   function setBusy(isBusy) {
-    if (!button) {
+    if (!button || !button.isConnected) {
       return;
     }
     button.disabled = !!isBusy;
