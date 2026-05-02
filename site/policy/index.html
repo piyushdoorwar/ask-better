@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AskBetter - Privacy Policy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link
+    rel="icon"
+    type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2307111d'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-family='Arial,sans-serif' font-size='28' font-weight='700' fill='%23f5c74d'%3EAB%3C/text%3E%3C/svg%3E"
+  />
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;500;600;700&display=swap");
+
+    :root {
+      --bg: #07111d;
+      --bg-deep: #030813;
+      --line: rgba(163, 188, 214, 0.22);
+      --line-strong: rgba(245, 199, 77, 0.4);
+      --text: #edf4fb;
+      --text-soft: rgba(237, 244, 251, 0.8);
+      --text-muted: rgba(237, 244, 251, 0.58);
+      --gold: #f5c74d;
+      --gold-soft: rgba(245, 199, 77, 0.18);
+      --mint: #69f0c7;
+      --mint-soft: rgba(105, 240, 199, 0.14);
+      --blue-soft: rgba(110, 170, 255, 0.14);
+      --page-pad: clamp(20px, 4vw, 56px);
+      --content-gap: clamp(28px, 5vw, 72px);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Manrope", "Segoe UI", sans-serif;
+      color: var(--text);
+      line-height: 1.7;
+      background:
+        radial-gradient(circle at top left, rgba(245, 199, 77, 0.16), transparent 34%),
+        radial-gradient(circle at 82% 12%, rgba(105, 240, 199, 0.12), transparent 28%),
+        linear-gradient(135deg, #081322 0%, #06111f 46%, #030813 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.65), transparent 85%);
+      opacity: 0.35;
+    }
+
+    a {
+      color: #ffe08c;
+      text-underline-offset: 3px;
+    }
+
+    a:hover {
+      color: #fff1be;
+    }
+
+    .page {
+      position: relative;
+      padding: clamp(28px, 5vw, 60px) var(--page-pad) 48px;
+      display: grid;
+      gap: var(--content-gap);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.85fr);
+      gap: clamp(24px, 4vw, 48px);
+      align-items: end;
+      padding-bottom: clamp(24px, 4vw, 44px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      font-family: "Space Grotesk", "Segoe UI", sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 10ch;
+      font-family: "Space Grotesk", "Segoe UI", sans-serif;
+      font-size: clamp(3rem, 10vw, 7.4rem);
+      line-height: 0.94;
+      letter-spacing: -0.05em;
+      text-transform: uppercase;
+    }
+
+    .hero-copy {
+      margin: 18px 0 0;
+      max-width: 68ch;
+      font-size: clamp(1rem, 2.1vw, 1.25rem);
+      color: var(--text-soft);
+    }
+
+    .hero-side {
+      display: grid;
+      gap: 18px;
+      align-content: end;
+      justify-items: start;
+    }
+
+    .stamp {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: clamp(72px, 11vw, 112px);
+      aspect-ratio: 1;
+      border: 1px solid rgba(245, 199, 77, 0.3);
+      border-radius: 24px;
+      background:
+        linear-gradient(145deg, rgba(245, 199, 77, 0.1), rgba(255, 255, 255, 0.03)),
+        rgba(3, 8, 19, 0.5);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 18px 40px rgba(0, 0, 0, 0.22);
+      font-family: "Space Grotesk", "Segoe UI", sans-serif;
+      font-size: clamp(1.4rem, 3.5vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      color: var(--gold);
+    }
+
+    .meta-list {
+      display: grid;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .meta-item {
+      display: grid;
+      gap: 4px;
+      padding: 0 0 12px;
+      border-bottom: 1px solid rgba(163, 188, 214, 0.16);
+    }
+
+    .meta-label {
+      font-family: "Space Grotesk", "Segoe UI", sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .meta-value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .meta-value.is-good {
+      color: var(--mint);
+    }
+
+    .meta-value.is-warn {
+      color: #ffe08c;
+    }
+
+    .policy-grid {
+      display: grid;
+      grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1.8fr);
+      gap: clamp(24px, 4vw, 56px);
+      align-items: start;
+    }
+
+    .rail {
+      position: sticky;
+      top: 28px;
+      align-self: start;
+    }
+
+    .rail-title {
+      margin: 0 0 12px;
+      font-family: "Space Grotesk", "Segoe UI", sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .rail-copy {
+      margin: 0;
+      max-width: 26ch;
+      color: var(--text-muted);
+      font-size: 0.98rem;
+    }
+
+    .sections {
+      display: grid;
+      gap: 0;
+    }
+
+    .policy-section {
+      display: grid;
+      grid-template-columns: minmax(88px, 120px) minmax(0, 1fr);
+      gap: clamp(16px, 3vw, 28px);
+      padding: clamp(18px, 3vw, 28px) 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .policy-section:first-child {
+      border-top: 1px solid var(--line-strong);
+      padding-top: 0;
+    }
+
+    .section-index {
+      margin: 2px 0 0;
+      font-family: "Space Grotesk", "Segoe UI", sans-serif;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 700;
+      line-height: 1;
+      color: rgba(245, 199, 77, 0.85);
+    }
+
+    .section-body h2 {
+      margin: 0 0 10px;
+      font-family: "Space Grotesk", "Segoe UI", sans-serif;
+      font-size: clamp(1.1rem, 2vw, 1.45rem);
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+
+    .section-body p {
+      margin: 0 0 10px;
+      color: var(--text-soft);
+      font-size: 1rem;
+    }
+
+    .section-body p:last-child,
+    .section-body ul:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-body ul {
+      margin: 10px 0 14px;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+
+    .section-body li {
+      position: relative;
+      padding-left: 18px;
+      color: var(--text-soft);
+    }
+
+    .section-body li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.72em;
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--gold), #fff1be);
+      box-shadow: 0 0 0 5px var(--gold-soft);
+      transform: translateY(-50%);
+    }
+
+    .section-body strong {
+      color: var(--text);
+    }
+
+    .note {
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid rgba(105, 240, 199, 0.26);
+      border-radius: 999px;
+      background: var(--mint-soft);
+      color: #b8ffe6;
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+
+    .note.warn {
+      border-color: rgba(245, 199, 77, 0.28);
+      background: var(--gold-soft);
+      color: #ffe7a9;
+    }
+
+    .contact-line {
+      display: inline-block;
+      padding-bottom: 2px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      color: var(--text-muted);
+      font-size: 0.94rem;
+    }
+
+    .mono {
+      font-family: "Space Grotesk", "Consolas", monospace;
+      font-size: 0.96em;
+    }
+
+    @media (max-width: 920px) {
+      .hero,
+      .policy-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-side {
+        justify-items: stretch;
+      }
+
+      .rail {
+        position: static;
+      }
+
+      .rail-copy {
+        max-width: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+
+      h1 {
+        max-width: none;
+      }
+
+      .policy-section {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .section-index {
+        font-size: 1.1rem;
+      }
+
+      .footer {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">AskBetter Chrome Extension</p>
+        <h1 id="page-title">Privacy Policy</h1>
+        <p class="hero-copy">
+          AskBetter is built with a local-first approach. Your prompts, settings, and content remain in your browser unless you explicitly connect a third-party AI provider.
+        </p>
+      </div>
+      <div class="hero-side">
+        <div class="stamp" aria-hidden="true">AB</div>
+        <div class="meta-list" role="list" aria-label="Policy summary">
+          <div class="meta-item" role="listitem">
+            <span class="meta-label">Last updated</span>
+            <span class="meta-value">February 2026</span>
+          </div>
+          <div class="meta-item" role="listitem">
+            <span class="meta-label">Developer collection</span>
+            <span class="meta-value is-good">None</span>
+          </div>
+          <div class="meta-item" role="listitem">
+            <span class="meta-label">Third-party AI</span>
+            <span class="meta-value is-warn">Optional and user-controlled</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="policy-grid" aria-label="Privacy policy details">
+      <aside class="rail" aria-label="Policy overview">
+        <h2 class="rail-title">Plain-English Summary</h2>
+        <p class="rail-copy">
+          This page explains what AskBetter stores, what it never collects, and what changes if you decide to connect an external AI service.
+        </p>
+      </aside>
+
+      <div class="sections">
+        <section class="policy-section" aria-labelledby="section-1">
+          <p class="section-index">01</p>
+          <div class="section-body">
+            <h2 id="section-1">Scope</h2>
+            <p>
+              This Privacy Policy applies to the AskBetter browser extension (the "Extension"). By installing or using AskBetter, you agree to this policy.
+            </p>
+          </div>
+        </section>
+
+        <section class="policy-section" aria-labelledby="section-2">
+          <p class="section-index">02</p>
+          <div class="section-body">
+            <h2 id="section-2">Data Collection</h2>
+            <p>
+              AskBetter does <strong>not</strong> collect, store, sell, or transmit personal data to the developer. The Extension does not require accounts, logins, or identity information.
+            </p>
+            <p class="note">No developer analytics, no hidden telemetry.</p>
+          </div>
+        </section>
+
+        <section class="policy-section" aria-labelledby="section-3">
+          <p class="section-index">03</p>
+          <div class="section-body">
+            <h2 id="section-3">Local Data Storage</h2>
+            <p>
+              AskBetter may store limited data locally within your browser so core features work reliably.
+            </p>
+            <ul>
+              <li>User preferences and settings</li>
+              <li>Saved prompts, templates, and custom instructions</li>
+              <li>Provider configuration choices, such as which provider you selected</li>
+            </ul>
+            <p>
+              This data remains on your device. You can remove it by uninstalling the Extension or clearing extension or site storage in your browser.
+            </p>
+          </div>
+        </section>
+
+        <section class="policy-section" aria-labelledby="section-4">
+          <p class="section-index">04</p>
+          <div class="section-body">
+            <h2 id="section-4">Prompts, Page Content, and Processing</h2>
+            <p>
+              AskBetter helps you improve prompts and may interact with content you provide, including text you type, paste, or select on a page. Any processing happens locally unless you configure a third-party AI provider.
+            </p>
+            <p>
+              If you choose to use a third-party AI provider, the Extension may send the prompt and any related content you choose to include directly from your browser to that provider. AskBetter does not route this content through developer-controlled servers.
+            </p>
+            <p>
+              The developer does not access, store, or monitor your prompts, page selections, or outputs.
+            </p>
+          </div>
+        </section>
+
+        <section class="policy-section" aria-labelledby="section-5">
+          <p class="section-index">05</p>
+          <div class="section-body">
+            <h2 id="section-5">API Keys and Credentials</h2>
+            <p>
+              If AskBetter allows you to enter API keys or credentials for third-party providers, they are stored locally in your browser environment. The developer does not receive your keys.
+            </p>
+            <p>
+              You are responsible for managing your keys safely. If you believe a key is compromised, revoke or rotate it with the provider.
+            </p>
+          </div>
+        </section>
+
+        <section class="policy-section" aria-labelledby="section-6">
+          <p class="section-index">06</p>
+          <div class="section-body">
+            <h2 id="section-6">Third-Party Services</h2>
+            <p>
+              Third-party AI providers are optional and user-configured. Their handling of data is governed by their own privacy policies and terms. The developer is not responsible for third-party data practices.
+            </p>
+            <p class="note warn">Connecting an external provider changes how your data is handled.</p>
+          </div>
+        </section>
+
+        <section class="policy-section" aria-labelledby="section-7">
+          <p class="section-index">07</p>
+          <div class="section-body">
+            <h2 id="section-7">Permissions</h2>
+            <p>
+              AskBetter may request browser permissions such as <span class="mono">storage</span>, <span class="mono">activeTab</span>, or <span class="mono">scripting</span> strictly to enable core features. The Extension is not designed for tracking and does not include advertising SDKs.
+            </p>
+            <ul>
+              <li><strong>Storage:</strong> Saves your settings and templates locally.</li>
+              <li><strong>Active Tab / Scripting:</strong> Lets you select or transform text on the page when you trigger the feature.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="policy-section" aria-labelledby="section-8">
+          <p class="section-index">08</p>
+          <div class="section-body">
+            <h2 id="section-8">Analytics and Tracking</h2>
+            <p>
+              AskBetter does not use analytics or tracking tools and does not profile users.
+            </p>
+          </div>
+        </section>
+
+        <section class="policy-section" aria-labelledby="section-9">
+          <p class="section-index">09</p>
+          <div class="section-body">
+            <h2 id="section-9">Data Security</h2>
+            <p>
+              Data handled by AskBetter remains within the browser environment. Reasonable safeguards are used, but no system can guarantee absolute security.
+            </p>
+          </div>
+        </section>
+
+        <section class="policy-section" aria-labelledby="section-10">
+          <p class="section-index">10</p>
+          <div class="section-body">
+            <h2 id="section-10">Children's Privacy</h2>
+            <p>
+              AskBetter does not knowingly collect personal data from anyone, including children.
+            </p>
+          </div>
+        </section>
+
+        <section class="policy-section" aria-labelledby="section-11">
+          <p class="section-index">11</p>
+          <div class="section-body">
+            <h2 id="section-11">AI Output Disclaimer</h2>
+            <p>
+              Outputs may be inaccurate, incomplete, or misleading. Do not rely on outputs for legal, medical, financial, or other professional advice. You are responsible for verifying outputs before use.
+            </p>
+          </div>
+        </section>
+
+        <section class="policy-section" aria-labelledby="section-12">
+          <p class="section-index">12</p>
+          <div class="section-body">
+            <h2 id="section-12">Changes to This Policy</h2>
+            <p>
+              This Privacy Policy may be updated from time to time. Continued use of AskBetter after updates indicates acceptance of the revised policy.
+            </p>
+          </div>
+        </section>
+
+        <section class="policy-section" aria-labelledby="section-13">
+          <p class="section-index">13</p>
+          <div class="section-body">
+            <h2 id="section-13">Contact</h2>
+            <p>
+              If you have questions about this Privacy Policy, contact <strong class="contact-line">piyushdoorwar@outlook.com</strong>.
+            </p>
+          </div>
+        </section>
+
+        <section class="policy-section" aria-labelledby="section-14">
+          <p class="section-index">14</p>
+          <div class="section-body">
+            <h2 id="section-14">No Warranty</h2>
+            <p>
+              AskBetter is provided on an <strong>"as is"</strong> and <strong>"as available"</strong> basis, without warranties of any kind, whether express or implied, including but not limited to fitness for a particular purpose, reliability, accuracy, or availability.
+            </p>
+          </div>
+        </section>
+
+        <section class="policy-section" aria-labelledby="section-15">
+          <p class="section-index">15</p>
+          <div class="section-body">
+            <h2 id="section-15">Limitation of Liability</h2>
+            <p>
+              To the maximum extent permitted by applicable law, the developer shall not be liable for any direct, indirect, incidental, consequential, special, or punitive damages, including but not limited to loss of data, loss of profits, business interruption, or reputational harm, arising out of or related to the use of, or inability to use, AskBetter.
+            </p>
+          </div>
+        </section>
+
+        <section class="policy-section" aria-labelledby="section-16">
+          <p class="section-index">16</p>
+          <div class="section-body">
+            <h2 id="section-16">User Responsibility</h2>
+            <p>
+              You are solely responsible for how you use AskBetter, including any prompts, outputs, decisions made based on outputs, and any third-party services you connect or interact with.
+            </p>
+          </div>
+        </section>
+
+        <section class="policy-section" aria-labelledby="section-17">
+          <p class="section-index">17</p>
+          <div class="section-body">
+            <h2 id="section-17">Indemnification</h2>
+            <p>
+              You agree to indemnify, defend, and hold harmless the developer from and against any claims, damages, liabilities, losses, and expenses, including legal fees, arising out of or related to:
+            </p>
+            <ul>
+              <li>Your use or misuse of the Extension</li>
+              <li>Your violation of any laws or third-party rights</li>
+              <li>Your use of third-party AI providers or services</li>
+            </ul>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>&copy; <span id="year"></span> AskBetter</span>
+      <span>Local-first. User-controlled.</span>
+    </footer>
+  </main>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
