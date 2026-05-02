@@ -55,7 +55,7 @@ It injects a lightweight `Optimize` button near the prompt input. Clicking it re
 1. Open Chrome and go to `chrome://extensions`.
 2. Enable `Developer mode` (top right).
 3. Click `Load unpacked`.
-4. Select this folder: `c:\Repos\prompt-optimizer-ask-better`.
+4. Select this folder: `c:\Repos\ask-better`.
 5. Pin the AskBetter extension (optional, recommended).
 
 ## Configure
