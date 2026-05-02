@@ -1,126 +1,93 @@
-# AskBetter (Chrome Extension, MV3)
+# AskBetter
 
-AskBetter is a local-first prompt optimizer that uses Google Gemini, OpenAI, or Anthropic Claude and works on:
+**One-click prompt optimizer for ChatGPT and Google Gemini.**
 
-- ChatGPT (`chat.openai.com` and `chatgpt.com`)
-- Google Gemini (`gemini.google.com`)
+Get better AI responses without rewriting your prompts from scratch. AskBetter adds an ✨ Optimize button directly inside ChatGPT and Gemini — click it, and your rough draft becomes a sharp, structured prompt. Powered by your choice of Gemini, OpenAI, or Claude. Runs entirely in your browser. No backend, no tracking.
 
-It injects a lightweight `Optimize` button near the prompt input. Clicking it rewrites the current prompt based on your selected preset and replaces the textbox content.
+🌐 **[piyushdoorwar.github.io/ask-better](https://piyushdoorwar.github.io/ask-better/)**
+🔒 **[Privacy Policy](https://piyushdoorwar.github.io/ask-better/policy/)**
 
-## Privacy and Security
+---
 
-- No backend server.
-- Data is stored locally in `chrome.storage.local`.
-- API key is read and used only by `background.js` (service worker).
-- Content scripts never read or store the API key.
-- Prompt text is never logged by the extension.
-- If `Custom Prompt Additions` is set, it is sent only with optimize requests to your selected provider.
-- No analytics or telemetry are collected in this version.
-- Full privacy policy: `https://piyushdoorwar.github.io/ask-better/policy/`
+## What it does
+
+- **Ask Better** — an Optimize button appears in the ChatGPT and Gemini prompt box. Type your rough idea, click Optimize, and AskBetter rewrites it with your chosen preset before you send.
+- **Phrase Better** — right-click any selected text anywhere on the web to clean it up: grammar, spelling, and punctuation fixed with minimal rewording.
 
 ## Presets
 
-- `Core Rewrite`
-  - `Structured`: story-like 2-3 paragraph prompt with strong context and constraints.
-  - `Concise`: shorter while preserving requirements.
-  - `Fix grammar`: spelling/grammar fixes with minimal rewrite.
-  - `Improve clarity`: clearer phrasing with the same meaning.
-- `Communication Style`
-  - `Persuasive`: more compelling and outcome-oriented.
-  - `Executive brief`: concise, strategic, stakeholder-friendly.
-  - `Coaching tone`: supportive, accountable, action-driven.
-  - `Email rephrase/rewrite`: polished email-ready rewrite with clear structure and tone.
-- `Critical Thinking`
-  - `Devil's advocate`: challenge weak assumptions and blind spots.
-  - `First principles`: decompose to fundamentals and core logic.
-  - `Risk audit`: focus on risks, failure modes, and mitigations.
-- `Build and Delivery`
-  - `Technical spec`: precise requirements and acceptance criteria.
-  - `Implementation plan`: ordered tasks, dependencies, and deliverables.
+**Core Rewrite**
+| Preset | What it does |
+|---|---|
+| Structured | Story-like 2–3 paragraph prompt with strong context and constraints |
+| Concise | Shorter while preserving all requirements |
+| Fix Grammar | Spelling and grammar fixes with minimal rewrite |
+| Improve Clarity | Clearer phrasing, same meaning |
 
-## Files
+**Communication Style**
+| Preset | What it does |
+|---|---|
+| Persuasive | More compelling and outcome-oriented |
+| Executive Brief | Concise, strategic, stakeholder-ready |
+| Coaching Tone | Supportive, accountable, action-driven |
+| Email Rephrase | Polished email-ready rewrite with clear structure and tone |
 
-- `manifest.json` (MV3 config)
-- `background.js` (secure API handling + provider API calls)
-- `content/chatgpt.js` (ChatGPT injection)
-- `content/gemini.js` (Gemini injection)
-- `injected/styles.css` (button + toast styles)
-- `ui/theme.css` (shared design tokens/base theme for popup and options)
-- `ui/popup.html`, `ui/popup.js`, `ui/popup.css` (quick controls/status/model switch)
-- `ui/options.html`, `ui/options.js`, `ui/options.css` (sectioned settings + auto-save)
-- `assets/icons/ui/*.svg` (menu/section icons for models, presets, integrations, custom prompt, security)
+**Critical Thinking**
+| Preset | What it does |
+|---|---|
+| Devil's Advocate | Challenge weak assumptions and blind spots |
+| First Principles | Decompose to fundamentals and core logic |
+| Risk Audit | Surface risks, failure modes, and mitigations |
 
-## Install (Unpacked)
+**Build & Delivery**
+| Preset | What it does |
+|---|---|
+| Technical Spec | Precise requirements and acceptance criteria |
+| Implementation Plan | Ordered tasks, dependencies, and deliverables |
 
-1. Open Chrome and go to `chrome://extensions`.
-2. Enable `Developer mode` (top right).
-3. Click `Load unpacked`.
-4. Select this folder: `c:\Repos\ask-better`.
-5. Pin the AskBetter extension (optional, recommended).
+## Privacy
 
-## Configure
+- No backend server — API calls go directly from your browser to your chosen AI provider.
+- Settings and API keys are stored locally in `chrome.storage.local`. Never synced to the cloud.
+- API keys are only readable by the background service worker — web pages never see them.
+- No analytics. No telemetry. Not in this version, not ever.
 
-1. Click the AskBetter extension icon.
-2. Click `Open settings`.
-3. Use the left menu sections:
-   - Models
-   - Mode
-   - Presets
-   - Integrations
-   - Custom Prompt Additions
-   - Security
-4. Set:
-   - Provider
-   - API key
-   - Model
-   - Default preset
-   - Keep user voice toggle (preserve tone/style during rewrites)
-   - Toggles (Global AI, ChatGPT, Gemini)
-5. Settings auto-save on change (no Save button required).
-6. In Security, click `Test key` once. On success, the key is saved and locked.
-7. Use `Clear stored key/data` to reset key setup.
+## Install from the Chrome Web Store
 
-## Use on ChatGPT/Gemini
+**[Add AskBetter to Chrome](https://chromewebstore.google.com/detail/askbetter/eelecokniegejkbbklgdpnhmhgfkfpif)**
 
-1. Open ChatGPT or Gemini.
-2. Type or paste a prompt.
-3. Click `Optimize`.
-4. AskBetter replaces the current prompt with the optimized version.
+## Quick setup
 
-If AI is off or no key is set, AskBetter shows:
+1. Click the AskBetter icon → **Open settings**.
+2. Choose your provider (Gemini, OpenAI, or Anthropic Claude).
+3. Paste your API key and click **Test key**. It saves automatically on success.
+4. Pick a default preset. Done.
 
-- `AI disabled or key missing`
+**Get an API key:**
+- Gemini: [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+- OpenAI: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+- Anthropic: [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys)
 
-## API Key Links
+## License
 
-- Gemini key: `https://aistudio.google.com/apikey`
-- OpenAI key: `https://platform.openai.com/api-keys`
-- Anthropic key: `https://console.anthropic.com/settings/keys`
+Source code is publicly viewable. Personal, non-commercial use is permitted. Copying, redistribution, modification for distribution, and commercial use are **not** permitted without explicit written permission.
 
-## Notes
+See [LICENSE](./LICENSE) for full terms.
 
-- AskBetter supports Google Gemini, OpenAI, and Anthropic Claude as model providers.
-- The Optimize button can appear on both ChatGPT and Gemini pages.
+## Legal
 
-## Legal Notice
+AskBetter is provided "as is" without warranties of any kind. You are solely responsible for your prompts, outputs, API key management, and compliance with your AI provider's terms of service. The developer is not liable for any damages arising from use of this software.
 
-By installing, enabling, or using AskBetter, you acknowledge and agree that AskBetter is provided "as is" and
-"as available," without warranties of any kind, to the maximum extent permitted by applicable law.
+## Contributing
 
-You are solely responsible for your prompts, outputs, key management, provider configuration, compliance with provider
-terms, data handling obligations, and applicable laws in your jurisdiction.
+Found a bug or want to suggest a preset? Open an issue or submit a pull request. Contributions become part of this project and are subject to the same license terms.
 
-To the maximum extent permitted by law, the developer is not liable for indirect, incidental, special, consequential,
-exemplary, or punitive damages, or for loss of data, business, revenue, or reputation arising from use of, or
-inability to use, AskBetter.
+## Manual test checklist
 
-## Manual Test Checklist
-
-- [ ] Works on ChatGPT (`chat.openai.com` or `chatgpt.com`).
-- [ ] Works on Gemini (`gemini.google.com`).
-- [ ] Missing key shows helpful toast (`AI disabled or key missing`).
-- [ ] Optimize replaces textbox content.
-- [ ] Provider/model switch persists and is used by optimization requests.
-- [ ] Options page left menu switches sections correctly.
-- [ ] Changes auto-save without clicking a Save button.
-- [ ] Settings persist after extension/page reload.
+- [ ] Optimize button appears on ChatGPT and Gemini
+- [ ] Clicking Optimize rewrites and replaces the prompt input
+- [ ] Phrase Better right-click option appears on selected text
+- [ ] Missing key shows helpful toast (AI disabled or key missing)
+- [ ] Provider and model switch persists across page reloads
+- [ ] Settings auto-save on change (no Save button required)
+- [ ] Options page left menu switches sections correctly
