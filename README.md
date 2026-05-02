@@ -16,7 +16,7 @@ It injects a lightweight `Optimize` button near the prompt input. Clicking it re
 - Prompt text is never logged by the extension.
 - If `Custom Prompt Additions` is set, it is sent only with optimize requests to your selected provider.
 - No analytics or telemetry are collected in this version.
-- Full privacy policy: `https://piyushdoorwar.github.io/policy/`
+- Full privacy policy: `https://piyushdoorwar.github.io/ask-better/policy/`
 
 ## Presets
 
