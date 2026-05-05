@@ -30,9 +30,9 @@ body {
         display: block;
         padding: 5px;
         border-radius: var(--radius-sm);
-        border: 1px solid rgba(233, 84, 32, 0.35);
-        background: linear-gradient(145deg, rgba(94, 39, 80, 0.55), rgba(28, 22, 28, 0.96));
-        box-shadow: 0 2px 8px rgba(233, 84, 32, 0.2);
+        border: 1px solid rgba(232, 153, 30, 0.35);
+        background: linear-gradient(145deg, rgba(139, 90, 143, 0.45), rgba(15, 13, 11, 0.96));
+        box-shadow: 0 2px 8px rgba(232, 153, 30, 0.2);
       }
 
       h1 {
@@ -44,9 +44,9 @@ body {
       }
 
       .badge {
-        border: 1px solid rgba(233, 84, 32, 0.3);
-        color: var(--orange-light);
-        background: rgba(233, 84, 32, 0.1);
+        border: 1px solid rgba(232, 153, 30, 0.3);
+        color: var(--accent-bright);
+        background: rgba(232, 153, 30, 0.1);
         border-radius: 4px;
         padding: 2px 7px;
         font-size: 9px;
@@ -107,6 +107,7 @@ body {
       #statusText {
         font-size: 13px;
         font-weight: 600;
+        font-family: inherit;
       }
 
       .status-ok {
@@ -121,7 +122,7 @@ body {
         display: inline-block;
         margin-top: 5px;
         font-size: 12px;
-        color: var(--orange-light);
+        color: var(--accent-bright);
         text-decoration: underline;
         text-underline-offset: 2px;
       }
@@ -226,8 +227,8 @@ body {
       }
 
       .switch input:checked + .slider {
-        background: var(--orange);
-        border-color: var(--orange-dark);
+        background: var(--accent);
+        border-color: var(--accent-dark);
       }
 
       .switch input:checked + .slider::before {
@@ -242,11 +243,11 @@ body {
       .open-settings {
         width: 100%;
         margin-top: 8px;
-        border: 1px solid rgba(233, 84, 32, 0.45);
+        border: 1px solid rgba(232, 153, 30, 0.45);
         border-radius: var(--radius);
         padding: 10px 14px;
         color: var(--text);
-        background: rgba(233, 84, 32, 0.14);
+        background: rgba(232, 153, 30, 0.14);
         font-size: 14px;
         font-weight: 600;
         cursor: pointer;
@@ -255,8 +256,8 @@ body {
       }
 
       .open-settings:hover {
-        background: rgba(233, 84, 32, 0.24);
-        border-color: var(--orange);
+        background: rgba(232, 153, 30, 0.24);
+        border-color: var(--accent);
       }
 
       .open-settings:focus-visible {

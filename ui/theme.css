@@ -1,60 +1,61 @@
 :root {
   color-scheme: dark;
 
-  /* Ubuntu font — installed natively on Ubuntu, graceful fallback elsewhere */
-  --font-ui: 'Ubuntu', 'Cantarell', 'Noto Sans', 'Segoe UI', Arial, sans-serif;
+  /* AskBetter font stack */
+  --font-ui: 'Cantarell', 'Ubuntu', 'Inter', 'Segoe UI', sans-serif;
 
-  /* Ubuntu brand palette */
-  --orange: #E95420;
-  --orange-light: #F07148;
-  --orange-dark: #C34113;
-  --aubergine: #5E2750;
-  --aubergine-light: #772953;
-  --aubergine-dark: #2C001E;
+  /* AskBetter brand palette */
+  --accent: #e8991e;
+  --accent-bright: #f5ae3a;
+  --accent-dark: #d17a14;
+  --accent-glow: rgba(232, 153, 30, 0.14);
 
-  /* Backward-compat aliases — existing references to --yellow, --purple-light etc. resolve to Ubuntu orange */
-  --purple: #5E2750;
-  --purple-light: #E95420;
+  /* Backward-compat aliases */
+  --orange: #e8991e;
+  --orange-light: #f5ae3a;
+  --orange-dark: #d17a14;
+  --yellow: #e8991e;
+  --yellow-dark: #d17a14;
+  --yellow-light: #f5ae3a;
+  --purple: #8b5a8f;
+  --purple-light: #e8991e;
   --purple-dark: #2C001E;
-  --purple-soft: rgba(233, 84, 32, 0.14);
-  --yellow: #E95420;
-  --yellow-dark: #C34113;
-  --yellow-light: #F07148;
-  --shadow-purple: 0 4px 16px rgba(233, 84, 32, 0.28);
+  --purple-soft: rgba(232, 153, 30, 0.14);
+  --shadow-purple: 0 4px 16px rgba(232, 153, 30, 0.28);
 
   /* Semantic colors */
   --green: #26A269;
   --amber: #E5A50A;
   --red: #C01C28;
-  --pink: #E95420;
+  --pink: #e8991e;
   --blue: #5DADE2;
 
-  /* Backgrounds — warm dark grays (Ubuntu Yaru Dark) */
-  --bg: #1a1a1a;
-  --bg-secondary: #1f1f1f;
-  --bg-panel: #252525;
-  --bg-elevated: #2e2e2e;
-  --bg-elevated-2: #383838;
+  /* Backgrounds — AskBetter dark theme */
+  --bg: #0f0d0b;
+  --bg-secondary: #161310;
+  --bg-panel: #1e1a15;
+  --bg-elevated: #252118;
+  --bg-elevated-2: #2e2720;
 
-  /* Text — Ubuntu warm white */
-  --text: #eeeeec;
-  --text-secondary: rgba(238, 238, 236, 0.72);
-  --text-muted: rgba(238, 238, 236, 0.48);
+  /* Text — AskBetter warm light */
+  --text: #f4f0eb;
+  --text-secondary: rgba(244, 240, 235, 0.72);
+  --text-muted: rgba(244, 240, 235, 0.48);
 
   /* Borders */
   --border: rgba(255, 255, 255, 0.09);
   --border-light: rgba(255, 255, 255, 0.16);
 
-  /* Shadows — flatter, warmer */
+  /* Shadows */
   --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.5);
   --shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.55);
 
   /* Interactions */
-  --focus: rgba(233, 84, 32, 0.38);
+  --focus: rgba(232, 153, 30, 0.38);
   --surface-gloss: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 
-  /* Radii — GNOME/Ubuntu conservative style */
+  /* Radii */
   --radius-sm: 6px;
   --radius: 8px;
   --radius-card: 12px;
@@ -63,7 +64,7 @@
 * {
   box-sizing: border-box;
   scrollbar-width: thin;
-  scrollbar-color: rgba(233, 84, 32, 0.55) transparent;
+  scrollbar-color: rgba(232, 153, 30, 0.55) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -77,12 +78,12 @@
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(233, 84, 32, 0.5);
+  background: rgba(232, 153, 30, 0.5);
   border-radius: 4px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: var(--orange);
+  background: var(--accent);
 }
 
 html,
@@ -93,10 +94,9 @@ body {
 body {
   font-family: var(--font-ui);
   color: var(--text);
-  /* Subtle aubergine glow top-left + faint orange bottom-right — Ubuntu Yaru atmosphere */
   background:
-    radial-gradient(900px 500px at 0% 0%, rgba(94, 39, 80, 0.18), transparent 58%),
-    radial-gradient(500px 350px at 100% 100%, rgba(233, 84, 32, 0.07), transparent 58%),
+    radial-gradient(900px 500px at 0% 0%, rgba(139, 90, 143, 0.12), transparent 58%),
+    radial-gradient(500px 350px at 100% 100%, rgba(232, 153, 30, 0.05), transparent 58%),
     var(--bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -143,11 +143,11 @@ body {
 }
 
 .select-shell:hover {
-  border-color: rgba(233, 84, 32, 0.5);
+  border-color: rgba(232, 153, 30, 0.5);
 }
 
 .select-shell:focus-within {
-  border-color: var(--orange);
+  border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--focus);
 }
 
@@ -184,7 +184,7 @@ body {
 
 .select-shell select option:checked,
 .select-shell select option:hover {
-  background: rgba(233, 84, 32, 0.65);
+  background: rgba(232, 153, 30, 0.65);
   color: #ffffff;
 }
 
@@ -256,11 +256,11 @@ body {
 }
 
 .csel-trigger:hover {
-  border-color: rgba(233, 84, 32, 0.5);
+  border-color: rgba(232, 153, 30, 0.5);
 }
 
 .csel.is-open .csel-trigger {
-  border-color: var(--orange);
+  border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--focus);
   border-radius: var(--radius) var(--radius) 0 0;
 }
@@ -336,12 +336,12 @@ body {
 }
 
 .csel-item.is-selected {
-  background: var(--aubergine);
+  background: var(--accent);
   color: #ffffff;
 }
 
 .csel-item.is-selected:hover {
-  background: var(--aubergine-light);
+  background: var(--accent-bright);
 }
 
 .csel-icon {
