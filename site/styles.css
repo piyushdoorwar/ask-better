@@ -37,6 +37,14 @@ a {
   text-decoration: none;
 }
 
+.inline-icon {
+  display: inline;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  color: var(--accent);
+}
+
 /* ── Typography ─────────────────────────────────────────────────────────── */
 h1,
 h2,

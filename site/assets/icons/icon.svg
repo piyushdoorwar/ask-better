@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="AskBetter icon">
+  <defs>
+    <linearGradient id="bg" x1="4" y1="3" x2="60" y2="61" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3b1008" />
+      <stop offset="1" stop-color="#c0440e" />
+    </linearGradient>
+    <linearGradient id="badge" x1="39" y1="8" x2="57" y2="26" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fde047" />
+      <stop offset="1" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+
+  <rect x="1" y="1" width="62" height="62" rx="18" fill="url(#bg)" />
+  <rect x="2" y="2" width="60" height="60" rx="17" fill="none" stroke="#f4c4a8" stroke-opacity="0.22" />
+
+  <path
+    d="M12.5 14.5h27c8.8 0 16 7.2 16 16s-7.2 16-16 16H28.4L16.7 56v-9.5h-4.2c-2.8 0-5-2.2-5-5v-22c0-2.8 2.2-5 5-5z"
+    fill="#d1d5db"
+  />
+
+  <rect x="17.5" y="25.2" width="22.8" height="4.8" rx="2.4" fill="#7c2d12" opacity="0.9" />
+  <rect x="17.5" y="34.2" width="16.2" height="4.8" rx="2.4" fill="#9a3412" opacity="0.76" />
+
+  <circle cx="48" cy="17" r="10" fill="url(#badge)" />
+  <path
+    d="M48 10l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1-5.1-1.9 5.1-1.9z"
+    fill="#fffef7"
+  />
+  <circle cx="54.8" cy="24.6" r="2" fill="#fef08a" />
+</svg>
