@@ -82,7 +82,9 @@ function startAskBetter(site, siteToggleKey, selectors) {
       return;
     }
 
-    const input = findPromptInput(selectors);
+    const input = (activeInput && activeInput.isConnected && isEligiblePromptInput(activeInput))
+      ? activeInput
+      : findPromptInput(selectors);
     if (!input) {
       hideButton();
       return;
@@ -526,6 +528,31 @@ function findPromptInput(selectors) {
       }
     }
   }
+  // Fallback: some sites render the composer inside a shadow root, which
+  // document.querySelectorAll cannot reach. Pierce open shadow roots.
+  return findPromptInputDeep(document, selectors);
+}
+
+function findPromptInputDeep(root, selectors) {
+  const hosts = root.querySelectorAll("*");
+  for (const host of hosts) {
+    const shadow = host.shadowRoot;
+    if (!shadow) {
+      continue;
+    }
+    for (const selector of selectors) {
+      const nodes = shadow.querySelectorAll(selector);
+      for (const node of nodes) {
+        if (isEligiblePromptInput(node)) {
+          return node;
+        }
+      }
+    }
+    const nested = findPromptInputDeep(shadow, selectors);
+    if (nested) {
+      return nested;
+    }
+  }
   return null;
 }
 
@@ -534,7 +561,8 @@ function isEligiblePromptInput(node) {
     return false;
   }
   const rect = node.getBoundingClientRect();
-  if (!rect || rect.width < 160 || rect.height < 24) {
+  const minHeight = node.isContentEditable ? 16 : 24;
+  if (!rect || rect.width < 160 || rect.height < minHeight) {
     return false;
   }
   if (rect.bottom < 0 || rect.top > window.innerHeight) {

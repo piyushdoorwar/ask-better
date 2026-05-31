@@ -71,7 +71,8 @@
     },
     {
       "matches": [
-        "https://claude.ai/*"
+        "https://claude.ai/*",
+        "https://*.claude.ai/*"
       ],
       "js": [
         "content/core.js",
@@ -80,7 +81,10 @@
       "css": [
         "injected/styles.css"
       ],
-      "run_at": "document_idle"
+      "run_at": "document_idle",
+      "all_frames": true,
+      "match_about_blank": true,
+      "match_origin_as_fallback": true
     }
   ]
 }
