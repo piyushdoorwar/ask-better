@@ -875,6 +875,10 @@
         gap: 8px;
       }
 
+      .toggle-grid + .grid {
+        margin-top: 16px;
+      }
+
       .toggle-row {
         display: flex;
         align-items: center;
