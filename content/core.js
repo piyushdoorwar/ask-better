@@ -205,7 +205,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
 
     previewCard.addEventListener("pointerdown", (event) => event.stopPropagation());
     previewCard.addEventListener("click", (event) => {
-      const trigger = event.target instanceof HTMLElement ? event.target.closest("[data-action]") : null;
+      const trigger = event.target instanceof Element ? event.target.closest("[data-action]") : null;
       if (!trigger) {
         return;
       }
