@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS = {
   enableClaude: true,
   enableAskBetterMode: true,
   enablePhraseBetterMode: true,
+  phraseBetterOptionCount: 2,
   enableAI: true,
   keepUserVoice: false,
   keyVerified: false,
@@ -214,18 +215,18 @@ async function rewriteText({ prompt, preset, site, settings, mode }) {
   }
 }
 
-async function callProvider({ provider, apiKey, model, prompt, preset, settings, mode, completionPass }) {
+async function callProvider({ provider, apiKey, model, prompt, preset, settings, mode, completionPass, variantCount }) {
   if (provider === "openai") {
-    return await callOpenAI({ apiKey, model, prompt, preset, settings, mode, completionPass });
+    return await callOpenAI({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount });
   }
   if (provider === "anthropic") {
-    return await callAnthropic({ apiKey, model, prompt, preset, settings, mode, completionPass });
+    return await callAnthropic({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount });
   }
-  return await callGemini({ apiKey, model, prompt, preset, settings, mode, completionPass });
+  return await callGemini({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount });
 }
 
-async function callGemini({ apiKey, model, prompt, preset, settings, mode, completionPass }) {
-  const systemText = buildSystemInstruction({ preset, settings, mode, completionPass });
+async function callGemini({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount }) {
+  const systemText = buildSystemInstruction({ preset, settings, mode, completionPass, variantCount });
 
   const normalizedModel = normalizeGeminiModel(model || DEFAULT_SETTINGS.geminiModel);
   const response = await fetch(
@@ -271,8 +272,8 @@ async function callGemini({ apiKey, model, prompt, preset, settings, mode, compl
   return extractGeminiText(data).trim();
 }
 
-async function callOpenAI({ apiKey, model, prompt, preset, settings, mode, completionPass }) {
-  const instructions = buildSystemInstruction({ preset, settings, mode, completionPass });
+async function callOpenAI({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount }) {
+  const instructions = buildSystemInstruction({ preset, settings, mode, completionPass, variantCount });
   const normalizedModel = normalizeOpenAIModel(model || DEFAULT_SETTINGS.openaiModel);
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
@@ -305,8 +306,8 @@ async function callOpenAI({ apiKey, model, prompt, preset, settings, mode, compl
   return extractOpenAIText(data).trim();
 }
 
-async function callAnthropic({ apiKey, model, prompt, preset, settings, mode, completionPass }) {
-  const system = buildSystemInstruction({ preset, settings, mode, completionPass });
+async function callAnthropic({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount }) {
+  const system = buildSystemInstruction({ preset, settings, mode, completionPass, variantCount });
   const normalizedModel = normalizeAnthropicModel(model || DEFAULT_SETTINGS.anthropicModel);
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -603,8 +604,23 @@ function readApiErrorMessage(body) {
   return "";
 }
 
-function buildSystemInstruction({ preset, settings, mode, completionPass }) {
+function buildSystemInstruction({ preset, settings, mode, completionPass, variantCount }) {
   if (mode === "phrase_better") {
+    const count = Number(variantCount) > 1 ? Math.min(Math.round(Number(variantCount)), 3) : 1;
+
+    if (count > 1) {
+      return [
+        `You improve user-selected text with minimal edits and provide ${count} alternative corrected versions.`,
+        `Return exactly ${count} variants and nothing else.`,
+        "Put each variant on its own line, prefixed with its number and a period, like '1. ', '2. '.",
+        "Do not add any other commentary, labels, markdown, bullets, headings, or explanations.",
+        "Each variant must fix grammar, spelling, punctuation, and obvious wording issues.",
+        "Each variant must preserve the original meaning and tone and stay close to the original length.",
+        "Make the variants meaningfully distinct from each other in phrasing.",
+        "Do not add new claims, examples, or instructions that were not present in the original."
+      ].join(" ");
+    }
+
     const parts = [
       "You improve user-selected text with minimal edits.",
       "Return only the corrected text as plain text.",
@@ -743,6 +759,7 @@ function toPublicSettings(settings) {
     enableClaude: !!settings.enableClaude,
     enableAskBetterMode: settings.enableAskBetterMode !== false,
     enablePhraseBetterMode: settings.enablePhraseBetterMode !== false,
+    phraseBetterOptionCount: normalizePhraseBetterOptionCount(settings.phraseBetterOptionCount),
     enableAI: !!settings.enableAI,
     keepUserVoice: !!settings.keepUserVoice,
     customPresets: settings.customPresets.map((preset) => ({ id: preset.id, name: preset.name })),
@@ -885,12 +902,24 @@ async function readSettings() {
     enableClaude: raw.enableClaude !== false,
     enableAskBetterMode: raw.enableAskBetterMode !== false,
     enablePhraseBetterMode: raw.enablePhraseBetterMode !== false,
+    phraseBetterOptionCount: normalizePhraseBetterOptionCount(raw.phraseBetterOptionCount),
     enableAI: raw.enableAI !== false,
     keepUserVoice: !!raw.keepUserVoice,
     keyVerified: !!raw.keyVerified,
     customPromptAdditions: String(raw.customPromptAdditions || ""),
     customPresets
   };
+}
+
+function normalizePhraseBetterOptionCount(value) {
+  const count = Math.round(Number(value));
+  if (!Number.isFinite(count) || count < 1) {
+    return DEFAULT_SETTINGS.phraseBetterOptionCount;
+  }
+  if (count > 3) {
+    return 3;
+  }
+  return count;
 }
 
 async function syncPhraseBetterContextMenu() {
@@ -920,16 +949,11 @@ async function handlePhraseBetterContextMenu(info, tab) {
   }
 
   const settings = await readSettings();
+  const count = normalizePhraseBetterOptionCount(settings.phraseBetterOptionCount);
   await showPageBusyIndicatorInTab(tab.id, info.frameId);
   let response;
   try {
-    response = await rewriteText({
-      prompt: selectedText,
-      preset: "grammar",
-      site: "chatgpt",
-      settings,
-      mode: "phrase_better"
-    });
+    response = await generatePhraseBetterOptions({ prompt: selectedText, settings, count });
   } finally {
     await hidePageBusyIndicatorInTab(tab.id, info.frameId);
   }
@@ -942,24 +966,92 @@ async function handlePhraseBetterContextMenu(info, tab) {
     return;
   }
 
-  const replaced = await replaceSelectedTextInTab(tab.id, info.frameId, response.optimizedPrompt);
-  if (!replaced) {
+  const shown = await showPhraseBetterChooserInTab(tab.id, info.frameId, response.options);
+  if (!shown) {
     await showPageToastInTab(tab.id, info.frameId, "Phrase Better works in editable text fields.");
-    return;
   }
-
-  await showPageToastInTab(tab.id, info.frameId, "Phrase Better applied");
 }
 
-async function replaceSelectedTextInTab(tabId, frameId, nextText) {
+async function generatePhraseBetterOptions({ prompt, settings, count }) {
+  const apiKey = getApiKeyForProvider(settings);
+  const model = getModelForProvider(settings);
+  const provider = normalizeProvider(settings.provider);
+  const variantCount = normalizePhraseBetterOptionCount(count);
+
+  if (!prompt) {
+    return { ok: false, code: "EMPTY_PROMPT", message: "Prompt is empty." };
+  }
+
+  if (!settings.enableAI || settings.enablePhraseBetterMode === false || !apiKey) {
+    return { ok: false, code: "DISABLED_OR_MISSING_KEY", message: "AI disabled or key missing" };
+  }
+
+  try {
+    if (variantCount <= 1) {
+      const text = await callProvider({ provider, apiKey, model, prompt, preset: "grammar", settings, mode: "phrase_better" });
+      const cleaned = String(text || "").trim();
+      if (!cleaned) {
+        return { ok: false, code: "EMPTY_MODEL_OUTPUT", message: "Model returned an empty response." };
+      }
+      return { ok: true, options: [cleaned] };
+    }
+
+    const raw = await callProvider({
+      provider,
+      apiKey,
+      model,
+      prompt,
+      preset: "grammar",
+      settings,
+      mode: "phrase_better",
+      variantCount
+    });
+    const options = parsePhraseVariants(raw, variantCount);
+    if (!options.length) {
+      return { ok: false, code: "EMPTY_MODEL_OUTPUT", message: "Model returned an empty response." };
+    }
+    return { ok: true, options };
+  } catch (error) {
+    return mapProviderError(error);
+  }
+}
+
+function parsePhraseVariants(raw, count) {
+  const text = String(raw || "").trim();
+  if (!text) {
+    return [];
+  }
+  const lines = text.split(/\r?\n+/).map((line) => line.trim()).filter(Boolean);
+  const numbered = [];
+  for (const line of lines) {
+    const match = line.match(/^\(?\d+[.)]\s*(.+)$/);
+    if (match && match[1].trim()) {
+      numbered.push(match[1].trim());
+    }
+  }
+  const candidates = numbered.length ? numbered : lines;
+
+  const seen = new Set();
+  const result = [];
+  for (const candidate of candidates) {
+    const key = candidate.toLowerCase();
+    if (candidate && !seen.has(key)) {
+      seen.add(key);
+      result.push(candidate);
+    }
+  }
+  return result.slice(0, count);
+}
+
+async function showPhraseBetterChooserInTab(tabId, frameId, options) {
   try {
     const results = await chrome.scripting.executeScript({
       target: {
         tabId,
         frameIds: typeof frameId === "number" ? [frameId] : undefined
       },
-      func: replaceSelectedTextOnPage,
-      args: [String(nextText || "")]
+      func: showPhraseBetterChooserOnPage,
+      args: [Array.isArray(options) ? options.map((option) => String(option || "")) : []]
     });
     return !!(results && results[0] && results[0].result && results[0].result.ok);
   } catch (_error) {
@@ -1011,7 +1103,49 @@ async function hidePageBusyIndicatorInTab(tabId, frameId) {
   }
 }
 
-function replaceSelectedTextOnPage(nextText) {
+function showPhraseBetterChooserOnPage(options) {
+  const chooserId = "askbetter-phrase-chooser";
+  const existing = document.getElementById(chooserId);
+  if (existing) {
+    existing.remove();
+  }
+
+  const variants = Array.isArray(options) ? options.filter((option) => String(option || "").trim()) : [];
+  if (!variants.length) {
+    return { ok: false, reason: "NO_OPTIONS" };
+  }
+
+  // Capture the selection context now, before any user interaction can clear it.
+  let captured = null;
+  let anchorRect = null;
+  const active = document.activeElement;
+  const isTextInput = active instanceof HTMLTextAreaElement
+    || (active instanceof HTMLInputElement && /^(text|search|url|email|tel|password)$/i.test(active.type || "text"));
+
+  if (isTextInput && typeof active.selectionStart === "number" && typeof active.selectionEnd === "number" && active.selectionEnd > active.selectionStart) {
+    captured = { type: "input", el: active, start: active.selectionStart, end: active.selectionEnd };
+    anchorRect = active.getBoundingClientRect();
+  } else {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+      const range = selection.getRangeAt(0);
+      const anchorNode = range.commonAncestorContainer && range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
+        ? range.commonAncestorContainer
+        : range.commonAncestorContainer && range.commonAncestorContainer.parentElement;
+      const editableRoot = anchorNode && anchorNode.closest
+        ? anchorNode.closest("[contenteditable='true'], [contenteditable='plaintext-only']")
+        : null;
+      if (editableRoot) {
+        captured = { type: "contenteditable", range: range.cloneRange(), editableRoot };
+        anchorRect = range.getBoundingClientRect();
+      }
+    }
+  }
+
+  if (!captured) {
+    return { ok: false, reason: "UNEDITABLE_SELECTION" };
+  }
+
   const dispatch = (target, type) => {
     if (!target) {
       return;
@@ -1023,51 +1157,222 @@ function replaceSelectedTextOnPage(nextText) {
     }
   };
 
-  const active = document.activeElement;
-  const isTextInput = active instanceof HTMLTextAreaElement
-    || (active instanceof HTMLInputElement && /^(text|search|url|email|tel|password)$/i.test(active.type || "text"));
-
-  if (isTextInput && typeof active.selectionStart === "number" && typeof active.selectionEnd === "number") {
-    const start = active.selectionStart;
-    const end = active.selectionEnd;
-    if (end > start) {
-      active.setRangeText(nextText, start, end, "end");
-      dispatch(active, "input");
-      dispatch(active, "change");
-      return { ok: true, method: "input" };
+  const applyText = (nextText) => {
+    if (captured.type === "input") {
+      const el = captured.el;
+      try {
+        el.focus({ preventScroll: true });
+      } catch (_error) {
+        // Ignore focus failures.
+      }
+      try {
+        el.setRangeText(nextText, captured.start, captured.end, "end");
+      } catch (_error) {
+        const value = String(el.value || "");
+        el.value = value.slice(0, captured.start) + nextText + value.slice(captured.end);
+      }
+      dispatch(el, "input");
+      dispatch(el, "change");
+      return true;
     }
+
+    try {
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(captured.range);
+      captured.range.deleteContents();
+      const textNode = document.createTextNode(nextText);
+      captured.range.insertNode(textNode);
+      selection.removeAllRanges();
+      const after = document.createRange();
+      after.setStartAfter(textNode);
+      after.collapse(true);
+      selection.addRange(after);
+      dispatch(captured.editableRoot, "input");
+      dispatch(captured.editableRoot, "change");
+      return true;
+    } catch (_error) {
+      return false;
+    }
+  };
+
+  const FONT = '500 13px/1.4 "Google Sans Text", "Google Sans", "Segoe UI", Arial, sans-serif';
+  const card = document.createElement("div");
+  card.id = chooserId;
+  card.style.position = "fixed";
+  card.style.zIndex = "2147483003";
+  card.style.boxSizing = "border-box";
+  card.style.width = "min(420px, calc(100vw - 24px))";
+  card.style.maxHeight = "min(60vh, 460px)";
+  card.style.display = "flex";
+  card.style.flexDirection = "column";
+  card.style.gap = "8px";
+  card.style.padding = "12px";
+  card.style.borderRadius = "14px";
+  card.style.border = "1px solid rgba(139, 92, 246, 0.55)";
+  card.style.background = "rgba(18, 16, 22, 0.98)";
+  card.style.color = "#f4f0eb";
+  card.style.font = FONT;
+  card.style.boxShadow = "0 18px 48px rgba(0, 0, 0, 0.5)";
+
+  const head = document.createElement("div");
+  head.style.display = "flex";
+  head.style.alignItems = "center";
+  head.style.justifyContent = "space-between";
+  head.style.gap = "8px";
+
+  const title = document.createElement("span");
+  title.textContent = variants.length > 1 ? "Phrase Better — choose one" : "Phrase Better suggestion";
+  title.style.fontWeight = "600";
+  title.style.fontSize = "12px";
+  title.style.color = "#d7c8ff";
+
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.textContent = "✕";
+  closeBtn.setAttribute("aria-label", "Discard");
+  closeBtn.style.cursor = "pointer";
+  closeBtn.style.border = "none";
+  closeBtn.style.background = "transparent";
+  closeBtn.style.color = "#9a8f83";
+  closeBtn.style.font = "600 13px/1 sans-serif";
+  closeBtn.style.padding = "4px 6px";
+  closeBtn.style.borderRadius = "8px";
+
+  head.appendChild(title);
+  head.appendChild(closeBtn);
+  card.appendChild(head);
+
+  const list = document.createElement("div");
+  list.style.display = "flex";
+  list.style.flexDirection = "column";
+  list.style.gap = "6px";
+  list.style.overflowY = "auto";
+  card.appendChild(list);
+
+  let closed = false;
+  const cleanup = () => {
+    if (closed) {
+      return;
+    }
+    closed = true;
+    document.removeEventListener("keydown", onKeydown, true);
+    document.removeEventListener("pointerdown", onOutside, true);
+    card.remove();
+  };
+
+  const onKeydown = (event) => {
+    if (event.key === "Escape") {
+      event.stopPropagation();
+      cleanup();
+    }
+  };
+  const onOutside = (event) => {
+    if (!card.contains(event.target)) {
+      cleanup();
+    }
+  };
+
+  const confirmApplied = () => {
+    list.remove();
+    head.remove();
+    const done = document.createElement("div");
+    done.textContent = "✓ Applied";
+    done.style.padding = "4px 2px";
+    done.style.color = "#7ee0a1";
+    done.style.fontWeight = "600";
+    card.appendChild(done);
+    window.setTimeout(cleanup, 700);
+  };
+
+  variants.forEach((variant, index) => {
+    const row = document.createElement("button");
+    row.type = "button";
+    row.style.display = "flex";
+    row.style.gap = "8px";
+    row.style.alignItems = "flex-start";
+    row.style.textAlign = "left";
+    row.style.width = "100%";
+    row.style.cursor = "pointer";
+    row.style.padding = "9px 10px";
+    row.style.borderRadius = "10px";
+    row.style.border = "1px solid rgba(255, 255, 255, 0.14)";
+    row.style.background = "rgba(255, 255, 255, 0.05)";
+    row.style.color = "#f4f0eb";
+    row.style.font = FONT;
+    row.addEventListener("mouseenter", () => {
+      row.style.background = "rgba(139, 92, 246, 0.22)";
+      row.style.borderColor = "rgba(139, 92, 246, 0.7)";
+    });
+    row.addEventListener("mouseleave", () => {
+      row.style.background = "rgba(255, 255, 255, 0.05)";
+      row.style.borderColor = "rgba(255, 255, 255, 0.14)";
+    });
+
+    if (variants.length > 1) {
+      const badge = document.createElement("span");
+      badge.textContent = String(index + 1);
+      badge.style.flex = "0 0 auto";
+      badge.style.minWidth = "18px";
+      badge.style.height = "18px";
+      badge.style.display = "inline-flex";
+      badge.style.alignItems = "center";
+      badge.style.justifyContent = "center";
+      badge.style.borderRadius = "999px";
+      badge.style.background = "rgba(139, 92, 246, 0.5)";
+      badge.style.color = "#fff";
+      badge.style.fontSize = "11px";
+      badge.style.fontWeight = "700";
+      row.appendChild(badge);
+    }
+
+    const text = document.createElement("span");
+    text.textContent = variant;
+    text.style.whiteSpace = "pre-wrap";
+    text.style.wordBreak = "break-word";
+    row.appendChild(text);
+
+    row.addEventListener("click", () => {
+      if (applyText(variant)) {
+        confirmApplied();
+      } else {
+        cleanup();
+      }
+    });
+
+    list.appendChild(row);
+  });
+
+  closeBtn.addEventListener("click", cleanup);
+
+  document.documentElement.appendChild(card);
+
+  // Position near the captured selection, clamped to the viewport.
+  const cardRect = card.getBoundingClientRect();
+  const width = Math.max(280, Math.round(cardRect.width || 360));
+  const height = Math.max(120, Math.round(cardRect.height || 200));
+  const clamp = (value, min, max) => Math.min(Math.max(value, min), Math.max(min, max));
+
+  let top;
+  if (anchorRect && (anchorRect.width > 0 || anchorRect.height > 0)) {
+    const above = anchorRect.top - height - 10;
+    top = above >= 8 ? above : clamp(anchorRect.bottom + 10, 8, window.innerHeight - height - 8);
+  } else {
+    top = clamp(window.innerHeight - height - 24, 8, window.innerHeight - height - 8);
   }
+  const left = anchorRect
+    ? clamp(anchorRect.left, 8, window.innerWidth - width - 8)
+    : clamp(window.innerWidth - width - 24, 8, window.innerWidth - width - 8);
 
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
-    return { ok: false, reason: "NO_SELECTION" };
-  }
+  card.style.top = `${top}px`;
+  card.style.left = `${left}px`;
 
-  const range = selection.getRangeAt(0);
-  const anchorNode = range.commonAncestorContainer && range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
-    ? range.commonAncestorContainer
-    : range.commonAncestorContainer && range.commonAncestorContainer.parentElement;
-  const editableRoot = anchorNode && anchorNode.closest
-    ? anchorNode.closest("[contenteditable='true'], [contenteditable='plaintext-only']")
-    : null;
+  window.setTimeout(() => {
+    document.addEventListener("keydown", onKeydown, true);
+    document.addEventListener("pointerdown", onOutside, true);
+  }, 0);
 
-  if (!editableRoot) {
-    return { ok: false, reason: "UNEDITABLE_SELECTION" };
-  }
-
-  range.deleteContents();
-  const textNode = document.createTextNode(nextText);
-  range.insertNode(textNode);
-
-  selection.removeAllRanges();
-  const nextRange = document.createRange();
-  nextRange.setStartAfter(textNode);
-  nextRange.collapse(true);
-  selection.addRange(nextRange);
-
-  dispatch(editableRoot, "input");
-  dispatch(editableRoot, "change");
-  return { ok: true, method: "contenteditable" };
+  return { ok: true };
 }
 
 function showPageToastOnPage(message) {

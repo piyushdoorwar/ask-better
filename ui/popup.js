@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS = {
   enableClaude: true,
   enableAskBetterMode: true,
   enablePhraseBetterMode: true,
+  phraseBetterOptionCount: 2,
   enableAI: true,
   keepUserVoice: false,
   keyVerified: false,
@@ -155,12 +156,24 @@ async function readSettings() {
     enableClaude: raw.enableClaude !== false,
     enableAskBetterMode: raw.enableAskBetterMode !== false,
     enablePhraseBetterMode: raw.enablePhraseBetterMode !== false,
+    phraseBetterOptionCount: normalizePhraseBetterOptionCount(raw.phraseBetterOptionCount),
     enableAI: raw.enableAI !== false,
     keepUserVoice: !!raw.keepUserVoice,
     keyVerified: !!raw.keyVerified,
     customPromptAdditions: String(raw.customPromptAdditions || ""),
     customPresets: normalizeCustomPresets(raw.customPresets)
   };
+}
+
+function normalizePhraseBetterOptionCount(value) {
+  const count = Math.round(Number(value));
+  if (!Number.isFinite(count) || count < 1) {
+    return DEFAULT_SETTINGS.phraseBetterOptionCount;
+  }
+  if (count > 3) {
+    return 3;
+  }
+  return count;
 }
 
 async function updateSettings(partial) {

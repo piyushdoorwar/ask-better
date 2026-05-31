@@ -248,10 +248,11 @@ User selects provider & enters API key in the extension options page. Selection 
 
 ### "Phrase Better" (Right-Click Context Menu)
 
-- User right-clicks any selected text on a webpage
-- Context menu shows "Rephrase with AskBetter"
-- Opens a small overlay with the rephrased version
-- User can copy or close
+- User right-clicks any selected text on a webpage → "Re-phrase with AskBetter".
+- Runs entirely in the background worker (`handlePhraseBetterContextMenu`); works on **any** page, including those where `injected/styles.css` is not loaded.
+- Generates **1–3 distinct suggestions** in a single API call (configurable via `phraseBetterOptionCount`, default 2). Multi-variant output is requested via `buildSystemInstruction({ mode:"phrase_better", variantCount })` and parsed by `parsePhraseVariants`.
+- Shows a **non-destructive chooser overlay** injected into the page (`showPhraseBetterChooserOnPage`, fully inline-styled): the user clicks a suggestion to apply it (flashes "✓ Applied"), or dismisses via the close button / click-outside / `Esc`. It never auto-replaces the selection.
+- The overlay captures the selection context (text-input offsets or a cloned contenteditable `Range`) the moment it opens, so applying still targets the original selection.
 
 ### Local-First Storage
 

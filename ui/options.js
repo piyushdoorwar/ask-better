@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS = {
   enableClaude: true,
   enableAskBetterMode: true,
   enablePhraseBetterMode: true,
+  phraseBetterOptionCount: 2,
   enableAI: true,
   keepUserVoice: false,
   keyVerified: false,
@@ -53,9 +54,10 @@ const SECTION_INFO_CONTENT = {
     title: "Mode",
     description: "Modes control which AskBetter experiences are available across supported surfaces.",
     points: [
-      "Ask Better powers the existing Optimize button on ChatGPT and Gemini.",
+      "Ask Better powers the existing Optimize button on ChatGPT, Gemini, and Claude.",
       "Phrase Better adds a right-click action for selected text in editable fields.",
       "Phrase Better focuses on grammar, spelling, and small wording fixes while preserving the original phrasing as much as possible.",
+      "Phrase Better suggestions lets you show 1, 2, or 3 rephrase options in a chooser, so you accept or reject before your text is replaced.",
       "Both modes are enabled by default and can be turned off independently."
     ]
   },
@@ -113,6 +115,7 @@ const enableGeminiEl = document.getElementById("enableGemini");
 const enableClaudeEl = document.getElementById("enableClaude");
 const enableAskBetterModeEl = document.getElementById("enableAskBetterMode");
 const enablePhraseBetterModeEl = document.getElementById("enablePhraseBetterMode");
+const phraseBetterOptionCountEl = document.getElementById("phraseBetterOptionCount");
 const customPromptAdditionsEl = document.getElementById("customPromptAdditions");
 const customAdditionsListEl = document.getElementById("customAdditionsList");
 const customAdditionsEmptyEl = document.getElementById("customAdditionsEmpty");
@@ -369,6 +372,10 @@ function bindAutoSave() {
 
   enablePhraseBetterModeEl.addEventListener("change", async () => {
     await savePartial({ enablePhraseBetterMode: !!enablePhraseBetterModeEl.checked });
+  });
+
+  phraseBetterOptionCountEl.addEventListener("change", async () => {
+    await savePartial({ phraseBetterOptionCount: normalizePhraseBetterOptionCount(phraseBetterOptionCountEl.value) });
   });
 
   enableChatGPTEl.addEventListener("change", async () => {
@@ -789,6 +796,7 @@ function fillForm(settings) {
   enableAIEl.checked = !!normalized.enableAI;
   enableAskBetterModeEl.checked = normalized.enableAskBetterMode !== false;
   enablePhraseBetterModeEl.checked = normalized.enablePhraseBetterMode !== false;
+  phraseBetterOptionCountEl.value = String(normalized.phraseBetterOptionCount);
   enableChatGPTEl.checked = !!normalized.enableChatGPT;
   enableGeminiEl.checked = !!normalized.enableGemini;
   enableClaudeEl.checked = normalized.enableClaude !== false;
@@ -954,12 +962,24 @@ function migrateSettings(rawSettings) {
     enableClaude: raw.enableClaude !== false,
     enableAskBetterMode: raw.enableAskBetterMode !== false,
     enablePhraseBetterMode: raw.enablePhraseBetterMode !== false,
+    phraseBetterOptionCount: normalizePhraseBetterOptionCount(raw.phraseBetterOptionCount),
     enableAI: raw.enableAI !== false,
     keepUserVoice: !!raw.keepUserVoice,
     keyVerified: !!raw.keyVerified,
     customPromptAdditions: String(raw.customPromptAdditions || ""),
     customPresets: normalizeCustomPresets(raw.customPresets)
   };
+}
+
+function normalizePhraseBetterOptionCount(value) {
+  const count = Math.round(Number(value));
+  if (!Number.isFinite(count) || count < 1) {
+    return DEFAULT_SETTINGS.phraseBetterOptionCount;
+  }
+  if (count > 3) {
+    return 3;
+  }
+  return count;
 }
 
 function normalizePreset(value, presetList) {
