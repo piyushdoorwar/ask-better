@@ -1,8 +1,8 @@
 # AskBetter
 
-**One-click prompt optimizer for ChatGPT and Google Gemini.**
+**One-click prompt optimizer for ChatGPT, Google Gemini, and Claude.**
 
-Get better AI responses without rewriting your prompts from scratch. AskBetter adds an ✨ Optimize button directly inside ChatGPT and Gemini — click it, and your rough draft becomes a sharp, structured prompt. Powered by your choice of Gemini, OpenAI, or Claude. Runs entirely in your browser. No backend, no tracking.
+Get better AI responses without rewriting your prompts from scratch. AskBetter adds an Optimize button directly inside ChatGPT, Gemini, and Claude — click it (or press `Ctrl/Cmd+Shift+O`), review the rewrite in a non-destructive preview, and accept it. Powered by your choice of Gemini, OpenAI, or Claude. Runs entirely in your browser. No backend, no tracking.
 
 🌐 **[piyushdoorwar.github.io/ask-better](https://piyushdoorwar.github.io/ask-better/)**
 🔒 **[Privacy Policy](https://piyushdoorwar.github.io/ask-better/policy/)**
@@ -11,15 +11,17 @@ Get better AI responses without rewriting your prompts from scratch. AskBetter a
 
 ## What it does
 
-- **Ask Better** — an Optimize button appears in the ChatGPT and Gemini prompt box. Type your rough idea, click Optimize, and AskBetter rewrites it with your chosen preset before you send.
-- **Phrase Better** — right-click any selected text anywhere on the web to clean it up: grammar, spelling, and punctuation fixed with minimal rewording.
+- **Ask Better** — an Optimize button appears in the ChatGPT, Gemini, and Claude prompt box (or trigger it with `Ctrl/Cmd+Shift+O`). Type your rough idea, optimize it, and review the result in a **non-destructive preview** — Accept, Regenerate, or Discard. Nothing replaces your text until you accept it.
+- **Phrase Better** — right-click any selected text anywhere on the web to clean it up: grammar, spelling, and punctuation fixed with minimal rewording. It shows **1–3 suggestions in a chooser** (configurable) so you pick before it replaces your text — and the selection is captured up front, so you don't have to wait with the text selected.
+- **Custom presets** — beyond the built-ins, define your own reusable rewrite styles (name + instruction) in Settings; they show up in the preset picker.
+- **Proportional, no fabrication** — rewrites match the length and specificity of your input and never invent requirements, facts, or details you didn't provide.
 
 ## Presets
 
 **Core Rewrite**
 | Preset | What it does |
 |---|---|
-| Structured | Story-like 2–3 paragraph prompt with strong context and constraints |
+| Structured | Clear, flowing, high-context prompt — scaled to the substance of your input |
 | Concise | Shorter while preserving all requirements |
 | Fix Grammar | Spelling and grammar fixes with minimal rewrite |
 | Improve Clarity | Clearer phrasing, same meaning |
@@ -45,6 +47,8 @@ Get better AI responses without rewriting your prompts from scratch. AskBetter a
 | Technical Spec | Precise requirements and acceptance criteria |
 | Implementation Plan | Ordered tasks, dependencies, and deliverables |
 
+Plus **Custom presets** — add your own `{ name, instruction }` styles in Settings → Presets; they appear in the preset picker alongside the built-ins.
+
 ## Privacy
 
 - No backend server — API calls go directly from your browser to your chosen AI provider.
@@ -62,6 +66,8 @@ Get better AI responses without rewriting your prompts from scratch. AskBetter a
 2. Choose your provider (Gemini, OpenAI, or Anthropic Claude).
 3. Paste your API key and click **Test key**. It saves automatically on success.
 4. Pick a default preset. Done.
+
+Then open ChatGPT, Gemini, or Claude and click the **Optimize** button (or press `Ctrl/Cmd+Shift+O`). The shortcut can be rebound at `chrome://extensions/shortcuts`.
 
 **Get an API key:**
 - Gemini: [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
@@ -84,9 +90,13 @@ Found a bug or want to suggest a preset? Open an issue or submit a pull request.
 
 ## Manual test checklist
 
-- [ ] Optimize button appears on ChatGPT and Gemini
-- [ ] Clicking Optimize rewrites and replaces the prompt input
-- [ ] Phrase Better right-click option appears on selected text
+- [ ] Optimize button appears on ChatGPT, Gemini, and Claude
+- [ ] `Ctrl/Cmd+Shift+O` triggers Optimize on the active prompt box
+- [ ] Optimize shows a preview; Accept writes the text, Discard/Regenerate work, nothing replaces until Accept
+- [ ] Short/vague prompts stay short (no invented requirements)
+- [ ] Phrase Better right-click shows the configured number of suggestions (1–3) and applies the chosen one
+- [ ] Phrase Better applies even if you click away while it processes (selection captured up front)
+- [ ] Custom presets can be added/removed and appear in the preset picker
 - [ ] Missing key shows helpful toast (AI disabled or key missing)
 - [ ] Provider and model switch persists across page reloads
 - [ ] Settings auto-save on change (no Save button required)

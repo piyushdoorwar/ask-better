@@ -238,6 +238,15 @@ Four categories:
 
 Presets are stored as `{ name, systemPrompt, description }` in `chrome.storage.local`.
 
+### Rewrite Rules (Ask Better prompt construction)
+
+The Ask Better system instruction (`buildSystemInstruction` in `background.js`, the non–phrase-better branch) enforces two cross-preset rules so rewrites don't balloon or hallucinate:
+
+- **Proportionality** — the rewrite is scaled to the input; a short/vague prompt yields a short rewrite, never padded for its own sake.
+- **No fabrication** — the model must not invent concrete details the user didn't provide (facts, names, numbers, dates, audiences, tools, domain requirements).
+- **`structured`** is narrative/flowing and may add *generic* framing to be well-formed, but must not fabricate specifics and must stay short for thin inputs — it no longer forces "2–3 paragraphs".
+- Custom-preset instructions are resolved by `getPresetInstruction(preset, settings)`; user `customPromptAdditions` are appended and take priority over default preset style on conflict.
+
 ### Three AI Providers
 
 - **OpenAI** (GPT-4, GPT-3.5, etc.) — API key required (`api.openai.com`)
@@ -251,8 +260,8 @@ User selects provider & enters API key in the extension options page. Selection 
 - User right-clicks any selected text on a webpage → "Re-phrase with AskBetter".
 - Runs entirely in the background worker (`handlePhraseBetterContextMenu`); works on **any** page, including those where `injected/styles.css` is not loaded.
 - Generates **1–3 distinct suggestions** in a single API call (configurable via `phraseBetterOptionCount`, default 2). Multi-variant output is requested via `buildSystemInstruction({ mode:"phrase_better", variantCount })` and parsed by `parsePhraseVariants`.
-- Shows a **non-destructive chooser overlay** injected into the page (`showPhraseBetterChooserOnPage`, fully inline-styled): the user clicks a suggestion to apply it (flashes "✓ Applied"), or dismisses via the close button / click-outside / `Esc`. It never auto-replaces the selection.
-- The overlay captures the selection context (text-input offsets or a cloned contenteditable `Range`) the moment it opens, so applying still targets the original selection.
+- Shows a **non-destructive chooser overlay** injected into the page (`showPhraseBetterChooserOnPage`, fully inline-styled): the user clicks a suggestion to apply it (flashes an "Applied" check), or dismisses via the close button / click-outside / `Esc`. It never auto-replaces the selection.
+- The selection context (text-input offsets or a cloned contenteditable `Range`) is captured **at context-menu time** by `capturePhraseBetterSelectionOnPage` and stored on the page's isolated-world global `window.__askBetterPhraseSelection`, so the rephrase can be applied to the original location even after the async request — the user doesn't have to keep the text selected. The chooser falls back to the live selection if the stored one is gone.
 
 ### Local-First Storage
 
@@ -406,7 +415,7 @@ Full settings page accessible from the popup or extension management UI.
 
 ### Landing Page (`/site/index.html`)
 
-- **Hero section**: "Ask Better" tagline, one-line value prop ("One-click prompt optimizer for ChatGPT and Google Gemini")
+- **Hero section**: "Ask Better" tagline, one-line value prop ("One-click prompt optimizer for ChatGPT, Google Gemini, and Claude")
 - **Feature highlights**: 6 key features (One-click optimize, 15+ presets, Three AI providers, Phrase Better, Works where you work, Draggable & unobtrusive) with SVG icons
 - **Preset showcase**: 4 preset categories (Core Rewrite, Communication Style, Critical Thinking, Build & Delivery) with descriptions
 - **Privacy section**: 4 privacy features (No backend server, Local storage only, Key isolation, Zero telemetry)
@@ -539,6 +548,10 @@ Currently minimal. Can be extended for:
 - **Muted**: `#9a8f83` (gray)
 
 All color values are stored in `ui/theme.css` as CSS variables for easy theming.
+
+**Single source of truth**: the palette is one warm amber theme kept in sync with `site/styles.css` — there is no purple. The popup/options reference `ui/theme.css` variables. The **injected** UI can't read those variables (content scripts load standalone), so `injected/styles.css` and the inline-styled overlays (`showPhraseBetterChooserOnPage` in `background.js`) use the same amber **literals** (`#e8991e` / `#f5ae3a`). When changing brand color, update `site/styles.css`, `ui/theme.css`, and those injected literals together.
+
+**Icons are SVG, never emoji** — all visible UI glyphs (Optimize button sparkle, preview/chooser close & check) are inline SVGs using `fill`/`stroke: currentColor`, mirroring `site/assets/icons/`.
 
 ### JavaScript Patterns
 
