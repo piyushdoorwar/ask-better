@@ -952,6 +952,16 @@ async function handlePhraseBetterContextMenu(info, tab) {
 
   const settings = await readSettings();
   const count = normalizePhraseBetterOptionCount(settings.phraseBetterOptionCount);
+
+  // Capture WHERE/WHAT was selected up front, before the async request can let the
+  // selection get lost (focus change, typing). The chooser later applies to this
+  // stored location, so the user does not have to keep the text selected while it processes.
+  const captured = await capturePhraseBetterSelectionInTab(tab.id, info.frameId);
+  if (!captured) {
+    await showPageToastInTab(tab.id, info.frameId, "Phrase Better works in editable text fields.");
+    return;
+  }
+
   await showPageBusyIndicatorInTab(tab.id, info.frameId);
   let response;
   try {
@@ -971,6 +981,21 @@ async function handlePhraseBetterContextMenu(info, tab) {
   const shown = await showPhraseBetterChooserInTab(tab.id, info.frameId, response.options);
   if (!shown) {
     await showPageToastInTab(tab.id, info.frameId, "Phrase Better works in editable text fields.");
+  }
+}
+
+async function capturePhraseBetterSelectionInTab(tabId, frameId) {
+  try {
+    const results = await chrome.scripting.executeScript({
+      target: {
+        tabId,
+        frameIds: typeof frameId === "number" ? [frameId] : undefined
+      },
+      func: capturePhraseBetterSelectionOnPage
+    });
+    return !!(results && results[0] && results[0].result && results[0].result.ok);
+  } catch (_error) {
+    return false;
   }
 }
 
@@ -1105,28 +1130,18 @@ async function hidePageBusyIndicatorInTab(tabId, frameId) {
   }
 }
 
-function showPhraseBetterChooserOnPage(options) {
-  const chooserId = "askbetter-phrase-chooser";
-  const existing = document.getElementById(chooserId);
-  if (existing) {
-    existing.remove();
-  }
-
-  const variants = Array.isArray(options) ? options.filter((option) => String(option || "").trim()) : [];
-  if (!variants.length) {
-    return { ok: false, reason: "NO_OPTIONS" };
-  }
-
-  // Capture the selection context now, before any user interaction can clear it.
+function capturePhraseBetterSelectionOnPage() {
+  // Store the current selection (location + live DOM references) on the page's
+  // isolated-world global so a later executeScript call can apply to it, even if the
+  // live selection is gone by then. The captured object keeps real DOM references; this
+  // is fine because both executeScript calls share the same isolated world for the tab.
   let captured = null;
-  let anchorRect = null;
   const active = document.activeElement;
   const isTextInput = active instanceof HTMLTextAreaElement
     || (active instanceof HTMLInputElement && /^(text|search|url|email|tel|password)$/i.test(active.type || "text"));
 
   if (isTextInput && typeof active.selectionStart === "number" && typeof active.selectionEnd === "number" && active.selectionEnd > active.selectionStart) {
     captured = { type: "input", el: active, start: active.selectionStart, end: active.selectionEnd };
-    anchorRect = active.getBoundingClientRect();
   } else {
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
@@ -1139,12 +1154,72 @@ function showPhraseBetterChooserOnPage(options) {
         : null;
       if (editableRoot) {
         captured = { type: "contenteditable", range: range.cloneRange(), editableRoot };
-        anchorRect = range.getBoundingClientRect();
+      }
+    }
+  }
+
+  window.__askBetterPhraseSelection = captured;
+  return { ok: !!captured };
+}
+
+function showPhraseBetterChooserOnPage(options) {
+  const chooserId = "askbetter-phrase-chooser";
+  const existing = document.getElementById(chooserId);
+  if (existing) {
+    existing.remove();
+  }
+
+  const variants = Array.isArray(options) ? options.filter((option) => String(option || "").trim()) : [];
+  if (!variants.length) {
+    return { ok: false, reason: "NO_OPTIONS" };
+  }
+
+  // Prefer the selection captured at context-menu time (stored on the page global);
+  // fall back to the live selection if it is still present and the stored one is gone.
+  let captured = null;
+  let anchorRect = null;
+
+  const stored = window.__askBetterPhraseSelection || null;
+  if (stored && stored.type === "input" && stored.el && stored.el.isConnected) {
+    captured = stored;
+    anchorRect = stored.el.getBoundingClientRect();
+  } else if (stored && stored.type === "contenteditable" && stored.range && stored.editableRoot && stored.editableRoot.isConnected) {
+    captured = stored;
+    try {
+      anchorRect = stored.range.getBoundingClientRect();
+    } catch (_error) {
+      anchorRect = null;
+    }
+  }
+
+  if (!captured) {
+    const active = document.activeElement;
+    const isTextInput = active instanceof HTMLTextAreaElement
+      || (active instanceof HTMLInputElement && /^(text|search|url|email|tel|password)$/i.test(active.type || "text"));
+
+    if (isTextInput && typeof active.selectionStart === "number" && typeof active.selectionEnd === "number" && active.selectionEnd > active.selectionStart) {
+      captured = { type: "input", el: active, start: active.selectionStart, end: active.selectionEnd };
+      anchorRect = active.getBoundingClientRect();
+    } else {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+        const range = selection.getRangeAt(0);
+        const anchorNode = range.commonAncestorContainer && range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
+          ? range.commonAncestorContainer
+          : range.commonAncestorContainer && range.commonAncestorContainer.parentElement;
+        const editableRoot = anchorNode && anchorNode.closest
+          ? anchorNode.closest("[contenteditable='true'], [contenteditable='plaintext-only']")
+          : null;
+        if (editableRoot) {
+          captured = { type: "contenteditable", range: range.cloneRange(), editableRoot };
+          anchorRect = range.getBoundingClientRect();
+        }
       }
     }
   }
 
   if (!captured) {
+    window.__askBetterPhraseSelection = null;
     return { ok: false, reason: "UNEDITABLE_SELECTION" };
   }
 
@@ -1260,6 +1335,7 @@ function showPhraseBetterChooserOnPage(options) {
       return;
     }
     closed = true;
+    window.__askBetterPhraseSelection = null;
     document.removeEventListener("keydown", onKeydown, true);
     document.removeEventListener("pointerdown", onOutside, true);
     card.remove();
