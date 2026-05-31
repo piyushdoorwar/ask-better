@@ -39,7 +39,7 @@ const PRESET_INSTRUCTIONS = {
   clarity: "Improve clarity while preserving intent, requirements, and details.",
   concise: "Make it concise without losing requirements, constraints, or key context.",
   structured:
-    "Rewrite into a story-like, high-context prompt in 2-3 strong paragraphs. Keep all requirements and constraints, but never use section labels such as Context, Task, Constraints, Output Format, or Questions unless the user explicitly asks for labeled sections.",
+    "Rewrite into a clear, flowing, high-context prompt using natural narrative rather than section labels such as Context, Task, Constraints, Output Format, or Questions (unless the user explicitly asks for labeled sections). Scale the length to the substance of the input: keep short or vague inputs brief, and never expand a thin prompt into multiple padded paragraphs.",
   persuasive: "Rewrite to be more persuasive and outcomes-focused while preserving user intent and constraints.",
   executive: "Rewrite in executive style: clear, decisive, strategic, and optimized for quick stakeholder alignment.",
   coaching: "Rewrite in a supportive coaching style with motivation, accountability, and practical action steps.",
@@ -646,13 +646,15 @@ function buildSystemInstruction({ preset, settings, mode, completionPass, varian
     "Return only one rewritten prompt as plain text.",
     "Do not include commentary, markdown fences, or explanations.",
     "Preserve all critical requirements and constraints from the original prompt.",
+    "Do not invent concrete details the user did not provide — no specific facts, names, numbers, dates, audiences, tools, or domain requirements. When a detail is missing, keep it general instead of fabricating it.",
+    "Keep the rewrite proportional to the input: a short, simple, or vague prompt must produce a short rewrite. Never pad length for its own sake.",
     "The rewritten prompt must be complete and end with a complete sentence.",
     `Preset behavior: ${instruction}`
   ];
 
   if (preset === "structured") {
     parts.push(
-      "For structured preset, write in 2-3 cohesive narrative paragraphs with natural flow, not bullet lists."
+      "For the structured preset, write in cohesive, flowing narrative (not bullet lists). You may add light, generic framing to make the request well-formed, but only generic scaffolding — never concrete specifics the user did not give. For short or vague inputs, keep it to one short paragraph or a couple of sentences; reserve multiple paragraphs for inputs that already contain substantial detail."
     );
   }
 
