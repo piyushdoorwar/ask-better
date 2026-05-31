@@ -31,7 +31,7 @@ body {
         padding: 5px;
         border-radius: var(--radius-sm);
         border: 1px solid rgba(232, 153, 30, 0.35);
-        background: linear-gradient(145deg, rgba(139, 90, 143, 0.45), rgba(15, 13, 11, 0.96));
+        background: linear-gradient(145deg, rgba(232, 153, 30, 0.28), rgba(15, 13, 11, 0.96));
         box-shadow: 0 2px 8px rgba(232, 153, 30, 0.2);
       }
 
@@ -243,21 +243,23 @@ body {
       .open-settings {
         width: 100%;
         margin-top: 8px;
-        border: 1px solid rgba(232, 153, 30, 0.45);
+        border: 1px solid var(--accent-bright);
         border-radius: var(--radius);
-        padding: 10px 14px;
-        color: var(--text);
-        background: rgba(232, 153, 30, 0.14);
+        padding: 11px 14px;
+        color: #1a1100;
+        background: var(--accent-gradient);
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 700;
         cursor: pointer;
-        transition: background 120ms, border-color 120ms;
+        transition: filter 120ms, box-shadow 120ms, transform 120ms;
         font-family: inherit;
+        box-shadow: 0 4px 14px rgba(232, 153, 30, 0.22);
       }
 
       .open-settings:hover {
-        background: rgba(232, 153, 30, 0.24);
-        border-color: var(--accent);
+        filter: brightness(1.05);
+        box-shadow: 0 6px 18px rgba(232, 153, 30, 0.32);
+        transform: translateY(-1px);
       }
 
       .open-settings:focus-visible {

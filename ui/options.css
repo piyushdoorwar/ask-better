@@ -37,7 +37,7 @@
         padding: 6px;
         border-radius: var(--radius);
         border: 1px solid rgba(232, 153, 30, 0.35);
-        background: linear-gradient(145deg, rgba(139, 90, 143, 0.45), rgba(15, 13, 11, 0.96));
+        background: linear-gradient(145deg, rgba(232, 153, 30, 0.28), rgba(15, 13, 11, 0.96));
         box-shadow: 0 2px 10px rgba(232, 153, 30, 0.2);
       }
 

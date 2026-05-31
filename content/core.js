@@ -1,5 +1,8 @@
 function startAskBetter(site, siteToggleKey, selectors) {
-  const BUTTON_LABEL = "✨ Optimize";
+  const OPTIMIZE_TEXT = "Optimize";
+  const BUSY_TEXT = "Optimizing…";
+  const SPARKLE_SVG = '<svg viewBox="0 0 36 36" width="14" height="14" aria-hidden="true" focusable="false" style="display:block;fill:currentColor"><path d="M34.347 16.893l-8.899-3.294l-3.323-10.891a1 1 0 0 0-1.912 0l-3.322 10.891l-8.9 3.294a1 1 0 0 0 0 1.876l8.895 3.293l3.324 11.223a1 1 0 0 0 1.918-.001l3.324-11.223l8.896-3.293a.998.998 0 0 0-.001-1.875z"></path><path d="M14.347 27.894l-2.314-.856l-.9-3.3a.998.998 0 0 0-1.929-.001l-.9 3.3l-2.313.856a1 1 0 0 0 0 1.876l2.301.853l.907 3.622a1 1 0 0 0 1.94-.001l.907-3.622l2.301-.853a.997.997 0 0 0 0-1.874z"></path><path d="M10.009 6.231l-2.364-.875l-.876-2.365a.999.999 0 0 0-1.876 0l-.875 2.365l-2.365.875a1 1 0 0 0 0 1.876l2.365.875l.875 2.365a1 1 0 0 0 1.876 0l.875-2.365l2.365-.875a1 1 0 0 0 0-1.876z"></path></svg>';
+  const BUTTON_INNER = `<span class="pf-optimize-icon" aria-hidden="true">${SPARKLE_SVG}</span><span class="pf-optimize-label">${OPTIMIZE_TEXT}</span>`;
   const DEFAULT_OFFSET = { x: 0, y: 0 };
 
   let button = null;
@@ -52,7 +55,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
     button = document.createElement("button");
     button.type = "button";
     button.className = "pf-optimize-btn";
-    button.textContent = BUTTON_LABEL;
+    button.innerHTML = BUTTON_INNER;
     button.style.display = "none";
     button.addEventListener("pointerdown", onPointerDown);
     button.addEventListener("pointermove", onPointerMove);
@@ -183,7 +186,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
     previewCard.style.display = "none";
     previewCard.innerHTML = `
       <div class="pf-preview-head">
-        <span class="pf-preview-title">${BUTTON_LABEL} preview</span>
+        <span class="pf-preview-title"><span class="pf-preview-icon" aria-hidden="true">${SPARKLE_SVG}</span>Optimize preview</span>
         <button type="button" class="pf-preview-close" data-action="discard" aria-label="Discard">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
             <path d="M6 6L18 18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
@@ -501,7 +504,10 @@ function startAskBetter(site, siteToggleKey, selectors) {
     if (button && button.isConnected) {
       button.disabled = isBusy;
       button.classList.toggle("pf-is-busy", isBusy);
-      button.textContent = isBusy ? "Optimizing..." : BUTTON_LABEL;
+      const label = button.querySelector(".pf-optimize-label");
+      if (label) {
+        label.textContent = isBusy ? BUSY_TEXT : OPTIMIZE_TEXT;
+      }
     }
     if (isBusy) {
       showBusyIndicator(input || activeInput);

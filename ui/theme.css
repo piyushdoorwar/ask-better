@@ -4,40 +4,43 @@
   /* AskBetter font stack */
   --font-ui: 'Cantarell', 'Ubuntu', 'Inter', 'Segoe UI', sans-serif;
 
-  /* AskBetter brand palette */
+  /* Brand palette — single source of truth, synced with site/styles.css */
   --accent: #e8991e;
   --accent-bright: #f5ae3a;
   --accent-dark: #d17a14;
-  --accent-glow: rgba(232, 153, 30, 0.14);
+  --accent-glow: rgba(232, 153, 30, 0.16);
+  --accent-gradient: linear-gradient(135deg, #f5ae3a 0%, #e8991e 100%);
 
-  /* Backward-compat aliases */
+  /* Aliases kept for existing references (all map to amber) */
   --orange: #e8991e;
   --orange-light: #f5ae3a;
   --orange-dark: #d17a14;
   --yellow: #e8991e;
   --yellow-dark: #d17a14;
   --yellow-light: #f5ae3a;
-  --purple: #8b5a8f;
-  --purple-light: #e8991e;
-  --purple-dark: #2C001E;
-  --purple-soft: rgba(232, 153, 30, 0.14);
-  --shadow-purple: 0 4px 16px rgba(232, 153, 30, 0.28);
+
+  /* Site-named warm tokens (kept in sync with site) */
+  --panel: #161310;
+  --line: #2e2720;
+  --muted: #9a8f83;
+  --soft: #d0c4b8;
+  --button: #332c25;
+  --button-border: #5a4f42;
 
   /* Semantic colors */
   --green: #26A269;
   --amber: #E5A50A;
   --red: #C01C28;
-  --pink: #e8991e;
   --blue: #5DADE2;
 
-  /* Backgrounds — AskBetter dark theme */
+  /* Backgrounds — warm dark ramp (bg/panel/panel-2/line match site) */
   --bg: #0f0d0b;
   --bg-secondary: #161310;
   --bg-panel: #1e1a15;
   --bg-elevated: #252118;
   --bg-elevated-2: #2e2720;
 
-  /* Text — AskBetter warm light */
+  /* Text — warm light */
   --text: #f4f0eb;
   --text-secondary: rgba(244, 240, 235, 0.72);
   --text-muted: rgba(244, 240, 235, 0.48);
@@ -95,8 +98,8 @@ body {
   font-family: var(--font-ui);
   color: var(--text);
   background:
-    radial-gradient(900px 500px at 0% 0%, rgba(139, 90, 143, 0.12), transparent 58%),
-    radial-gradient(500px 350px at 100% 100%, rgba(232, 153, 30, 0.05), transparent 58%),
+    radial-gradient(900px 520px at 0% 0%, rgba(232, 153, 30, 0.07), transparent 60%),
+    radial-gradient(620px 420px at 100% 100%, rgba(232, 153, 30, 0.04), transparent 60%),
     var(--bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -175,7 +178,7 @@ body {
 }
 
 .select-shell select option {
-  background: #2e2e2e;
+  background: var(--bg-panel);
   color: var(--text);
   padding: 8px 12px;
   font-size: 14px;
@@ -218,13 +221,13 @@ body {
 
 .select-shell select option,
 .select-shell select optgroup {
-  background: #1f1f24;
+  background: var(--bg-panel);
   color: var(--text);
 }
 
 .select-shell select option:checked {
-  background: #4f2c7f;
-  color: #fff;
+  background: var(--accent);
+  color: #1a1100;
 }
 
 /* ── Custom Select Component ── */

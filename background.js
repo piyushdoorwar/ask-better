@@ -1211,11 +1211,11 @@ function showPhraseBetterChooserOnPage(options) {
   card.style.gap = "8px";
   card.style.padding = "12px";
   card.style.borderRadius = "14px";
-  card.style.border = "1px solid rgba(139, 92, 246, 0.55)";
-  card.style.background = "rgba(18, 16, 22, 0.98)";
+  card.style.border = "1px solid rgba(232, 153, 30, 0.5)";
+  card.style.background = "rgba(22, 19, 16, 0.98)";
   card.style.color = "#f4f0eb";
   card.style.font = FONT;
-  card.style.boxShadow = "0 18px 48px rgba(0, 0, 0, 0.5)";
+  card.style.boxShadow = "0 18px 48px rgba(0, 0, 0, 0.55)";
 
   const head = document.createElement("div");
   head.style.display = "flex";
@@ -1225,20 +1225,22 @@ function showPhraseBetterChooserOnPage(options) {
 
   const title = document.createElement("span");
   title.textContent = variants.length > 1 ? "Phrase Better — choose one" : "Phrase Better suggestion";
-  title.style.fontWeight = "600";
+  title.style.fontWeight = "700";
   title.style.fontSize = "12px";
-  title.style.color = "#d7c8ff";
+  title.style.color = "#f5ae3a";
 
   const closeBtn = document.createElement("button");
   closeBtn.type = "button";
-  closeBtn.textContent = "✕";
+  closeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true" focusable="false" style="display:block"><path d="M6 6L18 18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path><path d="M18 6L6 18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path></svg>';
   closeBtn.setAttribute("aria-label", "Discard");
   closeBtn.style.cursor = "pointer";
   closeBtn.style.border = "none";
   closeBtn.style.background = "transparent";
   closeBtn.style.color = "#9a8f83";
-  closeBtn.style.font = "600 13px/1 sans-serif";
-  closeBtn.style.padding = "4px 6px";
+  closeBtn.style.display = "inline-flex";
+  closeBtn.style.alignItems = "center";
+  closeBtn.style.justifyContent = "center";
+  closeBtn.style.padding = "4px";
   closeBtn.style.borderRadius = "8px";
 
   head.appendChild(title);
@@ -1279,7 +1281,10 @@ function showPhraseBetterChooserOnPage(options) {
     list.remove();
     head.remove();
     const done = document.createElement("div");
-    done.textContent = "✓ Applied";
+    done.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" aria-hidden="true" focusable="false" style="display:block"><path d="M5 12.5L10 17L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Applied</span>';
+    done.style.display = "inline-flex";
+    done.style.alignItems = "center";
+    done.style.gap = "6px";
     done.style.padding = "4px 2px";
     done.style.color = "#7ee0a1";
     done.style.fontWeight = "600";
@@ -1303,8 +1308,8 @@ function showPhraseBetterChooserOnPage(options) {
     row.style.color = "#f4f0eb";
     row.style.font = FONT;
     row.addEventListener("mouseenter", () => {
-      row.style.background = "rgba(139, 92, 246, 0.22)";
-      row.style.borderColor = "rgba(139, 92, 246, 0.7)";
+      row.style.background = "rgba(232, 153, 30, 0.18)";
+      row.style.borderColor = "rgba(232, 153, 30, 0.7)";
     });
     row.addEventListener("mouseleave", () => {
       row.style.background = "rgba(255, 255, 255, 0.05)";
@@ -1321,8 +1326,8 @@ function showPhraseBetterChooserOnPage(options) {
       badge.style.alignItems = "center";
       badge.style.justifyContent = "center";
       badge.style.borderRadius = "999px";
-      badge.style.background = "rgba(139, 92, 246, 0.5)";
-      badge.style.color = "#fff";
+      badge.style.background = "rgba(232, 153, 30, 0.85)";
+      badge.style.color = "#1a1100";
       badge.style.fontSize = "11px";
       badge.style.fontWeight = "700";
       row.appendChild(badge);
