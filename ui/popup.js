@@ -12,13 +12,17 @@ const DEFAULT_SETTINGS = {
   defaultPreset: "structured",
   enableChatGPT: true,
   enableGemini: true,
+  enableClaude: true,
   enableAskBetterMode: true,
   enablePhraseBetterMode: true,
   enableAI: true,
   keepUserVoice: false,
   keyVerified: false,
-  customPromptAdditions: ""
+  customPromptAdditions: "",
+  customPresets: []
 };
+
+let customPresets = [];
 
 const GEMINI_KEY_URL = "https://aistudio.google.com/apikey";
 const OPENAI_KEY_URL = "https://platform.openai.com/api-keys";
@@ -54,7 +58,9 @@ init().catch(() => {
 
 async function init() {
   const settings = await readSettings();
+  customPresets = settings.customPresets.slice();
   renderStatus(settings);
+  renderCustomPresetOptions();
   defaultPresetEl.value = normalizePreset(settings.defaultPreset);
   providerSelectEl.value = normalizeProvider(settings.provider);
   const model = getProviderModel(settings);
@@ -143,15 +149,17 @@ async function readSettings() {
     anthropicApiKey: String(raw.anthropicApiKey || ""),
     anthropicModel: normalizeModel(raw.anthropicModel, DEFAULT_SETTINGS.anthropicModel),
     anthropicKeyVerified: !!raw.anthropicKeyVerified,
-    defaultPreset: normalizePreset(raw.defaultPreset),
+    defaultPreset: normalizePreset(raw.defaultPreset, normalizeCustomPresets(raw.customPresets)),
     enableChatGPT: raw.enableChatGPT !== false,
     enableGemini: raw.enableGemini !== false,
+    enableClaude: raw.enableClaude !== false,
     enableAskBetterMode: raw.enableAskBetterMode !== false,
     enablePhraseBetterMode: raw.enablePhraseBetterMode !== false,
     enableAI: raw.enableAI !== false,
     keepUserVoice: !!raw.keepUserVoice,
     keyVerified: !!raw.keyVerified,
-    customPromptAdditions: String(raw.customPromptAdditions || "")
+    customPromptAdditions: String(raw.customPromptAdditions || ""),
+    customPresets: normalizeCustomPresets(raw.customPresets)
   };
 }
 
@@ -161,7 +169,7 @@ async function updateSettings(partial) {
   await chrome.storage.local.set({ settings: next });
 }
 
-function normalizePreset(value) {
+function normalizePreset(value, presetList) {
   const preset = String(value || "").toLowerCase();
   const validPresets = new Set([
     "structured",
@@ -181,7 +189,53 @@ function normalizePreset(value) {
   if (validPresets.has(preset)) {
     return preset;
   }
+  const list = Array.isArray(presetList) ? presetList : customPresets;
+  if (list.some((item) => item.id === String(value || ""))) {
+    return String(value || "");
+  }
   return DEFAULT_SETTINGS.defaultPreset;
+}
+
+function normalizeCustomPresets(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const seen = new Set();
+  const result = [];
+  for (const raw of value) {
+    if (!raw || typeof raw !== "object") {
+      continue;
+    }
+    const id = String(raw.id || "").trim();
+    const name = String(raw.name || "").replace(/\s+/g, " ").trim();
+    const instruction = String(raw.instruction || "").trim();
+    if (!id || !name || !instruction || seen.has(id)) {
+      continue;
+    }
+    seen.add(id);
+    result.push({ id, name, instruction });
+  }
+  return result;
+}
+
+function renderCustomPresetOptions() {
+  const existing = defaultPresetEl.querySelector('optgroup[data-custom="1"]');
+  if (existing) {
+    existing.remove();
+  }
+  if (!customPresets.length) {
+    return;
+  }
+  const group = document.createElement("optgroup");
+  group.label = "Custom";
+  group.setAttribute("data-custom", "1");
+  for (const preset of customPresets) {
+    const option = document.createElement("option");
+    option.value = preset.id;
+    option.textContent = preset.name;
+    group.appendChild(option);
+  }
+  defaultPresetEl.appendChild(group);
 }
 
 function renderModelOptions(selectedModel) {

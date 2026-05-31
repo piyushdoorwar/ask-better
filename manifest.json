@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "AskBetter",
   "description": "Prompt optimizer and text rephraser for ChatGPT, Gemini, Claude, and editable text on the web.",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "permissions": [
     "activeTab",
     "contextMenus",
@@ -32,6 +32,15 @@
     }
   },
   "options_page": "ui/options.html",
+  "commands": {
+    "optimize-prompt": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+O",
+        "mac": "Command+Shift+O"
+      },
+      "description": "Optimize the current prompt with AskBetter"
+    }
+  },
   "content_scripts": [
     {
       "matches": [
@@ -39,6 +48,7 @@
         "https://chatgpt.com/*"
       ],
       "js": [
+        "content/core.js",
         "content/chatgpt.js"
       ],
       "css": [
@@ -51,7 +61,21 @@
         "https://gemini.google.com/*"
       ],
       "js": [
+        "content/core.js",
         "content/gemini.js"
+      ],
+      "css": [
+        "injected/styles.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://claude.ai/*"
+      ],
+      "js": [
+        "content/core.js",
+        "content/claude.js"
       ],
       "css": [
         "injected/styles.css"

@@ -130,3 +130,123 @@
     transform: rotate(360deg);
   }
 }
+
+.pf-preview-card {
+  --pf-font-ui: "Google Sans Text", "Google Sans", "Roboto", "Noto Sans", "Segoe UI", Arial, sans-serif;
+  position: fixed;
+  z-index: 2147483003;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(420px, calc(100vw - 24px));
+  max-height: min(60vh, 460px);
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(139, 92, 246, 0.55);
+  background: rgba(18, 16, 22, 0.98);
+  color: #f4f0eb;
+  font: 500 13px/1.4 var(--pf-font-ui);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
+}
+
+.pf-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pf-preview-title {
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  color: #d7c8ff;
+}
+
+.pf-preview-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #9a8f83;
+  cursor: pointer;
+}
+
+.pf-preview-close svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pf-preview-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f4f0eb;
+}
+
+.pf-preview-text {
+  flex: 1;
+  min-height: 120px;
+  max-height: 320px;
+  resize: vertical;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(10, 9, 12, 0.9);
+  color: #f4f0eb;
+  font: 500 13px/1.5 var(--pf-font-ui);
+  outline: none;
+}
+
+.pf-preview-text:focus {
+  border-color: rgba(139, 92, 246, 0.75);
+}
+
+.pf-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pf-preview-spacer {
+  flex: 1;
+}
+
+.pf-preview-btn {
+  border-radius: 999px;
+  padding: 7px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f4f0eb;
+  font: 600 12px/1.2 var(--pf-font-ui);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, opacity 120ms ease;
+}
+
+.pf-preview-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.pf-preview-accept {
+  border-color: rgba(139, 92, 246, 0.7);
+  background: linear-gradient(135deg, rgba(103, 57, 183, 0.95), rgba(91, 33, 182, 0.95));
+  color: #ffffff;
+}
+
+.pf-preview-accept:hover {
+  border-color: rgba(255, 215, 0, 0.85);
+}
+
+.pf-preview-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.pf-preview-is-busy .pf-preview-text {
+  opacity: 0.7;
+}

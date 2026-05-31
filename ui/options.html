@@ -240,6 +240,32 @@
                 </div>
                 <p class="inline-note">When enabled, rewrites preserve your tone and writing style as much as possible.</p>
               </div>
+
+              <div class="field full">
+                <label>Custom presets</label>
+                <div id="customPresetsEditor" class="custom-editor">
+                  <div id="customPresetsList" class="custom-preset-list" aria-live="polite"></div>
+                  <p id="customPresetsEmpty" class="custom-empty">No custom presets yet. Create your own reusable rewrite style below.</p>
+                </div>
+                <div class="custom-preset-form">
+                  <input
+                    id="customPresetName"
+                    class="custom-addition-input"
+                    type="text"
+                    placeholder="Preset name (e.g., Jira ticket)"
+                    autocomplete="off"
+                    maxlength="60"
+                  />
+                  <textarea
+                    id="customPresetInstruction"
+                    class="custom-preset-instruction"
+                    placeholder="Rewrite instruction (e.g., Rewrite as a Jira ticket with summary, description, and acceptance criteria.)"
+                    rows="3"
+                  ></textarea>
+                  <button type="button" id="addCustomPresetBtn" class="add-custom-btn">Add preset</button>
+                </div>
+                <p class="inline-note">Custom presets appear in the Default preset list above and in the popup.</p>
+              </div>
             </div>
           </section>
 
@@ -300,6 +326,18 @@
                 </label>
                 <span class="switch">
                   <input id="enableGemini" name="enableGemini" type="checkbox" />
+                  <span class="slider"></span>
+                </span>
+              </div>
+
+              <div class="toggle-row">
+                <label for="enableClaude" class="toggle-label-icon">
+                  <img class="csel-icon" src="../assets/icons/ui/claude-color.svg" alt="" aria-hidden="true" />
+                  <span class="csel-sep"></span>
+                  Enable on Claude
+                </label>
+                <span class="switch">
+                  <input id="enableClaude" name="enableClaude" type="checkbox" />
                   <span class="slider"></span>
                 </span>
               </div>

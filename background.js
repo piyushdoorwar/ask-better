@@ -12,12 +12,14 @@ const DEFAULT_SETTINGS = {
   defaultPreset: "structured",
   enableChatGPT: true,
   enableGemini: true,
+  enableClaude: true,
   enableAskBetterMode: true,
   enablePhraseBetterMode: true,
   enableAI: true,
   keepUserVoice: false,
   keyVerified: false,
-  customPromptAdditions: ""
+  customPromptAdditions: "",
+  customPresets: []
 };
 
 const PHRASE_BETTER_CONTEXT_MENU_ID = "askbetter-phrase-better";
@@ -26,7 +28,8 @@ let phraseBetterMenuSyncToken = 0;
 const DEFAULT_UI_PREFS = {
   buttonOffsets: {
     chatgpt: { x: 0, y: 0 },
-    gemini: { x: 0, y: 0 }
+    gemini: { x: 0, y: 0 },
+    claude: { x: 0, y: 0 }
   }
 };
 
@@ -71,6 +74,29 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     // Ignore context-menu runtime failures.
   });
 });
+
+if (chrome.commands && chrome.commands.onCommand) {
+  chrome.commands.onCommand.addListener((command) => {
+    if (command !== "optimize-prompt") {
+      return;
+    }
+    triggerOptimizeInActiveTab().catch(() => {
+      // Ignore command dispatch failures (e.g. no eligible tab).
+    });
+  });
+}
+
+async function triggerOptimizeInActiveTab() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab || typeof tab.id !== "number") {
+    return;
+  }
+  try {
+    await chrome.tabs.sendMessage(tab.id, { type: "ASKBETTER_TRIGGER_OPTIMIZE" });
+  } catch (_error) {
+    // The active tab has no AskBetter content script; nothing to trigger.
+  }
+}
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   handleMessage(message)
@@ -127,9 +153,9 @@ async function optimizePrompt(message) {
   const rawPrompt = typeof message.prompt === "string" ? message.prompt : "";
   const prompt = rawPrompt.trim();
   const mode = normalizeOptimizationMode(message.mode);
-  const preset = mode === "phrase_better" ? "grammar" : normalizePreset(message.preset);
-  const site = normalizeSite(message.site);
   const settings = await readSettings();
+  const preset = mode === "phrase_better" ? "grammar" : normalizePreset(message.preset, settings);
+  const site = normalizeSite(message.site);
   return await rewriteText({ prompt, preset, site, settings, mode });
 }
 
@@ -596,7 +622,7 @@ function buildSystemInstruction({ preset, settings, mode, completionPass }) {
     return parts.join(" ");
   }
 
-  const instruction = PRESET_INSTRUCTIONS[preset] || PRESET_INSTRUCTIONS.structured;
+  const instruction = getPresetInstruction(preset, settings);
   const customGuidance = String(settings && settings.customPromptAdditions ? settings.customPromptAdditions : "").trim();
   const keepUserVoice = !!(settings && settings.keepUserVoice);
   const parts = [
@@ -675,7 +701,7 @@ function isLikelyIncompleteOutput(text) {
   if (danglingWords.has(lastWord)) {
     return true;
   }
-  return true;
+  return false;
 }
 
 function mapProviderError(error) {
@@ -711,23 +737,63 @@ function toPublicSettings(settings) {
     openaiModel: settings.openaiModel,
     anthropicModel: settings.anthropicModel,
     activeModel: getModelForProvider(settings),
-    defaultPreset: normalizePreset(settings.defaultPreset),
+    defaultPreset: normalizePreset(settings.defaultPreset, settings),
     enableChatGPT: !!settings.enableChatGPT,
     enableGemini: !!settings.enableGemini,
+    enableClaude: !!settings.enableClaude,
     enableAskBetterMode: settings.enableAskBetterMode !== false,
     enablePhraseBetterMode: settings.enablePhraseBetterMode !== false,
     enableAI: !!settings.enableAI,
     keepUserVoice: !!settings.keepUserVoice,
+    customPresets: settings.customPresets.map((preset) => ({ id: preset.id, name: preset.name })),
     hasApiKey
   };
 }
 
-function normalizePreset(value) {
+function normalizePreset(value, settings) {
   const preset = String(value || "").toLowerCase();
   if (Object.prototype.hasOwnProperty.call(PRESET_INSTRUCTIONS, preset)) {
     return preset;
   }
+  const customPresets = settings && Array.isArray(settings.customPresets) ? settings.customPresets : [];
+  if (customPresets.some((item) => item.id === String(value || ""))) {
+    return String(value || "");
+  }
   return DEFAULT_SETTINGS.defaultPreset;
+}
+
+function getPresetInstruction(preset, settings) {
+  if (Object.prototype.hasOwnProperty.call(PRESET_INSTRUCTIONS, preset)) {
+    return PRESET_INSTRUCTIONS[preset];
+  }
+  const customPresets = settings && Array.isArray(settings.customPresets) ? settings.customPresets : [];
+  const match = customPresets.find((item) => item.id === preset);
+  if (match && match.instruction) {
+    return match.instruction;
+  }
+  return PRESET_INSTRUCTIONS.structured;
+}
+
+function normalizeCustomPresets(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const seen = new Set();
+  const result = [];
+  for (const raw of value) {
+    if (!raw || typeof raw !== "object") {
+      continue;
+    }
+    const id = String(raw.id || "").trim();
+    const name = String(raw.name || "").replace(/\s+/g, " ").trim();
+    const instruction = String(raw.instruction || "").trim();
+    if (!id || !name || !instruction || seen.has(id)) {
+      continue;
+    }
+    seen.add(id);
+    result.push({ id, name, instruction });
+  }
+  return result;
 }
 
 function normalizeGeminiModel(model) {
@@ -786,6 +852,9 @@ function isSiteEnabled(settings, site) {
   if (site === "gemini") {
     return !!settings.enableGemini;
   }
+  if (site === "claude") {
+    return !!settings.enableClaude;
+  }
   return !!settings.enableChatGPT;
 }
 
@@ -798,6 +867,7 @@ async function ensureDefaults() {
 async function readSettings() {
   const stored = await chrome.storage.local.get(["settings"]);
   const raw = stored.settings || {};
+  const customPresets = normalizeCustomPresets(raw.customPresets);
   return {
     provider: normalizeProvider(raw.provider),
     geminiApiKey: String(raw.geminiApiKey || ""),
@@ -809,15 +879,17 @@ async function readSettings() {
     anthropicApiKey: String(raw.anthropicApiKey || ""),
     anthropicModel: normalizeAnthropicModel(raw.anthropicModel || DEFAULT_SETTINGS.anthropicModel),
     anthropicKeyVerified: !!raw.anthropicKeyVerified,
-    defaultPreset: normalizePreset(raw.defaultPreset),
+    defaultPreset: normalizePreset(raw.defaultPreset, { customPresets }),
     enableChatGPT: raw.enableChatGPT !== false,
     enableGemini: raw.enableGemini !== false,
+    enableClaude: raw.enableClaude !== false,
     enableAskBetterMode: raw.enableAskBetterMode !== false,
     enablePhraseBetterMode: raw.enablePhraseBetterMode !== false,
     enableAI: raw.enableAI !== false,
     keepUserVoice: !!raw.keepUserVoice,
     keyVerified: !!raw.keyVerified,
-    customPromptAdditions: String(raw.customPromptAdditions || "")
+    customPromptAdditions: String(raw.customPromptAdditions || ""),
+    customPresets
   };
 }
 
@@ -1131,7 +1203,8 @@ async function readUiPrefs() {
   return {
     buttonOffsets: {
       chatgpt: normalizeOffset(buttonOffsets.chatgpt),
-      gemini: normalizeOffset(buttonOffsets.gemini)
+      gemini: normalizeOffset(buttonOffsets.gemini),
+      claude: normalizeOffset(buttonOffsets.claude)
     }
   };
 }
@@ -1149,7 +1222,11 @@ async function saveButtonOffset(site, offset) {
 }
 
 function normalizeSite(value) {
-  return String(value || "").toLowerCase() === "gemini" ? "gemini" : "chatgpt";
+  const site = String(value || "").toLowerCase();
+  if (site === "gemini" || site === "claude") {
+    return site;
+  }
+  return "chatgpt";
 }
 
 function normalizeOffset(rawOffset) {

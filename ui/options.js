@@ -12,12 +12,14 @@ const DEFAULT_SETTINGS = {
   defaultPreset: "structured",
   enableChatGPT: true,
   enableGemini: true,
+  enableClaude: true,
   enableAskBetterMode: true,
   enablePhraseBetterMode: true,
   enableAI: true,
   keepUserVoice: false,
   keyVerified: false,
-  customPromptAdditions: ""
+  customPromptAdditions: "",
+  customPresets: []
 };
 
 const GEMINI_KEY_URL = "https://aistudio.google.com/apikey";
@@ -108,6 +110,7 @@ const keepUserVoiceEl = document.getElementById("keepUserVoice");
 const enableAIEl = document.getElementById("enableAI");
 const enableChatGPTEl = document.getElementById("enableChatGPT");
 const enableGeminiEl = document.getElementById("enableGemini");
+const enableClaudeEl = document.getElementById("enableClaude");
 const enableAskBetterModeEl = document.getElementById("enableAskBetterMode");
 const enablePhraseBetterModeEl = document.getElementById("enablePhraseBetterMode");
 const customPromptAdditionsEl = document.getElementById("customPromptAdditions");
@@ -115,6 +118,11 @@ const customAdditionsListEl = document.getElementById("customAdditionsList");
 const customAdditionsEmptyEl = document.getElementById("customAdditionsEmpty");
 const customAdditionInputEl = document.getElementById("customAdditionInput");
 const addCustomAdditionBtnEl = document.getElementById("addCustomAdditionBtn");
+const customPresetsListEl = document.getElementById("customPresetsList");
+const customPresetsEmptyEl = document.getElementById("customPresetsEmpty");
+const customPresetNameEl = document.getElementById("customPresetName");
+const customPresetInstructionEl = document.getElementById("customPresetInstruction");
+const addCustomPresetBtnEl = document.getElementById("addCustomPresetBtn");
 const quickTagButtons = Array.from(document.querySelectorAll(".quick-tag"));
 const testKeyBtn = document.getElementById("testKeyBtn");
 const clearDataBtn = document.getElementById("clearDataBtn");
@@ -176,6 +184,7 @@ let statusResetTimer = 0;
 let lastInfoTriggerEl = null;
 let lastPrivacyTriggerEl = null;
 let customAdditions = [];
+let customPresets = [];
 
 init().catch(() => {
   setStatus("Unable to load settings.", "warn");
@@ -187,6 +196,7 @@ async function init() {
   bindPrivacyInfo();
   bindQuickAdditions();
   bindCustomAdditionsEditor();
+  bindCustomPresets();
   const stored = await chrome.storage.local.get(["settings"]);
   currentSettings = migrateSettings(stored.settings || {});
   fillForm(currentSettings);
@@ -368,6 +378,10 @@ function bindAutoSave() {
   enableGeminiEl.addEventListener("change", async () => {
     await savePartial({ enableGemini: !!enableGeminiEl.checked });
   });
+
+  enableClaudeEl.addEventListener("change", async () => {
+    await savePartial({ enableClaude: !!enableClaudeEl.checked });
+  });
 }
 
 function bindQuickAdditions() {
@@ -418,6 +432,150 @@ function bindCustomAdditionsEditor() {
     persistCustomAdditions();
     setStatus("Addition removed", "ok", true);
   });
+}
+
+function bindCustomPresets() {
+  if (!addCustomPresetBtnEl || !customPresetsListEl) {
+    return;
+  }
+
+  addCustomPresetBtnEl.addEventListener("click", () => {
+    addCustomPreset();
+  });
+
+  if (customPresetInstructionEl) {
+    customPresetInstructionEl.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        addCustomPreset();
+      }
+    });
+  }
+
+  customPresetsListEl.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+    const removeButton = target.closest(".custom-chip-remove");
+    if (!removeButton) {
+      return;
+    }
+    const id = removeButton.getAttribute("data-id");
+    const index = customPresets.findIndex((item) => item.id === id);
+    if (index < 0) {
+      return;
+    }
+    customPresets.splice(index, 1);
+    persistCustomPresets();
+    setStatus("Custom preset removed", "ok", true);
+  });
+}
+
+function addCustomPreset() {
+  const name = normalizeAddition(customPresetNameEl ? customPresetNameEl.value : "");
+  const instruction = String(customPresetInstructionEl ? customPresetInstructionEl.value : "").trim();
+  if (!name || !instruction) {
+    setStatus("Add a preset name and instruction.", "warn", true);
+    return;
+  }
+  if (customPresets.length >= 20) {
+    setStatus("Custom preset limit reached (20).", "warn", true);
+    return;
+  }
+  const exists = customPresets.some((item) => item.name.toLowerCase() === name.toLowerCase());
+  if (exists) {
+    setStatus("A preset with that name already exists.", "warn", true);
+    return;
+  }
+  const id = `custom_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+  customPresets.push({ id, name, instruction });
+  if (customPresetNameEl) {
+    customPresetNameEl.value = "";
+  }
+  if (customPresetInstructionEl) {
+    customPresetInstructionEl.value = "";
+  }
+  persistCustomPresets();
+  setStatus("Custom preset added", "ok", true);
+}
+
+function persistCustomPresets() {
+  renderCustomPresets();
+  renderCustomPresetOptions();
+
+  const current = currentSettings || {};
+  const normalizedDefault = normalizePreset(current.defaultPreset || defaultPresetEl.value);
+  defaultPresetEl.value = normalizedDefault;
+  const shell = defaultPresetEl.closest(".csel");
+  if (shell && shell._rebuildCustomSelect) {
+    shell._rebuildCustomSelect();
+  }
+
+  window.clearTimeout(customSaveTimer);
+  setStatus("Saving...");
+  customSaveTimer = window.setTimeout(async () => {
+    await savePartial({ customPresets: customPresets.slice(), defaultPreset: normalizedDefault });
+  }, 250);
+}
+
+function renderCustomPresets() {
+  if (!customPresetsListEl || !customPresetsEmptyEl) {
+    return;
+  }
+
+  customPresetsListEl.textContent = "";
+  for (const preset of customPresets) {
+    const item = document.createElement("div");
+    item.className = "custom-preset-item";
+
+    const info = document.createElement("div");
+    info.className = "custom-preset-info";
+
+    const name = document.createElement("span");
+    name.className = "custom-preset-name";
+    name.textContent = preset.name;
+
+    const desc = document.createElement("span");
+    desc.className = "custom-preset-desc";
+    desc.textContent = preset.instruction;
+
+    info.appendChild(name);
+    info.appendChild(desc);
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "custom-chip-remove";
+    removeButton.setAttribute("data-id", preset.id);
+    removeButton.setAttribute("aria-label", `Remove preset: ${preset.name}`);
+    removeButton.textContent = "x";
+
+    item.appendChild(info);
+    item.appendChild(removeButton);
+    customPresetsListEl.appendChild(item);
+  }
+
+  customPresetsEmptyEl.hidden = customPresets.length > 0;
+}
+
+function renderCustomPresetOptions() {
+  const existing = defaultPresetEl.querySelector('optgroup[data-custom="1"]');
+  if (existing) {
+    existing.remove();
+  }
+  if (!customPresets.length) {
+    return;
+  }
+  const group = document.createElement("optgroup");
+  group.label = "Custom";
+  group.setAttribute("data-custom", "1");
+  for (const preset of customPresets) {
+    const option = document.createElement("option");
+    option.value = preset.id;
+    option.textContent = preset.name;
+    group.appendChild(option);
+  }
+  defaultPresetEl.appendChild(group);
 }
 
 function addCustomAdditionFromInput() {
@@ -622,7 +780,10 @@ async function savePartial(partial, options) {
 function fillForm(settings) {
   const normalized = migrateSettings(settings);
   currentSettings = normalized;
+  customPresets = normalized.customPresets.slice();
   providerSelectEl.value = normalizeProvider(normalized.provider);
+  renderCustomPresetOptions();
+  renderCustomPresets();
   defaultPresetEl.value = normalizePreset(normalized.defaultPreset);
   keepUserVoiceEl.checked = !!normalized.keepUserVoice;
   enableAIEl.checked = !!normalized.enableAI;
@@ -630,6 +791,7 @@ function fillForm(settings) {
   enablePhraseBetterModeEl.checked = normalized.enablePhraseBetterMode !== false;
   enableChatGPTEl.checked = !!normalized.enableChatGPT;
   enableGeminiEl.checked = !!normalized.enableGemini;
+  enableClaudeEl.checked = normalized.enableClaude !== false;
   customAdditions = splitAdditionsLines(normalized.customPromptAdditions || "");
   customPromptAdditionsEl.value = customAdditions.join("\n");
   if (customAdditionInputEl) {
@@ -786,19 +948,21 @@ function migrateSettings(rawSettings) {
     anthropicApiKey: String(raw.anthropicApiKey || ""),
     anthropicModel: normalizeModel(raw.anthropicModel, DEFAULT_SETTINGS.anthropicModel),
     anthropicKeyVerified: !!raw.anthropicKeyVerified,
-    defaultPreset: normalizePreset(raw.defaultPreset),
+    defaultPreset: normalizePreset(raw.defaultPreset, normalizeCustomPresets(raw.customPresets)),
     enableChatGPT: raw.enableChatGPT !== false,
     enableGemini: raw.enableGemini !== false,
+    enableClaude: raw.enableClaude !== false,
     enableAskBetterMode: raw.enableAskBetterMode !== false,
     enablePhraseBetterMode: raw.enablePhraseBetterMode !== false,
     enableAI: raw.enableAI !== false,
     keepUserVoice: !!raw.keepUserVoice,
     keyVerified: !!raw.keyVerified,
-    customPromptAdditions: String(raw.customPromptAdditions || "")
+    customPromptAdditions: String(raw.customPromptAdditions || ""),
+    customPresets: normalizeCustomPresets(raw.customPresets)
   };
 }
 
-function normalizePreset(value) {
+function normalizePreset(value, presetList) {
   const preset = String(value || "").toLowerCase();
   const validPresets = new Set([
     "structured",
@@ -818,7 +982,33 @@ function normalizePreset(value) {
   if (validPresets.has(preset)) {
     return preset;
   }
+  const list = Array.isArray(presetList) ? presetList : customPresets;
+  if (list.some((item) => item.id === String(value || ""))) {
+    return String(value || "");
+  }
   return DEFAULT_SETTINGS.defaultPreset;
+}
+
+function normalizeCustomPresets(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const seen = new Set();
+  const result = [];
+  for (const raw of value) {
+    if (!raw || typeof raw !== "object") {
+      continue;
+    }
+    const id = String(raw.id || "").trim();
+    const name = String(raw.name || "").replace(/\s+/g, " ").trim();
+    const instruction = String(raw.instruction || "").trim();
+    if (!id || !name || !instruction || seen.has(id)) {
+      continue;
+    }
+    seen.add(id);
+    result.push({ id, name, instruction });
+  }
+  return result;
 }
 
 function normalizeModel(model, fallback) {

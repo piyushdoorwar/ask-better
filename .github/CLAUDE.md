@@ -25,7 +25,7 @@
 
 ## 1. Project Overview
 
-**AskBetter** is a Chrome extension (Manifest V3) that rewrites prompts in one click using AI providers of your choice (Gemini, OpenAI, or Claude). The extension injects an **Optimize** button directly into ChatGPT and Google Gemini interfaces, runs locally in the browser, and requires no backend server.
+**AskBetter** is a Chrome extension (Manifest V3) that rewrites prompts in one click using AI providers of your choice (Gemini, OpenAI, or Claude). The extension injects an **Optimize** button directly into ChatGPT, Google Gemini, and Claude.ai interfaces, runs locally in the browser, and requires no backend server. Optimized prompts are shown in a **non-destructive preview** (Accept / Regenerate / Discard) before they replace the input, and a keyboard shortcut (`Ctrl/Cmd+Shift+O`) triggers optimization without reaching for the button.
 
 - **Repo**: `piyushdoorwar/prompt-optimizer-ask-better`
 - **Owner/Author**: Piyush Doorwar
@@ -69,8 +69,10 @@ prompt-optimizer-ask-better/
 ├── codex.md                   # Internal documentation
 │
 ├── content/                   # Content scripts injected into pages
-│   ├── chatgpt.js            # ChatGPT prompt optimization logic
-│   ├── gemini.js             # Google Gemini prompt optimization logic
+│   ├── core.js              # Shared injection engine (startAskBetter + preview + helpers)
+│   ├── chatgpt.js           # ChatGPT config (selectors) → startAskBetter
+│   ├── gemini.js            # Google Gemini config → startAskBetter
+│   ├── claude.js            # Claude.ai config → startAskBetter
 │
 ├── injected/                  # Styles for injected components
 │   └── styles.css            # Styling for the Optimize button & overlays
@@ -98,7 +100,7 @@ prompt-optimizer-ask-better/
 │       └── ui/               # UI icon files (unused in current build)
 │
 └── .github/
-    └── agents.md             # THIS FILE
+    └── CLAUDE.md             # THIS FILE (agent reference)
 ```
 
 ---
@@ -151,7 +153,7 @@ Pattern: **Message-based communication** between background script, content scri
 
 1. **User clicks Optimize button** in ChatGPT or Gemini
    - Content script extracts selected/current prompt text
-   - Sends message to background: `{ action: "optimize", text: "...", site: "chatgpt|gemini", preset: "..." }`
+   - Sends message to background: `{ type: "ASKBETTER_OPTIMIZE", prompt: "...", site: "chatgpt|gemini|claude", preset: "..." }`
 
 2. **Background script receives request**
    - Looks up user's API provider & key from `chrome.storage.local`
@@ -180,9 +182,11 @@ Pattern: **Message-based communication** between background script, content scri
 | File | Role |
 |---|---|
 | `manifest.json` | Extension manifest — defines permissions, scripts, icons, browser action |
-| `background.js` | Service Worker — main extension logic, API orchestration |
-| `content/chatgpt.js` | ChatGPT page integration — injects button, extracts text |
-| `content/gemini.js` | Google Gemini page integration — similar to ChatGPT logic |
+| `background.js` | Service Worker — main extension logic, API orchestration, keyboard command dispatch |
+| `content/core.js` | Shared injection engine — `startAskBetter()`, Optimize button, preview card, busy/toast UI, all DOM helpers. Loaded before each site config script. |
+| `content/chatgpt.js` | ChatGPT config — defines selectors + calls `startAskBetter("chatgpt", …)` |
+| `content/gemini.js` | Google Gemini config — calls `startAskBetter("gemini", …)` |
+| `content/claude.js` | Claude.ai config — calls `startAskBetter("claude", …)` |
 | `injected/styles.css` | Styling for injected UI elements (button, overlays) |
 | `ui/popup.html` | Popup UI template |
 | `ui/popup.js` | Popup event handlers & state management |
@@ -198,9 +202,23 @@ Pattern: **Message-based communication** between background script, content scri
 
 ### One-Click Optimize
 
-- **Where**: ChatGPT prompt box & Google Gemini conversation input
-- **How**: Injected "Optimize" button (yellow sparkle icon) appears near the prompt input
-- **Action**: User clicks → prompt extracted → sent to background → optimized → inserted back into prompt box
+- **Where**: ChatGPT, Google Gemini, and Claude.ai prompt inputs
+- **How**: Injected "Optimize" button (sparkle icon, draggable) appears near the prompt input. Also triggerable via the `Ctrl/Cmd+Shift+O` keyboard shortcut (defined in `manifest.json` `commands`, dispatched by the background worker to the active tab via `ASKBETTER_TRIGGER_OPTIMIZE`).
+- **Action**: User triggers → prompt extracted → sent to background → optimized → shown in preview card.
+
+### Non-Destructive Preview
+
+- After optimization, the result is shown in a floating **preview card** anchored near the input — it does **not** overwrite the prompt automatically.
+- Actions: **Accept** (write into the input), **Regenerate** (re-run the same prompt/preset), **Discard** (close, original untouched). `Esc` discards.
+- The preview text is editable, so users can tweak before accepting.
+- Implemented entirely in `content/core.js` (`showPreview` / `acceptPreview` / `regeneratePreview` / `closePreview`); styles are `pf-preview-*` in `injected/styles.css`.
+
+### Custom User Presets
+
+- Beyond the built-in presets, users can define their own `{ id, name, instruction }` presets in **Options → Presets → Custom presets**.
+- Stored in `chrome.storage.local` under `settings.customPresets`; ids are namespaced `custom_*`.
+- Custom presets appear in the Default-preset dropdown (Options + popup) under a "Custom" optgroup.
+- The background worker resolves the instruction in `getPresetInstruction(preset, settings)`; `normalizePreset(value, settings)` validates custom ids against the stored list.
 
 ### 15+ Presets
 
@@ -251,6 +269,8 @@ User selects provider & enters API key in the extension options page. Selection 
 
 ## 7. Content Scripts & Injection
 
+> **Shared engine**: All injection logic lives in `content/core.js`, which exposes the top-level `startAskBetter(site, siteToggleKey, selectors)` plus DOM helpers (`findPromptInput`, `readPromptText`, `writePromptText`, `sendMessage`, `showToast`). Each site script (`chatgpt.js`, `gemini.js`, `claude.js`) is a thin IIFE that defines its selectors and calls `startAskBetter`. The manifest loads `core.js` **before** the site script for each surface; content scripts of the same extension share one isolated-world global, so the site scripts can call into `core.js`. `core.js` also registers a `chrome.runtime.onMessage` listener for `ASKBETTER_TRIGGER_OPTIMIZE` (the keyboard shortcut path).
+
 ### ChatGPT Integration (`content/chatgpt.js`)
 
 1. **Page Detection**: Monitors `window.location` for `chat.openai.com`
@@ -299,9 +319,10 @@ User selects provider & enters API key in the extension options page. Selection 
 
 - **`apiProvider`**: User's chosen AI provider
 - **`apiKey`**: Encrypted or plaintext (depends on implementation; currently plaintext)
-- **`selectedPreset`**: Currently selected preset name
-- **`presets`**: Full preset list with descriptions
-- **`lastUsedProvider`**: Auto-selects on extension open
+- **`defaultPreset`**: Currently selected preset id (built-in or `custom_*`)
+- **`customPresets`**: User-defined presets, array of `{ id, name, instruction }`
+- **`enableChatGPT` / `enableGemini` / `enableClaude`**: Per-surface injection toggles
+- **`uiPrefs.buttonOffsets`**: Draggable button offset per surface (`chatgpt`/`gemini`/`claude`)
 
 ---
 
