@@ -912,6 +912,14 @@
         grid-column: 1 / -1;
       }
 
+      .adjust-label {
+        grid-column: 1 / -1;
+        margin: 4px 0 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary);
+      }
+
       .toggle-row label {
         margin: 0;
         font-size: 14px;

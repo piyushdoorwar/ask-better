@@ -272,6 +272,7 @@ User selects provider & enters API key in the extension options page. Selection 
 - User right-clicks any selected text on a webpage → "Re-phrase with AskBetter".
 - Runs entirely in the background worker (`handlePhraseBetterContextMenu`); works on **any** page, including those where `injected/styles.css` is not loaded.
 - Generates **1–3 distinct suggestions** in a single API call (configurable via `phraseBetterOptionCount`, default 2). Multi-variant output is requested via `buildSystemInstruction({ mode:"phrase_better", variantCount })` and parsed by `parsePhraseVariants`.
+- **Presets + adjustments** (parallel to Ask Better's presets): `phraseBetterPreset` picks the goal — `fix_grammar` (**default**, the original minimal-edit grammar fix), `rephrase`, `casual`, `formal` — resolved from `PHRASE_PRESET_INSTRUCTIONS` in `background.js`. Three optional, stackable modifier toggles (`phraseBetterKeepVoice`, `phraseBetterPolish`, `phraseBetterWit`) append extra clauses via `getPhraseModifierClauses(settings)`; all default off, so the out-of-box behavior is unchanged. The `phrase_better` branch of `buildSystemInstruction` reads these from `settings` (the passed `preset` arg is unused for this mode).
 - Shows a **non-destructive chooser overlay** injected into the page (`showPhraseBetterChooserOnPage`, fully inline-styled): the user clicks a suggestion to apply it (flashes an "Applied" check), or dismisses via the close button / click-outside / `Esc`. It never auto-replaces the selection.
 - The selection context (text-input offsets or a cloned contenteditable `Range`) is captured **at context-menu time** by `capturePhraseBetterSelectionOnPage` and stored on the page's isolated-world global `window.__askBetterPhraseSelection`, so the rephrase can be applied to the original location even after the async request — the user doesn't have to keep the text selected. The chooser falls back to the live selection if the stored one is gone.
 
@@ -387,13 +388,13 @@ The popup is shown when the user clicks the extension icon in the Chrome toolbar
 
 Full settings page accessible from the popup or extension management UI.
 
-**Sidebar menu is grouped by app** (tab-style: one `.settings-section` shown at a time, switched by `activateSection` via each nav button's `data-section`). Group headers use `.menu-title` / `.menu-title--group`:
+**Sidebar menu is grouped by app**, each group wrapped in a `<div class="menu-group" data-group="...">` (tab-style: one `.settings-section` shown at a time, switched by `activateSection` via each nav button's `data-section`). Group headers use `.menu-title` / `.menu-title--group`:
 
-- **Common** — `section-models` (provider, model, and the global **Enable AI** toggle), `section-reports` (local usage dashboard), `section-security` (API key verify + clear data)
-- **AskBetter** — `section-askbetter-mode` (Ask Better on/off), `section-integrations` (Enable on ChatGPT/Gemini/Claude), `section-presets`, `section-custom`
-- **PhraseBetter** — `section-phrasebetter-mode` (Phrase Better on/off + suggestion count)
+- **Common** — `section-models` (provider, model, and the global **Enable AI** toggle), `section-mode` (**both** Ask Better + Phrase Better on/off), `section-reports` (local usage dashboard), `section-security` (API key verify + clear data)
+- **AskBetter** — `section-integrations` (Enable on ChatGPT/Gemini/Claude), `section-presets`, `section-custom`
+- **PhraseBetter** — `section-phrasebetter-presets` (**preset** + on-top **adjustment toggles**), `section-phrasebetter-suggestions` (how many options to show)
 
-Both "Mode" panels share the label "Mode" (disambiguated by group). The old single `section-mode` was split in two; the global Enable AI toggle moved from Integrations into Models. Section info-modal copy lives in `SECTION_INFO_CONTENT` keyed by `data-info-section` (`askbetter_mode` / `phrasebetter_mode`, etc.). All toggles/fields keep stable IDs, so moving them between panels doesn't touch the JS bindings.
+**Hide-when-off:** `applyGroupVisibility()` toggles `hidden` on the `askbetter` / `phrasebetter` `.menu-group` based on `enableAskBetterMode` / `enablePhraseBetterMode`; if the active section is in a group that just hid, it falls back to `section-models`. Called on load (end of `fillForm`) and from the two mode-toggle handlers. Mode lives in **Common** so the toggles are always reachable. Section info-modal copy lives in `SECTION_INFO_CONTENT` keyed by `data-info-section` (`modes`, `phrasebetter_presets`, `phrasebetter_suggestions`, …). All toggles/fields keep stable IDs, so moving them between panels doesn't touch the JS bindings.
 
 ```
 ┌────────────────────────────────────────┐

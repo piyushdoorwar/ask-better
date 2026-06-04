@@ -16,6 +16,10 @@ const DEFAULT_SETTINGS = {
   enableAskBetterMode: true,
   enablePhraseBetterMode: true,
   phraseBetterOptionCount: 2,
+  phraseBetterPreset: "fix_grammar",
+  phraseBetterKeepVoice: false,
+  phraseBetterPolish: false,
+  phraseBetterWit: false,
   enableAI: true,
   keepUserVoice: false,
   keyVerified: false,
@@ -39,23 +43,32 @@ const SECTION_INFO_CONTENT = {
       "Your API keys are stored locally and used only by the background worker for direct provider API calls."
     ]
   },
-  askbetter_mode: {
-    title: "Ask Better mode",
-    description: "Ask Better powers the Optimize button for prompt rewrites on supported surfaces.",
+  modes: {
+    title: "Mode",
+    description: "Turn each AskBetter experience on or off. Both default on and can be toggled independently.",
     points: [
       "Ask Better powers the Optimize button on ChatGPT, Gemini, and Claude.",
-      "Turn it off to hide the Optimize flow without affecting Phrase Better.",
-      "Use the Integrations section to choose which surfaces it appears on."
+      "Phrase Better adds a right-click action for selected text on any page.",
+      "When an experience is off, its sections are hidden from the left menu; turn it back on here to bring them back.",
+      "Use AskBetter → Integrations to choose which surfaces the Optimize button appears on."
     ]
   },
-  phrasebetter_mode: {
-    title: "Phrase Better mode",
-    description: "Phrase Better adds a right-click action for selected text on any page.",
+  phrasebetter_suggestions: {
+    title: "Phrase Better suggestions",
+    description: "Choose how many rephrase options Phrase Better shows.",
     points: [
-      "Phrase Better focuses on grammar, spelling, and small wording fixes while preserving the original phrasing as much as possible.",
-      "It works via right-click on selected text in editable fields across the web.",
-      "Phrase Better suggestions lets you show 1, 2, or 3 rephrase options in a chooser, so you accept or reject before your text is replaced.",
-      "Turn it off to remove the right-click action without affecting Ask Better."
+      "Show 1, 2, or 3 options in a chooser, so you accept or reject before your text is replaced.",
+      "More options are generated in a single request, so they all come back together.",
+      "What kind of rewrite each option is comes from the Phrase Better → Presets section."
+    ]
+  },
+  phrasebetter_presets: {
+    title: "Phrase Better presets",
+    description: "Control how Phrase Better rewrites your selected text.",
+    points: [
+      "Preset sets the goal: Fix grammar (default) makes the smallest edits and preserves your wording; Rephrase, Casual reply, and Formal message change the tone or phrasing more.",
+      "Optional adjustments stack on top of any preset and are off by default: Keep my voice (stay close to your wording), Polish wording (refine word choice), and Add a little wit (light, playful tone).",
+      "These apply every time you run Re-phrase from the right-click menu."
     ]
   },
   presets: {
@@ -125,6 +138,10 @@ const enableClaudeEl = document.getElementById("enableClaude");
 const enableAskBetterModeEl = document.getElementById("enableAskBetterMode");
 const enablePhraseBetterModeEl = document.getElementById("enablePhraseBetterMode");
 const phraseBetterOptionCountEl = document.getElementById("phraseBetterOptionCount");
+const phraseBetterPresetEl = document.getElementById("phraseBetterPreset");
+const phraseBetterKeepVoiceEl = document.getElementById("phraseBetterKeepVoice");
+const phraseBetterPolishEl = document.getElementById("phraseBetterPolish");
+const phraseBetterWitEl = document.getElementById("phraseBetterWit");
 const customPromptAdditionsEl = document.getElementById("customPromptAdditions");
 const customAdditionsListEl = document.getElementById("customAdditionsList");
 const customAdditionsEmptyEl = document.getElementById("customAdditionsEmpty");
@@ -345,6 +362,30 @@ function activateSection(targetId) {
   }
 }
 
+// Hide an app's whole menu group when its mode is off. If the section currently
+// shown lives in a group that just got hidden, fall back to Models.
+function applyGroupVisibility() {
+  if (!currentSettings) {
+    return;
+  }
+  const enabledByGroup = {
+    askbetter: currentSettings.enableAskBetterMode !== false,
+    phrasebetter: currentSettings.enablePhraseBetterMode !== false
+  };
+  for (const [name, enabled] of Object.entries(enabledByGroup)) {
+    const groupEl = document.querySelector(`.menu-group[data-group="${name}"]`);
+    if (groupEl) {
+      groupEl.hidden = !enabled;
+    }
+  }
+  const active = document.querySelector(".settings-section.active");
+  const activeBtn = active && document.querySelector(`.nav-btn[data-section="${active.id}"]`);
+  const activeGroup = activeBtn && activeBtn.closest(".menu-group");
+  if (activeGroup && activeGroup.hidden) {
+    activateSection("section-models");
+  }
+}
+
 function bindAutoSave() {
   providerSelectEl.addEventListener("change", async () => {
     const provider = normalizeProvider(providerSelectEl.value);
@@ -377,14 +418,32 @@ function bindAutoSave() {
 
   enableAskBetterModeEl.addEventListener("change", async () => {
     await savePartial({ enableAskBetterMode: !!enableAskBetterModeEl.checked });
+    applyGroupVisibility();
   });
 
   enablePhraseBetterModeEl.addEventListener("change", async () => {
     await savePartial({ enablePhraseBetterMode: !!enablePhraseBetterModeEl.checked });
+    applyGroupVisibility();
   });
 
   phraseBetterOptionCountEl.addEventListener("change", async () => {
     await savePartial({ phraseBetterOptionCount: normalizePhraseBetterOptionCount(phraseBetterOptionCountEl.value) });
+  });
+
+  phraseBetterPresetEl.addEventListener("change", async () => {
+    await savePartial({ phraseBetterPreset: normalizePhrasePreset(phraseBetterPresetEl.value) });
+  });
+
+  phraseBetterKeepVoiceEl.addEventListener("change", async () => {
+    await savePartial({ phraseBetterKeepVoice: !!phraseBetterKeepVoiceEl.checked });
+  });
+
+  phraseBetterPolishEl.addEventListener("change", async () => {
+    await savePartial({ phraseBetterPolish: !!phraseBetterPolishEl.checked });
+  });
+
+  phraseBetterWitEl.addEventListener("change", async () => {
+    await savePartial({ phraseBetterWit: !!phraseBetterWitEl.checked });
   });
 
   enableChatGPTEl.addEventListener("change", async () => {
@@ -808,6 +867,10 @@ function fillForm(settings) {
   enableAskBetterModeEl.checked = normalized.enableAskBetterMode !== false;
   enablePhraseBetterModeEl.checked = normalized.enablePhraseBetterMode !== false;
   phraseBetterOptionCountEl.value = String(normalized.phraseBetterOptionCount);
+  phraseBetterPresetEl.value = normalizePhrasePreset(normalized.phraseBetterPreset);
+  phraseBetterKeepVoiceEl.checked = !!normalized.phraseBetterKeepVoice;
+  phraseBetterPolishEl.checked = !!normalized.phraseBetterPolish;
+  phraseBetterWitEl.checked = !!normalized.phraseBetterWit;
   enableChatGPTEl.checked = !!normalized.enableChatGPT;
   enableGeminiEl.checked = !!normalized.enableGemini;
   enableClaudeEl.checked = normalized.enableClaude !== false;
@@ -820,6 +883,7 @@ function fillForm(settings) {
   syncQuickTagState();
   applyProviderUI();
   initCustomSelects();
+  applyGroupVisibility();
   renderStatusSummary();
 }
 
@@ -1011,6 +1075,10 @@ function migrateSettings(rawSettings) {
     enableAskBetterMode: raw.enableAskBetterMode !== false,
     enablePhraseBetterMode: raw.enablePhraseBetterMode !== false,
     phraseBetterOptionCount: normalizePhraseBetterOptionCount(raw.phraseBetterOptionCount),
+    phraseBetterPreset: normalizePhrasePreset(raw.phraseBetterPreset),
+    phraseBetterKeepVoice: !!raw.phraseBetterKeepVoice,
+    phraseBetterPolish: !!raw.phraseBetterPolish,
+    phraseBetterWit: !!raw.phraseBetterWit,
     enableAI: raw.enableAI !== false,
     keepUserVoice: !!raw.keepUserVoice,
     keyVerified: !!raw.keyVerified,
@@ -1028,6 +1096,12 @@ function normalizePhraseBetterOptionCount(value) {
     return 3;
   }
   return count;
+}
+
+const PHRASE_PRESET_IDS = new Set(["fix_grammar", "rephrase", "casual", "formal"]);
+function normalizePhrasePreset(value) {
+  const preset = String(value || "").toLowerCase();
+  return PHRASE_PRESET_IDS.has(preset) ? preset : DEFAULT_SETTINGS.phraseBetterPreset;
 }
 
 function normalizePreset(value, presetList) {

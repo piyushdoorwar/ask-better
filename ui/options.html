@@ -38,59 +38,71 @@
 
       <div class="layout">
         <aside class="sidebar card">
-          <p class="menu-title">Common</p>
-          <button class="nav-btn active" data-section="section-models" type="button">
-            <span class="nav-icon" aria-hidden="true">
-              <span class="icon-mask icon-models"></span>
-            </span>
-            <span class="nav-label">Models</span>
-          </button>
-          <button class="nav-btn" data-section="section-reports" type="button">
-            <span class="nav-icon" aria-hidden="true">
-              <span class="icon-mask icon-reports"></span>
-            </span>
-            <span class="nav-label">Reports</span>
-          </button>
-          <button class="nav-btn" data-section="section-security" type="button">
-            <span class="nav-icon" aria-hidden="true">
-              <span class="icon-mask icon-security"></span>
-            </span>
-            <span class="nav-label">Security</span>
-          </button>
+          <div class="menu-group" data-group="common">
+            <p class="menu-title">Common</p>
+            <button class="nav-btn active" data-section="section-models" type="button">
+              <span class="nav-icon" aria-hidden="true">
+                <span class="icon-mask icon-models"></span>
+              </span>
+              <span class="nav-label">Models</span>
+            </button>
+            <button class="nav-btn" data-section="section-mode" type="button">
+              <span class="nav-icon" aria-hidden="true">
+                <span class="icon-mask icon-mode"></span>
+              </span>
+              <span class="nav-label">Mode</span>
+            </button>
+            <button class="nav-btn" data-section="section-reports" type="button">
+              <span class="nav-icon" aria-hidden="true">
+                <span class="icon-mask icon-reports"></span>
+              </span>
+              <span class="nav-label">Reports</span>
+            </button>
+            <button class="nav-btn" data-section="section-security" type="button">
+              <span class="nav-icon" aria-hidden="true">
+                <span class="icon-mask icon-security"></span>
+              </span>
+              <span class="nav-label">Security</span>
+            </button>
+          </div>
 
-          <p class="menu-title menu-title--group">AskBetter</p>
-          <button class="nav-btn" data-section="section-askbetter-mode" type="button">
-            <span class="nav-icon" aria-hidden="true">
-              <span class="icon-mask icon-mode"></span>
-            </span>
-            <span class="nav-label">Mode</span>
-          </button>
-          <button class="nav-btn" data-section="section-integrations" type="button">
-            <span class="nav-icon" aria-hidden="true">
-              <span class="icon-mask icon-integrations"></span>
-            </span>
-            <span class="nav-label">Integrations</span>
-          </button>
-          <button class="nav-btn" data-section="section-presets" type="button">
-            <span class="nav-icon" aria-hidden="true">
-              <span class="icon-mask icon-presets"></span>
-            </span>
-            <span class="nav-label">Presets</span>
-          </button>
-          <button class="nav-btn" data-section="section-custom" type="button">
-            <span class="nav-icon" aria-hidden="true">
-              <span class="icon-mask icon-custom"></span>
-            </span>
-            <span class="nav-label">Custom Prompt Additions</span>
-          </button>
+          <div class="menu-group" data-group="askbetter">
+            <p class="menu-title menu-title--group">Ask Better</p>
+            <button class="nav-btn" data-section="section-integrations" type="button">
+              <span class="nav-icon" aria-hidden="true">
+                <span class="icon-mask icon-integrations"></span>
+              </span>
+              <span class="nav-label">Integrations</span>
+            </button>
+            <button class="nav-btn" data-section="section-presets" type="button">
+              <span class="nav-icon" aria-hidden="true">
+                <span class="icon-mask icon-presets"></span>
+              </span>
+              <span class="nav-label">Presets</span>
+            </button>
+            <button class="nav-btn" data-section="section-custom" type="button">
+              <span class="nav-icon" aria-hidden="true">
+                <span class="icon-mask icon-custom"></span>
+              </span>
+              <span class="nav-label">Custom Prompt Additions</span>
+            </button>
+          </div>
 
-          <p class="menu-title menu-title--group">PhraseBetter</p>
-          <button class="nav-btn" data-section="section-phrasebetter-mode" type="button">
-            <span class="nav-icon" aria-hidden="true">
-              <span class="icon-mask icon-mode"></span>
-            </span>
-            <span class="nav-label">Mode</span>
-          </button>
+          <div class="menu-group" data-group="phrasebetter">
+            <p class="menu-title menu-title--group">Phrase Better</p>
+            <button class="nav-btn" data-section="section-phrasebetter-presets" type="button">
+              <span class="nav-icon" aria-hidden="true">
+                <span class="icon-mask icon-presets"></span>
+              </span>
+              <span class="nav-label">Presets</span>
+            </button>
+            <button class="nav-btn" data-section="section-phrasebetter-suggestions" type="button">
+              <span class="nav-icon" aria-hidden="true">
+                <span class="icon-mask icon-mode"></span>
+              </span>
+              <span class="nav-label">Suggestions</span>
+            </button>
+          </div>
         </aside>
 
         <main class="content card">
@@ -201,7 +213,7 @@
             </div>
           </section>
 
-          <section id="section-askbetter-mode" class="settings-section">
+          <section id="section-mode" class="settings-section">
             <div class="section-head">
               <span class="section-badge" aria-hidden="true">
                 <span class="icon-mask icon-mode"></span>
@@ -209,7 +221,7 @@
               <div>
                 <div class="section-title-row">
                   <h2 class="section-title">Mode</h2>
-                  <button type="button" class="section-info-btn" data-info-section="askbetter_mode" aria-label="About Ask Better mode">
+                  <button type="button" class="section-info-btn" data-info-section="modes" aria-label="About Mode">
                     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
                       <path d="M12 10.3V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
@@ -217,7 +229,7 @@
                     </svg>
                   </button>
                 </div>
-                <p class="section-sub">Turn the Ask Better Optimize experience on or off.</p>
+                <p class="section-sub">Turn each experience on or off. When one is off, its menu sections are hidden.</p>
               </div>
             </div>
             <div class="toggle-grid">
@@ -231,29 +243,6 @@
                   <span class="slider"></span>
                 </span>
               </div>
-            </div>
-          </section>
-
-          <section id="section-phrasebetter-mode" class="settings-section">
-            <div class="section-head">
-              <span class="section-badge" aria-hidden="true">
-                <span class="icon-mask icon-mode"></span>
-              </span>
-              <div>
-                <div class="section-title-row">
-                  <h2 class="section-title">Mode</h2>
-                  <button type="button" class="section-info-btn" data-info-section="phrasebetter_mode" aria-label="About Phrase Better mode">
-                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
-                      <path d="M12 10.3V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
-                      <circle cx="12" cy="7.6" r="1.1" fill="currentColor"></circle>
-                    </svg>
-                  </button>
-                </div>
-                <p class="section-sub">Turn Phrase Better on or off and choose how many suggestions it shows.</p>
-              </div>
-            </div>
-            <div class="toggle-grid">
               <div class="toggle-row full">
                 <div>
                   <label for="enablePhraseBetterMode">Phrase Better</label>
@@ -263,6 +252,27 @@
                   <input id="enablePhraseBetterMode" name="enablePhraseBetterMode" type="checkbox" />
                   <span class="slider"></span>
                 </span>
+              </div>
+            </div>
+          </section>
+
+          <section id="section-phrasebetter-suggestions" class="settings-section">
+            <div class="section-head">
+              <span class="section-badge" aria-hidden="true">
+                <span class="icon-mask icon-mode"></span>
+              </span>
+              <div>
+                <div class="section-title-row">
+                  <h2 class="section-title">Suggestions</h2>
+                  <button type="button" class="section-info-btn" data-info-section="phrasebetter_suggestions" aria-label="About Phrase Better suggestions">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+                      <path d="M12 10.3V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                      <circle cx="12" cy="7.6" r="1.1" fill="currentColor"></circle>
+                    </svg>
+                  </button>
+                </div>
+                <p class="section-sub">Choose how many rephrase options Phrase Better shows before replacing your text.</p>
               </div>
             </div>
             <div class="grid">
@@ -276,6 +286,74 @@
                   </select>
                 </div>
                 <p class="inline-note">Phrase Better shows the suggestion(s) so you can pick one before it replaces your text.</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="section-phrasebetter-presets" class="settings-section">
+            <div class="section-head">
+              <span class="section-badge" aria-hidden="true">
+                <span class="icon-mask icon-presets"></span>
+              </span>
+              <div>
+                <div class="section-title-row">
+                  <h2 class="section-title">Presets</h2>
+                  <button type="button" class="section-info-btn" data-info-section="phrasebetter_presets" aria-label="About Phrase Better presets">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+                      <path d="M12 10.3V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                      <circle cx="12" cy="7.6" r="1.1" fill="currentColor"></circle>
+                    </svg>
+                  </button>
+                </div>
+                <p class="section-sub">Choose how Phrase Better rewrites your selected text.</p>
+              </div>
+            </div>
+            <div class="grid">
+              <div class="field full">
+                <label for="phraseBetterPreset">Phrase Better preset</label>
+                <div class="csel">
+                  <select id="phraseBetterPreset" name="phraseBetterPreset" hidden>
+                    <option value="fix_grammar">Fix grammar (default)</option>
+                    <option value="rephrase">Rephrase</option>
+                    <option value="casual">Casual reply</option>
+                    <option value="formal">Formal message</option>
+                  </select>
+                </div>
+                <p class="inline-note"><strong>Fix grammar</strong> (default) makes the smallest edits to fix grammar, spelling, and punctuation while keeping your wording. The other presets change the tone or phrasing more.</p>
+              </div>
+            </div>
+            <div class="toggle-grid">
+              <p class="adjust-label">Optional adjustments — stack on top of the preset, all off by default.</p>
+              <div class="toggle-row full">
+                <div>
+                  <label for="phraseBetterKeepVoice">Keep my voice</label>
+                  <p class="inline-note">Stay close to your original wording and style — the lightest change that still fits the preset.</p>
+                </div>
+                <span class="switch">
+                  <input id="phraseBetterKeepVoice" name="phraseBetterKeepVoice" type="checkbox" />
+                  <span class="slider"></span>
+                </span>
+              </div>
+              <div class="toggle-row full">
+                <div>
+                  <label for="phraseBetterPolish">Polish wording</label>
+                  <p class="inline-note">Upgrade word choice and smooth awkward phrasing for a more refined result.</p>
+                </div>
+                <span class="switch">
+                  <input id="phraseBetterPolish" name="phraseBetterPolish" type="checkbox" />
+                  <span class="slider"></span>
+                </span>
+              </div>
+              <div class="toggle-row full">
+                <div>
+                  <label for="phraseBetterWit">Add a little wit</label>
+                  <p class="inline-note">Give it a light, playful, slightly cheeky edge while staying tasteful.</p>
+                </div>
+                <span class="switch">
+                  <input id="phraseBetterWit" name="phraseBetterWit" type="checkbox" />
+                  <span class="slider"></span>
+                </span>
               </div>
             </div>
           </section>

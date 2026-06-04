@@ -16,6 +16,10 @@ const DEFAULT_SETTINGS = {
   enableAskBetterMode: true,
   enablePhraseBetterMode: true,
   phraseBetterOptionCount: 2,
+  phraseBetterPreset: "fix_grammar",
+  phraseBetterKeepVoice: false,
+  phraseBetterPolish: false,
+  phraseBetterWit: false,
   enableAI: true,
   keepUserVoice: false,
   keyVerified: false,
@@ -78,6 +82,45 @@ const PRESET_INSTRUCTIONS = {
   technical_spec: "Rewrite as a precise technical spec with clear requirements, constraints, and acceptance criteria.",
   implementation_plan: "Rewrite as an implementation-ready plan with ordered tasks, dependencies, and deliverables."
 };
+
+// Phrase Better presets (the right-click rephrase). "fix_grammar" is the default
+// and reproduces the original minimal-edit grammar-fix behavior.
+const PHRASE_PRESET_INSTRUCTIONS = {
+  fix_grammar:
+    "Fix grammar, spelling, punctuation, and obvious wording issues, making the smallest number of edits needed for the text to read cleanly and correctly. Preserve the original meaning, tone, wording, sentence order, and formatting as much as possible.",
+  rephrase:
+    "Reword the text for clarity and natural flow while keeping the same meaning and intent. You may restructure sentences, but do not introduce new information.",
+  casual:
+    "Rewrite in a relaxed, friendly, conversational tone suitable for a casual chat or message, while keeping the same meaning.",
+  formal:
+    "Rewrite in a polished, professional, and respectful tone suitable for formal communication, while keeping the same meaning."
+};
+
+function normalizePhrasePreset(value) {
+  const preset = String(value || "").toLowerCase();
+  return Object.prototype.hasOwnProperty.call(PHRASE_PRESET_INSTRUCTIONS, preset) ? preset : "fix_grammar";
+}
+
+// Optional on-top modifiers for Phrase Better; each stacks with the preset.
+function getPhraseModifierClauses(settings) {
+  const clauses = [];
+  if (settings && settings.phraseBetterKeepVoice) {
+    clauses.push(
+      "Keep the user's voice: stay close to their original wording, tone, and cadence, and make the lightest change that still achieves the goal."
+    );
+  }
+  if (settings && settings.phraseBetterPolish) {
+    clauses.push(
+      "Polish the wording: upgrade word choice and smooth any awkward phrasing for a more refined result."
+    );
+  }
+  if (settings && settings.phraseBetterWit) {
+    clauses.push(
+      "Add a light, playful, slightly cheeky touch of wit while staying tasteful and respectful."
+    );
+  }
+  return clauses;
+}
 
 chrome.runtime.onInstalled.addListener(async () => {
   await ensureDefaults();
@@ -669,32 +712,36 @@ function readApiErrorMessage(body) {
 function buildSystemInstruction({ preset, settings, mode, completionPass, variantCount }) {
   if (mode === "phrase_better") {
     const count = Number(variantCount) > 1 ? Math.min(Math.round(Number(variantCount)), 3) : 1;
+    const presetClause =
+      PHRASE_PRESET_INSTRUCTIONS[normalizePhrasePreset(settings && settings.phraseBetterPreset)] ||
+      PHRASE_PRESET_INSTRUCTIONS.fix_grammar;
+    const modifierClauses = getPhraseModifierClauses(settings);
 
     if (count > 1) {
       return [
-        `You improve user-selected text with minimal edits and provide ${count} alternative corrected versions.`,
+        `You transform the user-selected text and provide ${count} alternative versions.`,
+        presetClause,
+        "Each variant must preserve the original meaning and intent, and must not add new claims, examples, or instructions that were not present in the original.",
+        ...modifierClauses,
         `Return exactly ${count} variants and nothing else.`,
         "Put each variant on its own line, prefixed with its number and a period, like '1. ', '2. '.",
         "Do not add any other commentary, labels, markdown, bullets, headings, or explanations.",
-        "Each variant must fix grammar, spelling, punctuation, and obvious wording issues.",
-        "Each variant must preserve the original meaning and tone and stay close to the original length.",
-        "Make the variants meaningfully distinct from each other in phrasing.",
-        "Do not add new claims, examples, or instructions that were not present in the original."
+        "Make the variants meaningfully distinct from each other in phrasing."
       ].join(" ");
     }
 
     const parts = [
-      "You improve user-selected text with minimal edits.",
-      "Return only the corrected text as plain text.",
-      "Do not add commentary, labels, markdown, bullets, or explanations.",
-      "Fix grammar, spelling, punctuation, and obvious wording issues.",
-      "Preserve the original meaning, tone, wording, sentence order, and formatting as much as possible.",
-      "Make the smallest number of edits needed for the text to read cleanly and correctly.",
-      "Do not add new claims, examples, or instructions that were not present in the original."
+      "You transform the user-selected text.",
+      presetClause,
+      "Preserve the original meaning and intent.",
+      "Do not add new claims, examples, or instructions that were not present in the original.",
+      ...modifierClauses,
+      "Return only the rewritten text as plain text.",
+      "Do not add commentary, labels, markdown, bullets, or explanations."
     ];
 
     if (completionPass) {
-      parts.push("Previous output looked incomplete. Return the full corrected text from the original selection.");
+      parts.push("Previous output looked incomplete. Return the full rewritten text from the original selection.");
     }
 
     return parts.join(" ");
@@ -967,6 +1014,10 @@ async function readSettings() {
     enableAskBetterMode: raw.enableAskBetterMode !== false,
     enablePhraseBetterMode: raw.enablePhraseBetterMode !== false,
     phraseBetterOptionCount: normalizePhraseBetterOptionCount(raw.phraseBetterOptionCount),
+    phraseBetterPreset: normalizePhrasePreset(raw.phraseBetterPreset),
+    phraseBetterKeepVoice: !!raw.phraseBetterKeepVoice,
+    phraseBetterPolish: !!raw.phraseBetterPolish,
+    phraseBetterWit: !!raw.phraseBetterWit,
     enableAI: raw.enableAI !== false,
     keepUserVoice: !!raw.keepUserVoice,
     keyVerified: !!raw.keyVerified,
