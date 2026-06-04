@@ -7,7 +7,7 @@ const DEFAULT_SETTINGS = {
   openaiModel: "gpt-5.2",
   openaiKeyVerified: false,
   anthropicApiKey: "",
-  anthropicModel: "claude-sonnet-4-20250514",
+  anthropicModel: "claude-sonnet-4-6",
   anthropicKeyVerified: false,
   defaultPreset: "structured",
   enableChatGPT: true,
@@ -28,20 +28,8 @@ let customPresets = [];
 const GEMINI_KEY_URL = "https://aistudio.google.com/apikey";
 const OPENAI_KEY_URL = "https://platform.openai.com/api-keys";
 const ANTHROPIC_KEY_URL = "https://console.anthropic.com/settings/keys";
-const GEMINI_MODELS = [
-  "gemini-3-flash-preview",
-  "gemini-3-pro-preview",
-  "gemini-2.5-flash",
-  "gemini-2.5-pro",
-  "gemini-2.0-flash"
-];
-const OPENAI_MODELS = ["gpt-5.2", "gpt-5-mini", "gpt-4.1"];
-const ANTHROPIC_MODELS = [
-  "claude-sonnet-4-20250514",
-  "claude-opus-4-1-20250805",
-  "claude-3-7-sonnet-latest",
-  "claude-3-5-haiku-latest"
-];
+// Curated model lists (GEMINI_MODELS / OPENAI_MODELS / ANTHROPIC_MODELS) and the
+// live-fetch/merge/cache helpers live in models.js, loaded before this script.
 
 const statusBox = document.getElementById("statusBox");
 const statusText = document.getElementById("statusText");
@@ -50,6 +38,7 @@ const keepUserVoiceEl = document.getElementById("keepUserVoice");
 const providerSelectEl = document.getElementById("providerSelect");
 const modelLabelEl = document.getElementById("modelLabel");
 const modelSelectEl = document.getElementById("modelSelect");
+const modelHintEl = document.getElementById("modelHint");
 const openSettingsBtn = document.getElementById("openSettingsBtn");
 
 init().catch(() => {
@@ -66,6 +55,8 @@ async function init() {
   providerSelectEl.value = normalizeProvider(settings.provider);
   const model = getProviderModel(settings);
   renderModelOptions(model);
+  applyModelAvailability(settings);
+  void refreshModelDropdown(normalizeProvider(settings.provider));
   keepUserVoiceEl.checked = !!settings.keepUserVoice;
 
   initCustomSelects();
@@ -89,6 +80,8 @@ async function init() {
     const nextSettings = await readSettings();
     renderStatus(nextSettings);
     renderModelOptions(getProviderModel(nextSettings));
+    applyModelAvailability(nextSettings);
+    void refreshModelDropdown(provider);
   });
 
   modelSelectEl.addEventListener("change", async () => {
@@ -251,22 +244,42 @@ function renderCustomPresetOptions() {
   defaultPresetEl.appendChild(group);
 }
 
+// Pull the provider's live model list (cached 24h) and re-render the dropdown,
+// self-healing the selection to the newest model if the stored one is gone.
+async function refreshModelDropdown(provider) {
+  const models = await refreshProviderModels(provider);
+  if (normalizeProvider(providerSelectEl.value) !== normalizeProvider(provider)) {
+    return;
+  }
+  const meta = getProviderMeta(provider);
+  const current = await readSettings();
+  const stored = normalizeModel(current[meta.modelField], meta.defaultModel);
+  const selected = chooseModel(models, stored);
+  if (selected && selected !== stored) {
+    await updateSettings({ [meta.modelField]: selected });
+  }
+  renderModelOptions(selected);
+}
+
 function renderModelOptions(selectedModel) {
   const meta = getProviderMeta(providerSelectEl.value);
   if (modelLabelEl) {
     modelLabelEl.textContent = meta.modelLabel;
   }
   modelSelectEl.textContent = "";
-  for (const model of meta.models) {
+  const list = Array.isArray(meta.models) ? meta.models : [];
+  for (const model of list) {
     const option = document.createElement("option");
     option.value = model;
     option.textContent = model;
     modelSelectEl.appendChild(option);
   }
-  if (!meta.models.includes(selectedModel)) {
+  if (selectedModel && !list.includes(selectedModel)) {
+    // No live list yet (no key / offline) → show the stored model plainly;
+    // otherwise it's a genuine off-list choice → mark it custom.
     const option = document.createElement("option");
     option.value = selectedModel;
-    option.textContent = `${selectedModel} (custom)`;
+    option.textContent = list.length ? `${selectedModel} (custom)` : selectedModel;
     modelSelectEl.appendChild(option);
   }
   modelSelectEl.value = selectedModel;
@@ -282,9 +295,10 @@ function getProviderMeta(provider) {
     return {
       providerName: "OpenAI",
       keyField: "openaiApiKey",
+      verifiedField: "openaiKeyVerified",
       modelField: "openaiModel",
       defaultModel: DEFAULT_SETTINGS.openaiModel,
-      models: OPENAI_MODELS,
+      models: getProviderModels("openai"),
       keyUrl: OPENAI_KEY_URL,
       modelLabel: "OpenAI model"
     };
@@ -293,9 +307,10 @@ function getProviderMeta(provider) {
     return {
       providerName: "Anthropic",
       keyField: "anthropicApiKey",
+      verifiedField: "anthropicKeyVerified",
       modelField: "anthropicModel",
       defaultModel: DEFAULT_SETTINGS.anthropicModel,
-      models: ANTHROPIC_MODELS,
+      models: getProviderModels("anthropic"),
       keyUrl: ANTHROPIC_KEY_URL,
       modelLabel: "Claude model"
     };
@@ -303,12 +318,28 @@ function getProviderMeta(provider) {
   return {
     providerName: "Gemini",
     keyField: "geminiApiKey",
+    verifiedField: "geminiKeyVerified",
     modelField: "geminiModel",
     defaultModel: DEFAULT_SETTINGS.geminiModel,
-    models: GEMINI_MODELS,
+    models: getProviderModels("gemini"),
     keyUrl: GEMINI_KEY_URL,
     modelLabel: "Gemini model"
   };
+}
+
+// The model dropdown is only usable once the active provider's key is saved &
+// verified; otherwise it's disabled and a hint points the user to settings.
+function applyModelAvailability(settings) {
+  const meta = getProviderMeta(settings.provider);
+  const available = !!settings[meta.verifiedField] && !!String(settings[meta.keyField] || "").trim();
+  modelSelectEl.disabled = !available;
+  if (modelHintEl) {
+    modelHintEl.hidden = available;
+  }
+  const modelShell = modelSelectEl.closest('.csel');
+  if (modelShell && modelShell._syncCustomSelectDisabled) {
+    modelShell._syncCustomSelectDisabled();
+  }
 }
 
 function getProviderModel(settings) {
@@ -434,6 +465,7 @@ function buildCustomSelect(shell) {
   }
 
   function open() {
+    if (select.disabled) return;
     panel.hidden = false;
     trigger.setAttribute('aria-expanded', 'true');
     shell.classList.add('is-open');
@@ -447,6 +479,14 @@ function buildCustomSelect(shell) {
     shell.classList.remove('is-open');
   }
 
+  // Mirror the native <select>'s disabled state onto the custom UI.
+  function syncDisabled() {
+    const disabled = !!select.disabled;
+    trigger.disabled = disabled;
+    shell.classList.toggle('csel--disabled', disabled);
+    if (disabled) close();
+  }
+
   trigger.addEventListener('click', e => {
     e.stopPropagation();
     panel.hidden ? open() : close();
@@ -458,10 +498,13 @@ function buildCustomSelect(shell) {
 
   buildOptions();
   syncSelected();
+  syncDisabled();
 
   // Expose for external rebuild (e.g. after renderModelOptions repopulates options)
   shell._rebuildCustomSelect = () => {
     buildOptions();
     syncSelected();
+    syncDisabled();
   };
+  shell._syncCustomSelectDisabled = syncDisabled;
 }

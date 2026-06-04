@@ -7,7 +7,7 @@ const DEFAULT_SETTINGS = {
   openaiModel: "gpt-5.2",
   openaiKeyVerified: false,
   anthropicApiKey: "",
-  anthropicModel: "claude-sonnet-4-20250514",
+  anthropicModel: "claude-sonnet-4-6",
   anthropicKeyVerified: false,
   defaultPreset: "structured",
   enableChatGPT: true,
@@ -378,6 +378,32 @@ async function fetchModelsForProvider(payload) {
   }
 }
 
+// Provider /v1/models endpoints return everything they host — embeddings,
+// audio/TTS, vision, image/video, experimental builds, and dated snapshots.
+// These predicates keep the live list to the "main" general-purpose chat models
+// so the dropdown stays clean (and small) as providers keep adding SKUs, without
+// needing a code change each time a new flagship lands.
+const MODEL_DATED_SNAPSHOT = /-\d{4}(-\d{2}-\d{2})?$/; // gpt-4o-2024-08-06, gpt-4-0613
+const GEMINI_DATED_PREVIEW = /-\d{2}-\d{2}$/; // gemini-2.5-flash-preview-05-20
+const MODEL_FETCH_LIMIT = 12;
+
+function isMainGeminiModel(id) {
+  const s = String(id || "").toLowerCase();
+  if (!s.startsWith("gemini-")) return false; // drop gemma / learnlm / imagen / veo / aqa
+  if (/(embedding|aqa|imagen|veo|vision|tuning|thinking)/.test(s)) return false;
+  if (/(^|-)exp(-|$)/.test(s)) return false;
+  if (GEMINI_DATED_PREVIEW.test(s)) return false;
+  return true;
+}
+
+function isMainOpenAIModel(id) {
+  const s = String(id || "").toLowerCase();
+  if (!/^gpt-/.test(s) && !/^o\d/.test(s)) return false;
+  if (/(audio|realtime|transcribe|tts|search|image|embedding|moderation|instruct|vision|-16k|chat-latest)/.test(s)) return false;
+  if (MODEL_DATED_SNAPSHOT.test(s)) return false;
+  return true;
+}
+
 async function fetchGeminiModels(apiKey) {
   const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models", {
     method: "GET",
@@ -393,10 +419,11 @@ async function fetchGeminiModels(apiKey) {
   const ids = all
     .filter((m) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes("generateContent"))
     .map((m) => String(m.name || "").replace(/^models\//, ""))
-    .filter(Boolean)
+    .filter(isMainGeminiModel)
     .sort()
-    .reverse();
-  return { ok: true, models: ids.length ? ids : DEFAULT_SETTINGS.geminiModel ? [DEFAULT_SETTINGS.geminiModel] : [] };
+    .reverse()
+    .slice(0, MODEL_FETCH_LIMIT);
+  return { ok: true, models: ids };
 }
 
 async function fetchOpenAIModels(apiKey) {
@@ -411,12 +438,15 @@ async function fetchOpenAIModels(apiKey) {
   }
   const data = await response.json();
   const items = Array.isArray(data.data) ? data.data : [];
+  // Sort newest first by the API's `created` timestamp so flagships order
+  // correctly (gpt-5.8 over gpt-5.2) without a version list to maintain.
   const ids = items
+    .filter((m) => isMainOpenAIModel(m && m.id))
+    .sort((a, b) => (Number(b.created) || 0) - (Number(a.created) || 0))
     .map((m) => String(m.id || ""))
-    .filter((id) => /^gpt-/i.test(id))
-    .sort()
-    .reverse();
-  return { ok: true, models: ids.length ? ids : DEFAULT_SETTINGS.openaiModel ? [DEFAULT_SETTINGS.openaiModel] : [] };
+    .filter(Boolean)
+    .slice(0, MODEL_FETCH_LIMIT);
+  return { ok: true, models: ids };
 }
 
 async function fetchAnthropicModels(apiKey) {
@@ -435,12 +465,15 @@ async function fetchAnthropicModels(apiKey) {
   }
   const data = await response.json();
   const items = Array.isArray(data.data) ? data.data : [];
+  // Anthropic's list is already only Claude chat models — sort newest first by
+  // created_at (string IDs don't order opus/sonnet/haiku correctly).
   const ids = items
+    .filter((m) => String(m.id || "").toLowerCase().startsWith("claude-"))
+    .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))
     .map((m) => String(m.id || ""))
     .filter(Boolean)
-    .sort()
-    .reverse();
-  return { ok: true, models: ids.length ? ids : DEFAULT_SETTINGS.anthropicModel ? [DEFAULT_SETTINGS.anthropicModel] : [] };
+    .slice(0, MODEL_FETCH_LIMIT);
+  return { ok: true, models: ids };
 }
 
 async function testKey(payload) {

@@ -84,6 +84,7 @@ prompt-optimizer-ask-better/
 │   ├── options.html          # Settings/options page
 │   ├── options.css           # Options styling
 │   ├── options.js            # Options page logic
+│   ├── models.js             # Model dropdown source: live /v1/models fetch + 24h cache + self-healing selection, no hardcoded lists (loaded before popup.js/options.js)
 │   ├── theme.css             # Global theme (variables, dark mode)
 │
 ├── site/                      # Landing page & documentation (GitHub Pages)
@@ -190,6 +191,7 @@ Pattern: **Message-based communication** between background script, content scri
 | `injected/styles.css` | Styling for injected UI elements (button, overlays) |
 | `ui/popup.html` | Popup UI template |
 | `ui/popup.js` | Popup event handlers & state management |
+| `ui/models.js` | Model dropdown source — live `/v1/models` fetch (no hardcoded lists), 24h cache, and `chooseModel()` self-healing. Loaded before `popup.js`/`options.js`; both share its `getProviderModels()` / `refreshProviderModels()` / `chooseModel()` helpers. |
 | `ui/options.html` | Settings page template |
 | `ui/options.js` | Settings page logic (API key config, preset selection) |
 | `ui/theme.css` | Global CSS variables (colors, fonts, dark mode) |
@@ -254,6 +256,16 @@ The Ask Better system instruction (`buildSystemInstruction` in `background.js`, 
 - **Anthropic Claude** — API key required (`api.anthropic.com`)
 
 User selects provider & enters API key in the extension options page. Selection is remembered.
+
+### Dynamic Model Lists (self-updating dropdowns)
+
+- **No hardcoded model lists.** Dropdowns are populated purely from each provider's **live** catalogue, so new flagship models appear and retired ones disappear with no code edit.
+- On opening the popup/options (and on provider switch or key verify), the page calls `refreshProviderModels(provider)` (`ui/models.js`) → background `ASKBETTER_FETCH_MODELS` → `fetchModelsForProvider` hits `GET /v1/models` (Gemini `…/v1beta/models`, OpenAI, Anthropic). Results are **regex-filtered to main chat models** (`isMainGeminiModel` / `isMainOpenAIModel` in `background.js` drop embeddings, audio/TTS, vision, image/video, experimental builds, and dated snapshots; Anthropic keeps `claude-*`) and **cached 24h** in `chrome.storage.local.modelCache` — at most one network call per provider per day.
+- **Sorted newest-first by the API's own timestamps** (OpenAI `created`, Anthropic `created_at`; Gemini by name, no timestamp field) so the top entry is the latest flagship — no version list to maintain.
+- The background worker resolves the stored key itself and short-circuits with `MISSING_KEY` (no network) when none exists. Offline / before a key, the dropdown just shows the stored model (rendered plainly, no `(custom)` tag).
+- **Self-healing default:** `chooseModel()` keeps the stored selection when the live list still offers it; otherwise it snaps to the newest live model and persists it (`savePartial` / `updateSettings`). So a deprecated default never strands the user.
+- **Dropdown gating:** the model `<select>` is disabled (and a `.model-hint` is shown) until the active provider's key is saved & verified — `applyModelAvailability()` in both `ui/options.js` and `ui/popup.js`. The custom-select wrapper mirrors the native `disabled` via `shell._syncCustomSelectDisabled()` / the `csel--disabled` class. In options the dropdown re-enables immediately on a successful key test.
+- The only per-provider model constant left is the single **seed** in each `DEFAULT_SETTINGS` (`*Model`, kept in sync across `background.js`, `ui/options.js`, `ui/popup.js`) — a bootstrap value used before the first fetch; it self-heals once a live list loads. To tune what passes the noise filter, edit the `isMain*Model` predicates in `background.js`.
 
 ### "Phrase Better" (Right-Click Context Menu)
 
@@ -335,6 +347,7 @@ User selects provider & enters API key in the extension options page. Selection 
 - **`customPresets`**: User-defined presets, array of `{ id, name, instruction }`
 - **`enableChatGPT` / `enableGemini` / `enableClaude`**: Per-surface injection toggles
 - **`uiPrefs.buttonOffsets`**: Draggable button offset per surface (`chatgpt`/`gemini`/`claude`)
+- **`modelCache`**: Live model lists per provider, `{ [provider]: { models: string[], ts } }`, refreshed at most every 24h (see Dynamic Model Lists). Stored at the top level, **not** inside `settings`.
 
 ---
 
