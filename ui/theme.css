@@ -268,6 +268,20 @@ body {
   border-radius: var(--radius) var(--radius) 0 0;
 }
 
+/* Drop-up: open the panel above the trigger when there's no room below
+   (avoids growing the popup and triggering a scrollbar). */
+.csel--up .csel-panel {
+  top: auto;
+  bottom: 100%;
+  border-top: 1px solid var(--orange);
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.csel--up.is-open .csel-trigger {
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
 .csel--disabled {
   opacity: 0.55;
 }

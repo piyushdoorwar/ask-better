@@ -34,7 +34,7 @@ const ANTHROPIC_KEY_URL = "https://console.anthropic.com/settings/keys";
 const statusBox = document.getElementById("statusBox");
 const statusText = document.getElementById("statusText");
 const defaultPresetEl = document.getElementById("defaultPreset");
-const keepUserVoiceEl = document.getElementById("keepUserVoice");
+const phraseBetterPresetEl = document.getElementById("phraseBetterPreset");
 const providerSelectEl = document.getElementById("providerSelect");
 const modelLabelEl = document.getElementById("modelLabel");
 const modelSelectEl = document.getElementById("modelSelect");
@@ -52,12 +52,12 @@ async function init() {
   renderStatus(settings);
   renderCustomPresetOptions();
   defaultPresetEl.value = normalizePreset(settings.defaultPreset);
+  phraseBetterPresetEl.value = normalizePhrasePreset(settings.phraseBetterPreset);
   providerSelectEl.value = normalizeProvider(settings.provider);
   const model = getProviderModel(settings);
   renderModelOptions(model);
   applyModelAvailability(settings);
   void refreshModelDropdown(normalizeProvider(settings.provider));
-  keepUserVoiceEl.checked = !!settings.keepUserVoice;
 
   initCustomSelects();
 
@@ -65,8 +65,8 @@ async function init() {
     await updateSettings({ defaultPreset: normalizePreset(defaultPresetEl.value) });
   });
 
-  keepUserVoiceEl.addEventListener("change", async () => {
-    await updateSettings({ keepUserVoice: !!keepUserVoiceEl.checked });
+  phraseBetterPresetEl.addEventListener("change", async () => {
+    await updateSettings({ phraseBetterPreset: normalizePhrasePreset(phraseBetterPresetEl.value) });
   });
 
   providerSelectEl.addEventListener("change", async () => {
@@ -144,6 +144,7 @@ async function readSettings() {
     anthropicModel: normalizeModel(raw.anthropicModel, DEFAULT_SETTINGS.anthropicModel),
     anthropicKeyVerified: !!raw.anthropicKeyVerified,
     defaultPreset: normalizePreset(raw.defaultPreset, normalizeCustomPresets(raw.customPresets)),
+    phraseBetterPreset: normalizePhrasePreset(raw.phraseBetterPreset),
     enableChatGPT: raw.enableChatGPT !== false,
     enableGemini: raw.enableGemini !== false,
     enableClaude: raw.enableClaude !== false,
@@ -173,6 +174,12 @@ async function updateSettings(partial) {
   const current = await readSettings();
   const next = { ...current, ...partial };
   await chrome.storage.local.set({ settings: next });
+}
+
+const PHRASE_PRESET_IDS = new Set(["fix_grammar", "rephrase", "casual", "formal"]);
+function normalizePhrasePreset(value) {
+  const preset = String(value || "").toLowerCase();
+  return PHRASE_PRESET_IDS.has(preset) ? preset : "fix_grammar";
 }
 
 function normalizePreset(value, presetList) {
@@ -469,6 +476,15 @@ function buildCustomSelect(shell) {
     panel.hidden = false;
     trigger.setAttribute('aria-expanded', 'true');
     shell.classList.add('is-open');
+    // Flip the panel above the trigger when it would otherwise overflow the
+    // bottom of the popup (which forces a scrollbar).
+    shell.classList.remove('csel--up');
+    const rect = trigger.getBoundingClientRect();
+    const needed = Math.min(panel.scrollHeight, 200) + 8;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    if (spaceBelow < needed && rect.top > spaceBelow) {
+      shell.classList.add('csel--up');
+    }
     const sel = panel.querySelector('.csel-item.is-selected');
     if (sel) sel.scrollIntoView({ block: 'nearest' });
   }
@@ -476,7 +492,7 @@ function buildCustomSelect(shell) {
   function close() {
     panel.hidden = true;
     trigger.setAttribute('aria-expanded', 'false');
-    shell.classList.remove('is-open');
+    shell.classList.remove('is-open', 'csel--up');
   }
 
   // Mirror the native <select>'s disabled state onto the custom UI.

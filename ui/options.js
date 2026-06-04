@@ -1272,6 +1272,14 @@ function buildCustomSelect(shell) {
     panel.hidden = false;
     trigger.setAttribute('aria-expanded', 'true');
     shell.classList.add('is-open');
+    // Flip the panel above the trigger when it would overflow below the viewport.
+    shell.classList.remove('csel--up');
+    const rect = trigger.getBoundingClientRect();
+    const needed = Math.min(panel.scrollHeight, 200) + 8;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    if (spaceBelow < needed && rect.top > spaceBelow) {
+      shell.classList.add('csel--up');
+    }
     const sel = panel.querySelector('.csel-item.is-selected');
     if (sel) sel.scrollIntoView({ block: 'nearest' });
   }
@@ -1279,7 +1287,7 @@ function buildCustomSelect(shell) {
   function close() {
     panel.hidden = true;
     trigger.setAttribute('aria-expanded', 'false');
-    shell.classList.remove('is-open');
+    shell.classList.remove('is-open', 'csel--up');
   }
 
   // Mirror the native <select>'s disabled state onto the custom UI.

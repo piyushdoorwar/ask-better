@@ -26,8 +26,27 @@
       </div>
 
       <div class="field">
-        <p class="section-title">Default Optimization Style</p>
-        <label for="defaultPreset">Preset</label>
+        <p class="section-title">Provider &amp; model</p>
+        <label for="providerSelect">Provider</label>
+        <div class="csel">
+          <select id="providerSelect" hidden>
+            <option value="gemini" data-icon="../assets/icons/ui/gemini-color.svg">Google Gemini</option>
+            <option value="openai" data-icon="../assets/icons/ui/openai.svg">OpenAI</option>
+            <option value="anthropic" data-icon="../assets/icons/ui/claude-color.svg">Anthropic Claude</option>
+          </select>
+        </div>
+        <label id="modelLabel" for="modelSelect">Gemini model</label>
+        <div class="csel">
+          <!-- Options are populated at runtime from the provider's live model
+               list (see ui/models.js / popup.js renderModelOptions). -->
+          <select id="modelSelect" hidden></select>
+        </div>
+        <p class="model-hint" id="modelHint" hidden>Add your API key in settings to load models.</p>
+      </div>
+
+      <div class="field">
+        <p class="section-title">Ask Better</p>
+        <label for="defaultPreset">Optimize preset</label>
         <div class="csel">
           <select id="defaultPreset" hidden>
             <optgroup label="Core">
@@ -56,33 +75,16 @@
       </div>
 
       <div class="field">
-        <p class="section-title">Rewrite Options</p>
-        <div class="toggle-row">
-          <label for="keepUserVoice">Keep user voice</label>
-          <span class="switch">
-            <input type="checkbox" id="keepUserVoice" />
-            <span class="slider"></span>
-          </span>
-        </div>
-      </div>
-
-      <div class="field">
-        <p class="section-title">Model</p>
-        <label for="providerSelect">Provider</label>
+        <p class="section-title">Phrase Better</p>
+        <label for="phraseBetterPreset">Rephrase preset</label>
         <div class="csel">
-          <select id="providerSelect" hidden>
-            <option value="gemini" data-icon="../assets/icons/ui/gemini-color.svg">Google Gemini</option>
-            <option value="openai" data-icon="../assets/icons/ui/openai.svg">OpenAI</option>
-            <option value="anthropic" data-icon="../assets/icons/ui/claude-color.svg">Anthropic Claude</option>
+          <select id="phraseBetterPreset" hidden>
+            <option value="fix_grammar">Fix grammar (default)</option>
+            <option value="rephrase">Rephrase</option>
+            <option value="casual">Casual reply</option>
+            <option value="formal">Formal message</option>
           </select>
         </div>
-        <label id="modelLabel" for="modelSelect">Gemini model</label>
-        <div class="csel">
-          <!-- Options are populated at runtime from the provider's live model
-               list (see ui/models.js / popup.js renderModelOptions). -->
-          <select id="modelSelect" hidden></select>
-        </div>
-        <p class="model-hint" id="modelHint" hidden>Add your API key in settings to load models.</p>
       </div>
 
       <button class="open-settings" id="openSettingsBtn">Open settings</button>
