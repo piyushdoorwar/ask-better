@@ -275,6 +275,12 @@ User selects provider & enters API key in the extension options page. Selection 
 - Shows a **non-destructive chooser overlay** injected into the page (`showPhraseBetterChooserOnPage`, fully inline-styled): the user clicks a suggestion to apply it (flashes an "Applied" check), or dismisses via the close button / click-outside / `Esc`. It never auto-replaces the selection.
 - The selection context (text-input offsets or a cloned contenteditable `Range`) is captured **at context-menu time** by `capturePhraseBetterSelectionOnPage` and stored on the page's isolated-world global `window.__askBetterPhraseSelection`, so the rephrase can be applied to the original location even after the async request — the user doesn't have to keep the text selected. The chooser falls back to the live selection if the stored one is gone.
 
+### Usage Reports (local, 30-day)
+
+- A **Reports** panel (Common group, `section-reports`) shows a rolling 30-day usage dashboard: total requests, an Ask Better / Phrase Better split, and a stacked bar chart of daily request counts.
+- The chart is **Chart.js**, vendored locally at `ui/vendor/chart.umd.min.js` (MV3 blocks remote scripts) and driven by `ui/reports.js`. A segmented toggle re-stacks the bars by **provider** or **app/mode**, with a fixed colour per series, themed for the dark amber UI.
+- Source data is the local `usageLog` (see State & Persistence) — `recordUsage()` in `background.js` appends one entry per successful Optimize / Phrase Better request; nothing is sent anywhere. `reports.js` reads it directly from `chrome.storage.local`, filters to 30 days, and renders lazily when the section is first opened (the canvas must be visible for Chart.js to size correctly).
+
 ### Local-First Storage
 
 - **API keys**: stored in `chrome.storage.local`, never sent to external servers
@@ -348,6 +354,7 @@ User selects provider & enters API key in the extension options page. Selection 
 - **`enableChatGPT` / `enableGemini` / `enableClaude`**: Per-surface injection toggles
 - **`uiPrefs.buttonOffsets`**: Draggable button offset per surface (`chatgpt`/`gemini`/`claude`)
 - **`modelCache`**: Live model lists per provider, `{ [provider]: { models: string[], ts } }`, refreshed at most every 24h (see Dynamic Model Lists). Stored at the top level, **not** inside `settings`.
+- **`usageLog`**: Local-only usage history for the Reports section — an array of `{ ts, provider, model, mode }`, one entry per successful request, appended by `recordUsage()` in `background.js`. Pruned to the last 30 days (and capped at 5000) on every write; the Reports view also re-filters to 30 days on read. Never sent anywhere. Top-level key, not inside `settings`.
 
 ---
 
@@ -382,7 +389,7 @@ Full settings page accessible from the popup or extension management UI.
 
 **Sidebar menu is grouped by app** (tab-style: one `.settings-section` shown at a time, switched by `activateSection` via each nav button's `data-section`). Group headers use `.menu-title` / `.menu-title--group`:
 
-- **Common** — `section-models` (provider, model, and the global **Enable AI** toggle), `section-security` (API key verify + clear data)
+- **Common** — `section-models` (provider, model, and the global **Enable AI** toggle), `section-reports` (local usage dashboard), `section-security` (API key verify + clear data)
 - **AskBetter** — `section-askbetter-mode` (Ask Better on/off), `section-integrations` (Enable on ChatGPT/Gemini/Claude), `section-presets`, `section-custom`
 - **PhraseBetter** — `section-phrasebetter-mode` (Phrase Better on/off + suggestion count)
 

@@ -89,6 +89,17 @@ const SECTION_INFO_CONTENT = {
       "When you click Optimize, these additions are sent only to the selected provider API along with the prompt."
     ]
   },
+  reports: {
+    title: "Reports",
+    description: "A local-only snapshot of your AskBetter usage over the last 30 days.",
+    points: [
+      "Each successful Optimize (Ask Better) and Phrase Better request is counted, with its provider and model.",
+      "The chart stacks daily request counts; switch the breakdown between provider and app (Ask Better vs Phrase Better).",
+      "Data is stored only in this browser profile and is never sent anywhere.",
+      "Entries older than 30 days are dropped automatically, so the view always reflects a rolling 30-day window.",
+      "Clear stored key/data in the Security section also wipes this usage history."
+    ]
+  },
   security: {
     title: "Security",
     description: "This section is for key setup, verification, and reset controls.",

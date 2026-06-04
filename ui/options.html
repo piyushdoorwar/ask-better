@@ -45,6 +45,12 @@
             </span>
             <span class="nav-label">Models</span>
           </button>
+          <button class="nav-btn" data-section="section-reports" type="button">
+            <span class="nav-icon" aria-hidden="true">
+              <span class="icon-mask icon-reports"></span>
+            </span>
+            <span class="nav-label">Reports</span>
+          </button>
           <button class="nav-btn" data-section="section-security" type="button">
             <span class="nav-icon" aria-hidden="true">
               <span class="icon-mask icon-security"></span>
@@ -142,6 +148,57 @@
               </div>
             </div>
             <div id="providerInfo" class="provider-info" aria-live="polite"></div>
+          </section>
+
+          <section id="section-reports" class="settings-section">
+            <div class="section-head">
+              <span class="section-badge" aria-hidden="true">
+                <span class="icon-mask icon-reports"></span>
+              </span>
+              <div>
+                <div class="section-title-row">
+                  <h2 class="section-title">Reports</h2>
+                  <button type="button" class="section-info-btn" data-info-section="reports" aria-label="About Reports">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+                      <path d="M12 10.3V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                      <circle cx="12" cy="7.6" r="1.1" fill="currentColor"></circle>
+                    </svg>
+                  </button>
+                </div>
+                <p class="section-sub">Your AskBetter usage over the last 30 days. Stored locally, cleared automatically after 30 days.</p>
+              </div>
+            </div>
+
+            <p class="report-range" id="reportRange" aria-live="polite"></p>
+
+            <div class="report-stats" id="reportStats">
+              <div class="report-stat">
+                <span class="report-stat-value" id="statTotal">0</span>
+                <span class="report-stat-label">Total requests</span>
+              </div>
+              <div class="report-stat">
+                <span class="report-stat-value" id="statAskBetter">0</span>
+                <span class="report-stat-label">Ask Better</span>
+              </div>
+              <div class="report-stat">
+                <span class="report-stat-value" id="statPhraseBetter">0</span>
+                <span class="report-stat-label">Phrase Better</span>
+              </div>
+            </div>
+
+            <div class="report-controls">
+              <span class="report-controls-label">Break down by</span>
+              <div class="seg" id="reportGroupToggle" role="tablist" aria-label="Chart breakdown">
+                <button type="button" class="seg-btn active" data-group="provider" role="tab" aria-selected="true">Provider</button>
+                <button type="button" class="seg-btn" data-group="mode" role="tab" aria-selected="false">App</button>
+              </div>
+            </div>
+
+            <div class="report-chart-wrap">
+              <canvas id="reportChart" aria-label="Daily request count chart" role="img"></canvas>
+              <p class="report-empty" id="reportEmpty" hidden>No usage yet. Your Optimize and Phrase Better activity from the last 30 days will show up here.</p>
+            </div>
           </section>
 
           <section id="section-askbetter-mode" class="settings-section">
@@ -641,6 +698,8 @@
     </div>
 
     <script src="models.js"></script>
+    <script src="vendor/chart.umd.min.js"></script>
     <script src="options.js"></script>
+    <script src="reports.js"></script>
   </body>
 </html>

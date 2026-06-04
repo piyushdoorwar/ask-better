@@ -26,6 +26,34 @@ const DEFAULT_SETTINGS = {
 const PHRASE_BETTER_CONTEXT_MENU_ID = "askbetter-phrase-better";
 let phraseBetterMenuSyncToken = 0;
 
+// Local-only usage log for the Reports section: one entry per successful
+// request, kept for 30 days. Never leaves the browser.
+const USAGE_LOG_KEY = "usageLog";
+const USAGE_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+const USAGE_LOG_MAX = 5000;
+
+async function recordUsage(entry) {
+  try {
+    const now = Date.now();
+    const stored = await chrome.storage.local.get([USAGE_LOG_KEY]);
+    const log = Array.isArray(stored[USAGE_LOG_KEY]) ? stored[USAGE_LOG_KEY] : [];
+    log.push({
+      ts: now,
+      provider: String((entry && entry.provider) || ""),
+      model: String((entry && entry.model) || ""),
+      mode: entry && entry.mode === "phrase_better" ? "phrase_better" : "ask_better"
+    });
+    const cutoff = now - USAGE_RETENTION_MS;
+    let pruned = log.filter((e) => e && typeof e.ts === "number" && e.ts >= cutoff);
+    if (pruned.length > USAGE_LOG_MAX) {
+      pruned = pruned.slice(pruned.length - USAGE_LOG_MAX);
+    }
+    await chrome.storage.local.set({ [USAGE_LOG_KEY]: pruned });
+  } catch (_e) {
+    // Usage logging is best-effort and must never affect the user request.
+  }
+}
+
 const DEFAULT_UI_PREFS = {
   buttonOffsets: {
     chatgpt: { x: 0, y: 0 },
@@ -209,6 +237,7 @@ async function rewriteText({ prompt, preset, site, settings, mode }) {
       };
     }
 
+    await recordUsage({ provider, model, mode });
     return { ok: true, optimizedPrompt };
   } catch (error) {
     return mapProviderError(error);
@@ -1053,6 +1082,7 @@ async function generatePhraseBetterOptions({ prompt, settings, count }) {
       if (!cleaned) {
         return { ok: false, code: "EMPTY_MODEL_OUTPUT", message: "Model returned an empty response." };
       }
+      await recordUsage({ provider, model, mode: "phrase_better" });
       return { ok: true, options: [cleaned] };
     }
 
@@ -1070,6 +1100,7 @@ async function generatePhraseBetterOptions({ prompt, settings, count }) {
     if (!options.length) {
       return { ok: false, code: "EMPTY_MODEL_OUTPUT", message: "Model returned an empty response." };
     }
+    await recordUsage({ provider, model, mode: "phrase_better" });
     return { ok: true, options };
   } catch (error) {
     return mapProviderError(error);
