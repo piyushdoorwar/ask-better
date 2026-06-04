@@ -289,7 +289,7 @@
           AskBetter is local-first. Your prompts, settings, and API keys stay in your browser. No backend server. No developer analytics. No telemetry.
         </p>
         <div class="meta-row">
-          <span class="meta-pill"><span class="dot"></span>Last updated: May 2026</span>
+          <span class="meta-pill"><span class="dot"></span>Last updated: June 2026</span>
           <span class="meta-pill"><span class="dot"></span>Developer collection: None</span>
           <span class="meta-pill"><span class="dot warn"></span>Third-party AI: Optional, user-controlled</span>
         </div>
@@ -320,9 +320,11 @@
             <h2>Local Data Storage</h2>
             <p>AskBetter stores limited data locally in your browser using <code>chrome.storage.local</code>:</p>
             <ul>
-              <li>User preferences and settings (provider, model, preset, toggles)</li>
+              <li>User preferences and settings (provider, model, presets, toggles)</li>
               <li>Your Gemini, OpenAI, and/or Anthropic API keys</li>
               <li>Custom prompt additions</li>
+              <li>A local 30-day usage history shown in the Reports view (request counts by provider and mode)</li>
+              <li>Cached lists of the available provider models</li>
               <li>Draggable button position offsets</li>
             </ul>
             <p>This data stays on your device. Remove it by uninstalling the Extension or clearing extension storage in your browser settings.</p>
@@ -333,7 +335,7 @@
           <p class="section-num">04</p>
           <div class="section-body">
             <h2>Prompts, Page Content, and Processing</h2>
-            <p>AskBetter reads prompt text from ChatGPT and Google Gemini input boxes only when you trigger an Optimize action. Text is sent directly from your browser to your chosen AI provider. AskBetter does not route content through any developer-controlled server.</p>
+            <p>AskBetter reads prompt text from ChatGPT, Claude, and Google Gemini input boxes only when you trigger an Optimize action, and reads text you select on a web page only when you choose "Re-phrase with AskBetter" from the right-click menu. Text is sent directly from your browser to your chosen AI provider. AskBetter does not route content through any developer-controlled server.</p>
             <p>The developer does not access, store, or monitor your prompts, page selections, or AI outputs.</p>
           </div>
         </div>
@@ -363,7 +365,7 @@
             <p>AskBetter requests these browser permissions strictly to enable core features:</p>
             <ul>
               <li><strong>storage</strong> — saves your settings and API keys locally.</li>
-              <li><strong>activeTab / scripting</strong> — injects the Optimize button and reads/writes the prompt input on supported pages when triggered.</li>
+              <li><strong>activeTab / scripting</strong> — injects the Optimize button and reads/writes the prompt input on supported pages (ChatGPT, Claude, Gemini) when triggered, and applies a rephrase to text you select.</li>
               <li><strong>contextMenus</strong> — adds the "Re-phrase with AskBetter" right-click action.</li>
               <li><strong>host_permissions</strong> — makes direct API calls to Gemini, OpenAI, and Anthropic endpoints from the background worker.</li>
             </ul>
@@ -375,7 +377,7 @@
           <p class="section-num">08</p>
           <div class="section-body">
             <h2>Analytics and Tracking</h2>
-            <p>AskBetter does not use analytics or tracking tools and does not profile users. No usage events, crash reports, or interaction data are sent anywhere.</p>
+            <p>AskBetter does not use analytics or tracking tools and does not profile users. No usage events, crash reports, or interaction data are sent anywhere. The extension keeps a local 30-day usage summary (shown in its Reports view) that is computed and stored only on your device and is never transmitted.</p>
           </div>
         </div>
 
