@@ -38,24 +38,26 @@
 
       <div class="layout">
         <aside class="sidebar card">
-          <p class="menu-title">Menu</p>
+          <p class="menu-title">Common</p>
           <button class="nav-btn active" data-section="section-models" type="button">
             <span class="nav-icon" aria-hidden="true">
               <span class="icon-mask icon-models"></span>
             </span>
             <span class="nav-label">Models</span>
           </button>
-          <button class="nav-btn" data-section="section-mode" type="button">
+          <button class="nav-btn" data-section="section-security" type="button">
+            <span class="nav-icon" aria-hidden="true">
+              <span class="icon-mask icon-security"></span>
+            </span>
+            <span class="nav-label">Security</span>
+          </button>
+
+          <p class="menu-title menu-title--group">AskBetter</p>
+          <button class="nav-btn" data-section="section-askbetter-mode" type="button">
             <span class="nav-icon" aria-hidden="true">
               <span class="icon-mask icon-mode"></span>
             </span>
             <span class="nav-label">Mode</span>
-          </button>
-          <button class="nav-btn" data-section="section-presets" type="button">
-            <span class="nav-icon" aria-hidden="true">
-              <span class="icon-mask icon-presets"></span>
-            </span>
-            <span class="nav-label">Presets</span>
           </button>
           <button class="nav-btn" data-section="section-integrations" type="button">
             <span class="nav-icon" aria-hidden="true">
@@ -63,17 +65,25 @@
             </span>
             <span class="nav-label">Integrations</span>
           </button>
+          <button class="nav-btn" data-section="section-presets" type="button">
+            <span class="nav-icon" aria-hidden="true">
+              <span class="icon-mask icon-presets"></span>
+            </span>
+            <span class="nav-label">Presets</span>
+          </button>
           <button class="nav-btn" data-section="section-custom" type="button">
             <span class="nav-icon" aria-hidden="true">
               <span class="icon-mask icon-custom"></span>
             </span>
             <span class="nav-label">Custom Prompt Additions</span>
           </button>
-          <button class="nav-btn" data-section="section-security" type="button">
+
+          <p class="menu-title menu-title--group">PhraseBetter</p>
+          <button class="nav-btn" data-section="section-phrasebetter-mode" type="button">
             <span class="nav-icon" aria-hidden="true">
-              <span class="icon-mask icon-security"></span>
+              <span class="icon-mask icon-mode"></span>
             </span>
-            <span class="nav-label">Security</span>
+            <span class="nav-label">Mode</span>
           </button>
         </aside>
 
@@ -95,6 +105,19 @@
                   </button>
                 </div>
                 <p class="section-sub">Choose the active provider and model used for optimization.</p>
+              </div>
+            </div>
+            <div class="toggle-grid">
+              <div class="toggle-row full">
+                <label for="enableAI" class="toggle-label-icon">
+                  <svg class="csel-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5c-.28 0-.5.16-.59.41l-1.6 4.55-4.55 1.6a.625.625 0 000 1.18l4.55 1.6 1.6 4.55c.09.25.31.41.59.41s.5-.16.59-.41l1.6-4.55 4.55-1.6a.625.625 0 000-1.18l-4.55-1.6-1.6-4.55A.625.625 0 0012 2.5z" fill="currentColor" opacity=".9"/><path d="M5.5 14.5c-.18 0-.33.1-.39.27l-.9 2.56-2.56.9a.415.415 0 000 .78l2.56.9.9 2.56c.06.17.21.27.39.27s.33-.1.39-.27l.9-2.56 2.56-.9a.415.415 0 000-.78l-2.56-.9-.9-2.56A.415.415 0 005.5 14.5z" fill="currentColor" opacity=".6"/></svg>
+                  <span class="csel-sep"></span>
+                  Enable AI (global)
+                </label>
+                <span class="switch">
+                  <input id="enableAI" name="enableAI" type="checkbox" />
+                  <span class="slider"></span>
+                </span>
               </div>
             </div>
             <div class="grid">
@@ -121,7 +144,7 @@
             <div id="providerInfo" class="provider-info" aria-live="polite"></div>
           </section>
 
-          <section id="section-mode" class="settings-section">
+          <section id="section-askbetter-mode" class="settings-section">
             <div class="section-head">
               <span class="section-badge" aria-hidden="true">
                 <span class="icon-mask icon-mode"></span>
@@ -129,7 +152,7 @@
               <div>
                 <div class="section-title-row">
                   <h2 class="section-title">Mode</h2>
-                  <button type="button" class="section-info-btn" data-info-section="modes" aria-label="About Mode">
+                  <button type="button" class="section-info-btn" data-info-section="askbetter_mode" aria-label="About Ask Better mode">
                     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
                       <path d="M12 10.3V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
@@ -137,7 +160,7 @@
                     </svg>
                   </button>
                 </div>
-                <p class="section-sub">Control which AskBetter rewriting experiences are available.</p>
+                <p class="section-sub">Turn the Ask Better Optimize experience on or off.</p>
               </div>
             </div>
             <div class="toggle-grid">
@@ -151,7 +174,29 @@
                   <span class="slider"></span>
                 </span>
               </div>
+            </div>
+          </section>
 
+          <section id="section-phrasebetter-mode" class="settings-section">
+            <div class="section-head">
+              <span class="section-badge" aria-hidden="true">
+                <span class="icon-mask icon-mode"></span>
+              </span>
+              <div>
+                <div class="section-title-row">
+                  <h2 class="section-title">Mode</h2>
+                  <button type="button" class="section-info-btn" data-info-section="phrasebetter_mode" aria-label="About Phrase Better mode">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+                      <path d="M12 10.3V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                      <circle cx="12" cy="7.6" r="1.1" fill="currentColor"></circle>
+                    </svg>
+                  </button>
+                </div>
+                <p class="section-sub">Turn Phrase Better on or off and choose how many suggestions it shows.</p>
+              </div>
+            </div>
+            <div class="toggle-grid">
               <div class="toggle-row full">
                 <div>
                   <label for="enablePhraseBetterMode">Phrase Better</label>
@@ -293,22 +338,10 @@
                     </svg>
                   </button>
                 </div>
-                <p class="section-sub">Enable where AskBetter should appear.</p>
+                <p class="section-sub">Enable where the Ask Better Optimize button should appear.</p>
               </div>
             </div>
             <div class="toggle-grid">
-              <div class="toggle-row">
-                <label for="enableAI" class="toggle-label-icon">
-                  <svg class="csel-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5c-.28 0-.5.16-.59.41l-1.6 4.55-4.55 1.6a.625.625 0 000 1.18l4.55 1.6 1.6 4.55c.09.25.31.41.59.41s.5-.16.59-.41l1.6-4.55 4.55-1.6a.625.625 0 000-1.18l-4.55-1.6-1.6-4.55A.625.625 0 0012 2.5z" fill="currentColor" opacity=".9"/><path d="M5.5 14.5c-.18 0-.33.1-.39.27l-.9 2.56-2.56.9a.415.415 0 000 .78l2.56.9.9 2.56c.06.17.21.27.39.27s.33-.1.39-.27l.9-2.56 2.56-.9a.415.415 0 000-.78l-2.56-.9-.9-2.56A.415.415 0 005.5 14.5z" fill="currentColor" opacity=".6"/></svg>
-                  <span class="csel-sep"></span>
-                  Enable AI (global)
-                </label>
-                <span class="switch">
-                  <input id="enableAI" name="enableAI" type="checkbox" />
-                  <span class="slider"></span>
-                </span>
-              </div>
-
               <div class="toggle-row">
                 <label for="enableChatGPT" class="toggle-label-icon">
                   <img class="csel-icon" src="../assets/icons/ui/openai.svg" alt="" aria-hidden="true" />

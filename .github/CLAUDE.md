@@ -380,6 +380,14 @@ The popup is shown when the user clicks the extension icon in the Chrome toolbar
 
 Full settings page accessible from the popup or extension management UI.
 
+**Sidebar menu is grouped by app** (tab-style: one `.settings-section` shown at a time, switched by `activateSection` via each nav button's `data-section`). Group headers use `.menu-title` / `.menu-title--group`:
+
+- **Common** — `section-models` (provider, model, and the global **Enable AI** toggle), `section-security` (API key verify + clear data)
+- **AskBetter** — `section-askbetter-mode` (Ask Better on/off), `section-integrations` (Enable on ChatGPT/Gemini/Claude), `section-presets`, `section-custom`
+- **PhraseBetter** — `section-phrasebetter-mode` (Phrase Better on/off + suggestion count)
+
+Both "Mode" panels share the label "Mode" (disambiguated by group). The old single `section-mode` was split in two; the global Enable AI toggle moved from Integrations into Models. Section info-modal copy lives in `SECTION_INFO_CONTENT` keyed by `data-info-section` (`askbetter_mode` / `phrasebetter_mode`, etc.). All toggles/fields keep stable IDs, so moving them between panels doesn't touch the JS bindings.
+
 ```
 ┌────────────────────────────────────────┐
 │  AskBetter Options                     │

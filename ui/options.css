@@ -157,6 +157,12 @@
         letter-spacing: 0.12em;
       }
 
+      .menu-title--group {
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+      }
+
       .nav-btn {
         width: 100%;
         text-align: left;

@@ -31,22 +31,31 @@ const ANTHROPIC_KEY_URL = "https://console.anthropic.com/settings/keys";
 const SECTION_INFO_CONTENT = {
   models: {
     title: "Models",
-    description: "This section controls which provider and model AskBetter calls when you press Optimize.",
+    description: "This section controls which provider and model AskBetter calls when you press Optimize. It also holds the global AI on/off switch.",
     points: [
+      "Enable AI (global) turns optimization on/off everywhere, for both Ask Better and Phrase Better.",
       "AskBetter supports Google Gemini, OpenAI, and Anthropic Claude.",
       "Faster/lighter models usually respond quicker and cost less; larger models can improve rewrite quality.",
       "Your API keys are stored locally and used only by the background worker for direct provider API calls."
     ]
   },
-  modes: {
-    title: "Mode",
-    description: "Modes control which AskBetter experiences are available across supported surfaces.",
+  askbetter_mode: {
+    title: "Ask Better mode",
+    description: "Ask Better powers the Optimize button for prompt rewrites on supported surfaces.",
     points: [
-      "Ask Better powers the existing Optimize button on ChatGPT, Gemini, and Claude.",
-      "Phrase Better adds a right-click action for selected text in editable fields.",
+      "Ask Better powers the Optimize button on ChatGPT, Gemini, and Claude.",
+      "Turn it off to hide the Optimize flow without affecting Phrase Better.",
+      "Use the Integrations section to choose which surfaces it appears on."
+    ]
+  },
+  phrasebetter_mode: {
+    title: "Phrase Better mode",
+    description: "Phrase Better adds a right-click action for selected text on any page.",
+    points: [
       "Phrase Better focuses on grammar, spelling, and small wording fixes while preserving the original phrasing as much as possible.",
+      "It works via right-click on selected text in editable fields across the web.",
       "Phrase Better suggestions lets you show 1, 2, or 3 rephrase options in a chooser, so you accept or reject before your text is replaced.",
-      "Both modes are enabled by default and can be turned off independently."
+      "Turn it off to remove the right-click action without affecting Ask Better."
     ]
   },
   presets: {
@@ -62,11 +71,11 @@ const SECTION_INFO_CONTENT = {
   },
   integrations: {
     title: "Integrations",
-    description: "Integrations decide where AskBetter appears and whether optimization is enabled at all.",
+    description: "Integrations decide where the Ask Better Optimize button appears.",
     points: [
-      "Enable AI (global) turns optimization on/off everywhere.",
-      "Enable on ChatGPT and Enable on Gemini control where the Optimize button appears.",
-      "If AI is off or key is missing, clicking Optimize shows a friendly message and does nothing."
+      "Enable on ChatGPT, Gemini, and Claude control where the Optimize button appears.",
+      "The global AI on/off switch lives in the Models section.",
+      "If AI is off or the key is missing, clicking Optimize shows a friendly message and does nothing."
     ]
   },
   custom: {
