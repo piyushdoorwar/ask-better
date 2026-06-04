@@ -33,16 +33,25 @@
           <p class="eyebrow">Chrome Extension · MV3</p>
           <h1>Ask<br>Better</h1>
           <p class="lede">
-            One-click prompt optimizer for ChatGPT, Google Gemini, and Claude.
-            Powered by your choice of Gemini, OpenAI, or Claude. Runs entirely in
-            your browser — no backend, no tracking.
+            One extension, two ways to write better: optimize your prompts inside
+            ChatGPT, Gemini, and Claude, or right-click to rephrase any text on the
+            web. Runs entirely in your browser — no backend, no tracking.
           </p>
-          <div class="steps" aria-label="How it works">
-            <div class="step"><span class="step-n">1</span><span>Type your rough prompt</span></div>
-            <div class="step-sep" aria-hidden="true">→</div>
-            <div class="step"><span class="step-n">2</span><span>Click <img src="assets/icons/sparkle.svg" alt="" class="inline-icon" />&nbsp;Optimize</span></div>
-            <div class="step-sep" aria-hidden="true">→</div>
-            <div class="step"><span class="step-n">3</span><span>Send the better version</span></div>
+          <div class="hero-modes" aria-label="Two modes">
+            <div class="hero-mode">
+              <span class="hero-mode-icon" aria-hidden="true"><img src="assets/icons/sparkle.svg" alt="" /></span>
+              <div class="hero-mode-text">
+                <strong>Ask Better</strong>
+                <span>Optimize prompts in ChatGPT, Gemini &amp; Claude</span>
+              </div>
+            </div>
+            <div class="hero-mode">
+              <span class="hero-mode-icon" aria-hidden="true"><img src="assets/icons/cursor.svg" alt="" /></span>
+              <div class="hero-mode-text">
+                <strong>Phrase Better</strong>
+                <span>Right-click to rephrase any text on the web</span>
+              </div>
+            </div>
           </div>
           <div class="actions">
             <a class="button primary" id="installLink" href="#install">Add to Chrome</a>
@@ -89,7 +98,7 @@
             <!-- Chat main -->
             <div class="bm-main">
               <div class="bm-messages" aria-hidden="true">
-                <div class="bm-msg bm-msg--user">write me an email for the q2 project status update for stakeholders</div>
+                <div class="bm-msg bm-msg--user">write me an email for the <span class="bm-sel">q2 project status update for stakeholders</span></div>
                 <div class="bm-msg bm-msg--assistant">
                   <div class="bm-assistant-label">ChatGPT</div>
                   <div class="bm-assistant-lines">
@@ -98,6 +107,15 @@
                     <span class="bm-line bm-line--short"></span>
                   </div>
                 </div>
+              </div>
+
+              <!-- Phrase Better chooser — right-click rephrase of the selected text -->
+              <div class="bm-phrase" aria-hidden="true">
+                <div class="bm-phrase-head">
+                  <img src="assets/icons/phrase.svg" alt="" /> Re-phrase
+                </div>
+                <button class="bm-phrase-opt bm-phrase-opt--active" type="button">Q2 project status update for stakeholders</button>
+                <button class="bm-phrase-opt" type="button">stakeholder-ready Q2 status summary</button>
               </div>
 
               <!-- Input area — the star of the mockup -->
@@ -137,6 +155,8 @@
               <li><img src="assets/icons/spec.svg" alt="" class="inline-icon" /> Technical Spec</li>
               <li><img src="assets/icons/plan.svg" alt="" class="inline-icon" /> Implementation Plan</li>
               <li><img src="assets/icons/phrase.svg" alt="" class="inline-icon" /> Phrase Better</li>
+              <li><img src="assets/icons/reports.svg" alt="" class="inline-icon" /> Usage Reports</li>
+              <li><img src="assets/icons/refresh.svg" alt="" class="inline-icon" /> Always-current models</li>
               <li><img src="assets/icons/integration.svg" alt="" class="inline-icon" /> ChatGPT · Gemini · Claude</li>
               <li><img src="assets/icons/local.svg" alt="" class="inline-icon" /> Local-first</li>
             </ul>
@@ -155,6 +175,8 @@
               <li><img src="assets/icons/spec.svg" alt="" class="inline-icon" /> Technical Spec</li>
               <li><img src="assets/icons/plan.svg" alt="" class="inline-icon" /> Implementation Plan</li>
               <li><img src="assets/icons/phrase.svg" alt="" class="inline-icon" /> Phrase Better</li>
+              <li><img src="assets/icons/reports.svg" alt="" class="inline-icon" /> Usage Reports</li>
+              <li><img src="assets/icons/refresh.svg" alt="" class="inline-icon" /> Always-current models</li>
               <li><img src="assets/icons/integration.svg" alt="" class="inline-icon" /> ChatGPT · Gemini · Claude</li>
               <li><img src="assets/icons/local.svg" alt="" class="inline-icon" /> Local-first</li>
             </ul>
@@ -187,14 +209,24 @@
           <article data-reveal style="--reveal-delay: 0.24s">
             <div class="feat-icon" aria-hidden="true"><img src="assets/icons/cursor.svg" alt="" /></div>
             <h3>Phrase Better</h3>
-            <p>Right-click any selected text on the web to rephrase it with minimal edits — grammar, spelling, punctuation — without changing your wording or tone.</p>
+            <p>Right-click any selected text on the web to rephrase it. Pick a preset — fix grammar, rephrase, casual reply, or formal message — and stack adjustments like keep my voice, polish wording, or add a little wit.</p>
           </article>
           <article data-reveal style="--reveal-delay: 0.32s">
+            <div class="feat-icon" aria-hidden="true"><img src="assets/icons/reports.svg" alt="" /></div>
+            <h3>Usage reports</h3>
+            <p>A built-in 30-day dashboard charts your requests by provider and by app. Computed and stored entirely on your device — nothing is sent anywhere, and it clears itself after 30 days.</p>
+          </article>
+          <article data-reveal style="--reveal-delay: 0.4s">
+            <div class="feat-icon" aria-hidden="true"><img src="assets/icons/refresh.svg" alt="" /></div>
+            <h3>Always-current models</h3>
+            <p>The model list loads live from each provider, so new flagship models show up automatically — no extension update needed. Just verify your key and pick from the latest.</p>
+          </article>
+          <article data-reveal style="--reveal-delay: 0.48s">
             <div class="feat-icon" aria-hidden="true"><img src="assets/icons/globe.svg" alt="" /></div>
             <h3>Works where you work</h3>
             <p>Injected directly into ChatGPT, Google Gemini, and Claude. No copy-pasting to a separate tool. The Optimize button moves with your workflow.</p>
           </article>
-          <article data-reveal style="--reveal-delay: 0.4s">
+          <article data-reveal style="--reveal-delay: 0.56s">
             <div class="feat-icon" aria-hidden="true"><img src="assets/icons/lock.svg" alt="" /></div>
             <h3>Draggable &amp; unobtrusive</h3>
             <p>The Optimize button is draggable — park it anywhere that suits your layout. It disappears when you don't need it.</p>
@@ -207,7 +239,7 @@
         <div class="section-heading" data-reveal>
           <p class="eyebrow">Presets</p>
           <h2>A preset for every kind of prompt.</h2>
-          <p class="section-sub">Organized into four categories. Switch presets from the popup in one click — no settings page required.</p>
+          <p class="section-sub">Four categories for the Optimize button — switch in one click from the popup — plus dedicated presets for the right-click Phrase Better.</p>
         </div>
         <div class="preset-grid">
           <div class="preset-card" data-reveal>
@@ -259,6 +291,20 @@
               <li><span class="preset-tag">Implementation Plan</span> — ordered tasks, dependencies, deliverables</li>
             </ul>
           </div>
+          <div class="preset-card preset-card--full" data-reveal style="--reveal-delay: 0.4s">
+            <div class="preset-card-header">
+              <span class="preset-cat-icon" aria-hidden="true"><img src="assets/icons/phrase.svg" alt="" /></span>
+              <h3>Phrase Better</h3>
+            </div>
+            <p class="preset-card-desc">For the right-click rephrase on any page. Pick a preset, then stack optional adjustments.</p>
+            <ul class="preset-list">
+              <li><span class="preset-tag">Fix Grammar</span> — default; smallest edits, keeps your wording</li>
+              <li><span class="preset-tag">Rephrase</span> — reword for clarity and flow</li>
+              <li><span class="preset-tag">Casual Reply</span> — relaxed, friendly tone</li>
+              <li><span class="preset-tag">Formal Message</span> — polished and professional</li>
+              <li><span class="preset-tag">Adjustments</span> — keep my voice · polish wording · add a little wit</li>
+            </ul>
+          </div>
         </div>
       </section>
 
@@ -279,7 +325,7 @@
             <div class="privacy-card" data-reveal style="--reveal-delay: 0.1s">
               <div class="privacy-icon" aria-hidden="true"><img src="assets/icons/storage.svg" alt="" /></div>
               <h4>Local storage only</h4>
-              <p>Settings and API keys are stored in <code>chrome.storage.local</code> on your device. Never synced to the cloud.</p>
+              <p>Settings, API keys, and your 30-day usage history live in <code>chrome.storage.local</code> on your device. Never synced to the cloud.</p>
             </div>
             <div class="privacy-card" data-reveal style="--reveal-delay: 0.2s">
               <div class="privacy-icon" aria-hidden="true"><img src="assets/icons/key.svg" alt="" /></div>
@@ -289,7 +335,7 @@
             <div class="privacy-card" data-reveal style="--reveal-delay: 0.3s">
               <div class="privacy-icon" aria-hidden="true"><img src="assets/icons/signal.svg" alt="" /></div>
               <h4>Zero telemetry</h4>
-              <p>No analytics. No crash reporting. No usage tracking. Not in this version, not ever.</p>
+              <p>No analytics or crash reporting ever leaves your device. The usage Reports are computed and stored only on your machine — we never see them.</p>
             </div>
           </div>
         </div>

@@ -262,6 +262,60 @@ nav a:hover {
   padding: 0 2px;
 }
 
+/* ── Two-mode block in hero (Ask Better + Phrase Better) ───────────────── */
+.hero-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+  margin-bottom: 2px;
+}
+
+.hero-mode {
+  flex: 1 1 240px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 14px;
+  border-radius: 9px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+
+.hero-mode-icon {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--accent-glow);
+}
+
+.hero-mode-icon img {
+  width: 18px;
+  height: 18px;
+}
+
+.hero-mode-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.hero-mode-text strong {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.hero-mode-text span {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
 /* ── Marquee ─────────────────────────────────────────────────────────────── */
 .marquee-wrap {
   overflow: hidden;
@@ -423,6 +477,7 @@ nav a:hover {
 
 /* Main chat */
 .bm-main {
+  position: relative;
   display: flex;
   flex-direction: column;
   background: #111111;
@@ -458,6 +513,65 @@ nav a:hover {
   border: 1px solid rgba(255, 255, 255, 0.07);
   color: var(--muted);
   padding: 10px 14px;
+}
+
+/* Selected text + Phrase Better chooser in the mockup */
+.bm-sel {
+  border-radius: 3px;
+  background: rgba(232, 153, 30, 0.3);
+  box-shadow: 0 0 0 1px rgba(232, 153, 30, 0.4);
+}
+
+.bm-phrase {
+  position: absolute;
+  top: 62px;
+  right: 18px;
+  width: 232px;
+  padding: 8px;
+  border-radius: 9px;
+  background: #1b1714;
+  border: 1px solid rgba(232, 153, 30, 0.3);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55);
+  z-index: 3;
+}
+
+.bm-phrase-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px 7px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.bm-phrase-head img {
+  width: 12px;
+  height: 12px;
+}
+
+.bm-phrase-opt {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 7px 9px;
+  text-align: left;
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--soft);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: default;
+}
+
+.bm-phrase-opt--active {
+  color: var(--text);
+  background: rgba(232, 153, 30, 0.16);
+  border-color: rgba(232, 153, 30, 0.42);
 }
 
 .bm-assistant-label {
@@ -652,6 +766,21 @@ main {
   border-radius: 9px;
   background: var(--panel);
   transition: border-color 0.2s;
+}
+
+/* Phrase Better preset card spans the full row beneath the four categories. */
+.preset-card--full {
+  grid-column: 1 / -1;
+}
+
+.preset-card--full .preset-list {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+}
+
+.preset-card--full .preset-list li {
+  flex: 1 1 230px;
 }
 
 .preset-card:hover {
@@ -962,6 +1091,10 @@ footer a:hover,
   }
 
   .step-sep {
+    display: none;
+  }
+
+  .bm-phrase {
     display: none;
   }
 }
