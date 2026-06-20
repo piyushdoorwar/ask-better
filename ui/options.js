@@ -20,6 +20,7 @@ const DEFAULT_SETTINGS = {
   phraseBetterKeepVoice: false,
   phraseBetterPolish: false,
   phraseBetterWit: false,
+  phraseBetterHumanize: false,
   enableAI: true,
   keepUserVoice: false,
   keyVerified: false,
@@ -67,7 +68,7 @@ const SECTION_INFO_CONTENT = {
     description: "Control how Phrase Better rewrites your selected text.",
     points: [
       "Preset sets the goal: Fix grammar (default) makes the smallest edits and preserves your wording; Rephrase, Casual reply, and Formal message change the tone or phrasing more.",
-      "Optional adjustments stack on top of any preset and are off by default: Keep my voice (stay close to your wording), Polish wording (refine word choice), and Add a little wit (light, playful tone).",
+      "Optional adjustments stack on top of any preset and are off by default: Keep my voice (stay close to your wording), Polish wording (refine word choice), Add a little wit (light, playful tone), and Humanize (strip AI tells — no em dashes, emojis, or robotic stock phrasing).",
       "These apply every time you run Re-phrase from the right-click menu."
     ]
   },
@@ -142,6 +143,7 @@ const phraseBetterPresetEl = document.getElementById("phraseBetterPreset");
 const phraseBetterKeepVoiceEl = document.getElementById("phraseBetterKeepVoice");
 const phraseBetterPolishEl = document.getElementById("phraseBetterPolish");
 const phraseBetterWitEl = document.getElementById("phraseBetterWit");
+const phraseBetterHumanizeEl = document.getElementById("phraseBetterHumanize");
 const customPromptAdditionsEl = document.getElementById("customPromptAdditions");
 const customAdditionsListEl = document.getElementById("customAdditionsList");
 const customAdditionsEmptyEl = document.getElementById("customAdditionsEmpty");
@@ -444,6 +446,10 @@ function bindAutoSave() {
 
   phraseBetterWitEl.addEventListener("change", async () => {
     await savePartial({ phraseBetterWit: !!phraseBetterWitEl.checked });
+  });
+
+  phraseBetterHumanizeEl.addEventListener("change", async () => {
+    await savePartial({ phraseBetterHumanize: !!phraseBetterHumanizeEl.checked });
   });
 
   enableChatGPTEl.addEventListener("change", async () => {
@@ -871,6 +877,7 @@ function fillForm(settings) {
   phraseBetterKeepVoiceEl.checked = !!normalized.phraseBetterKeepVoice;
   phraseBetterPolishEl.checked = !!normalized.phraseBetterPolish;
   phraseBetterWitEl.checked = !!normalized.phraseBetterWit;
+  phraseBetterHumanizeEl.checked = !!normalized.phraseBetterHumanize;
   enableChatGPTEl.checked = !!normalized.enableChatGPT;
   enableGeminiEl.checked = !!normalized.enableGemini;
   enableClaudeEl.checked = normalized.enableClaude !== false;
@@ -1079,6 +1086,7 @@ function migrateSettings(rawSettings) {
     phraseBetterKeepVoice: !!raw.phraseBetterKeepVoice,
     phraseBetterPolish: !!raw.phraseBetterPolish,
     phraseBetterWit: !!raw.phraseBetterWit,
+    phraseBetterHumanize: !!raw.phraseBetterHumanize,
     enableAI: raw.enableAI !== false,
     keepUserVoice: !!raw.keepUserVoice,
     keyVerified: !!raw.keyVerified,

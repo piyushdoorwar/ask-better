@@ -20,6 +20,7 @@ const DEFAULT_SETTINGS = {
   phraseBetterKeepVoice: false,
   phraseBetterPolish: false,
   phraseBetterWit: false,
+  phraseBetterHumanize: false,
   enableAI: true,
   keepUserVoice: false,
   keyVerified: false,
@@ -117,6 +118,11 @@ function getPhraseModifierClauses(settings) {
   if (settings && settings.phraseBetterWit) {
     clauses.push(
       "Add a light, playful, slightly cheeky touch of wit while staying tasteful and respectful."
+    );
+  }
+  if (settings && settings.phraseBetterHumanize) {
+    clauses.push(
+      "Make it sound like a real person wrote it, not an AI. Do not use em dashes (—); use commas, periods, or parentheses instead. Do not use emojis. Avoid robotic stock phrases and AI-tell wording such as 'delve', 'leverage', 'furthermore', 'moreover', 'it is important to note', 'in today's world', or 'in conclusion'. Prefer plain, everyday words and natural phrasing a typical person would actually use. Apply this without overriding the other goals above."
     );
   }
   return clauses;
@@ -1018,6 +1024,7 @@ async function readSettings() {
     phraseBetterKeepVoice: !!raw.phraseBetterKeepVoice,
     phraseBetterPolish: !!raw.phraseBetterPolish,
     phraseBetterWit: !!raw.phraseBetterWit,
+    phraseBetterHumanize: !!raw.phraseBetterHumanize,
     enableAI: raw.enableAI !== false,
     keepUserVoice: !!raw.keepUserVoice,
     keyVerified: !!raw.keyVerified,
