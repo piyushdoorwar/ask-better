@@ -243,6 +243,11 @@
         mask-image: url("../assets/icons/ui/reports.svg");
       }
 
+      .icon-history {
+        -webkit-mask-image: url("../assets/icons/ui/history.svg");
+        mask-image: url("../assets/icons/ui/history.svg");
+      }
+
       .nav-label {
         font-weight: 500;
         white-space: nowrap;
