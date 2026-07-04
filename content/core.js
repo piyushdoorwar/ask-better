@@ -519,7 +519,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
       return;
     }
     writePromptText(input, nextText);
-    showToast("Prompt optimized");
+    showToast("Prompt optimized", "success");
   }
 
   async function regeneratePreview() {
@@ -893,15 +893,22 @@ function sendMessage(payload) {
   });
 }
 
-function showToast(message) {
+function showToast(message, variant) {
   let toast = document.getElementById("pf-toast");
   if (!toast) {
     toast = document.createElement("div");
     toast.id = "pf-toast";
     toast.className = "pf-toast";
+    toast.innerHTML = '<span class="pf-toast-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" focusable="false"><path d="M5 12.5L10 17L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="pf-toast-text"></span>';
     document.body.appendChild(toast);
   }
-  toast.textContent = message;
+  toast.classList.toggle("pf-toast-success", variant === "success");
+  const textEl = toast.querySelector(".pf-toast-text");
+  if (textEl) {
+    textEl.textContent = message;
+  } else {
+    toast.textContent = message;
+  }
   toast.classList.add("pf-toast-visible");
   window.clearTimeout(showToast.timer);
   showToast.timer = window.setTimeout(() => {
