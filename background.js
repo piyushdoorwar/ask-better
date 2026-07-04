@@ -10,6 +10,7 @@ const DEFAULT_SETTINGS = {
   anthropicModel: "claude-sonnet-4-6",
   anthropicKeyVerified: false,
   defaultPreset: "structured",
+  askBetterOptionCount: 1,
   enableChatGPT: true,
   enableGemini: true,
   enableClaude: true,
@@ -37,16 +38,26 @@ const USAGE_LOG_KEY = "usageLog";
 const USAGE_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 const USAGE_LOG_MAX = 5000;
 
+// Local-only prompt history (original → optimized pairs) for the History section.
+// Never leaves the browser; capped to the most recent HISTORY_MAX entries.
+const HISTORY_KEY = "promptHistory";
+const HISTORY_MAX = 100;
+const HISTORY_TEXT_MAX = 4000;
+
 async function recordUsage(entry) {
   try {
     const now = Date.now();
     const stored = await chrome.storage.local.get([USAGE_LOG_KEY]);
     const log = Array.isArray(stored[USAGE_LOG_KEY]) ? stored[USAGE_LOG_KEY] : [];
+    const usage = entry && entry.usage ? entry.usage : null;
     log.push({
       ts: now,
       provider: String((entry && entry.provider) || ""),
       model: String((entry && entry.model) || ""),
-      mode: entry && entry.mode === "phrase_better" ? "phrase_better" : "ask_better"
+      mode: entry && entry.mode === "phrase_better" ? "phrase_better" : "ask_better",
+      inputTokens: usage ? Number(usage.inputTokens) || 0 : 0,
+      outputTokens: usage ? Number(usage.outputTokens) || 0 : 0,
+      costUsd: entry && typeof entry.costUsd === "number" ? entry.costUsd : null
     });
     const cutoff = now - USAGE_RETENTION_MS;
     let pruned = log.filter((e) => e && typeof e.ts === "number" && e.ts >= cutoff);
@@ -57,6 +68,105 @@ async function recordUsage(entry) {
   } catch (_e) {
     // Usage logging is best-effort and must never affect the user request.
   }
+}
+
+async function recordHistory(entry) {
+  try {
+    const now = Date.now();
+    const original = String((entry && entry.original) || "").slice(0, HISTORY_TEXT_MAX);
+    const optimized = String((entry && entry.optimized) || "").slice(0, HISTORY_TEXT_MAX);
+    if (!original || !optimized) {
+      return;
+    }
+    const stored = await chrome.storage.local.get([HISTORY_KEY]);
+    const log = Array.isArray(stored[HISTORY_KEY]) ? stored[HISTORY_KEY] : [];
+    log.push({
+      ts: now,
+      original,
+      optimized,
+      preset: String((entry && entry.preset) || ""),
+      provider: String((entry && entry.provider) || ""),
+      model: String((entry && entry.model) || ""),
+      mode: entry && entry.mode === "phrase_better" ? "phrase_better" : "ask_better"
+    });
+    const trimmed = log.length > HISTORY_MAX ? log.slice(log.length - HISTORY_MAX) : log;
+    await chrome.storage.local.set({ [HISTORY_KEY]: trimmed });
+  } catch (_e) {
+    // History logging is best-effort and must never affect the user request.
+  }
+}
+
+// Approximate provider pricing in USD per 1,000,000 tokens. Model catalogs change
+// often, so we pattern-match model *families* (cheapest-specific first) and fall
+// back to a mid-tier estimate. The UI always labels the resulting figure as
+// approximate — it is a guide, not a bill.
+const PRICING_PER_MTOK = {
+  gemini: [
+    { test: /flash-lite/, input: 0.10, output: 0.40 },
+    { test: /flash/, input: 0.30, output: 2.50 },
+    { test: /pro/, input: 1.25, output: 10.0 },
+    { test: /./, input: 0.30, output: 2.50 }
+  ],
+  openai: [
+    { test: /nano/, input: 0.05, output: 0.40 },
+    { test: /mini|small/, input: 0.15, output: 0.60 },
+    { test: /^o\d|(^|-)o-/, input: 1.10, output: 4.40 },
+    { test: /./, input: 2.50, output: 10.0 }
+  ],
+  anthropic: [
+    { test: /haiku/, input: 0.80, output: 4.0 },
+    { test: /opus/, input: 15.0, output: 75.0 },
+    { test: /sonnet/, input: 3.0, output: 15.0 },
+    { test: /./, input: 3.0, output: 15.0 }
+  ]
+};
+
+function estimateCostUsd(provider, model, inputTokens, outputTokens) {
+  const table = PRICING_PER_MTOK[normalizeProvider(provider)];
+  if (!table) {
+    return null;
+  }
+  const id = String(model || "").toLowerCase();
+  const row = table.find((r) => r.test.test(id));
+  if (!row) {
+    return null;
+  }
+  const inTok = Number(inputTokens) || 0;
+  const outTok = Number(outputTokens) || 0;
+  if (inTok <= 0 && outTok <= 0) {
+    return null;
+  }
+  return (inTok / 1e6) * row.input + (outTok / 1e6) * row.output;
+}
+
+function mergeUsage(a, b) {
+  if (!a) {
+    return b || null;
+  }
+  if (!b) {
+    return a;
+  }
+  return {
+    inputTokens: (Number(a.inputTokens) || 0) + (Number(b.inputTokens) || 0),
+    outputTokens: (Number(a.outputTokens) || 0) + (Number(b.outputTokens) || 0)
+  };
+}
+
+// Shape the usage/cost figures returned to the content script for the preview footer.
+function buildUsagePayload(provider, model, usage, costUsd) {
+  const inTok = usage ? Number(usage.inputTokens) || 0 : 0;
+  const outTok = usage ? Number(usage.outputTokens) || 0 : 0;
+  if (!inTok && !outTok && typeof costUsd !== "number") {
+    return null;
+  }
+  return {
+    provider,
+    model,
+    inputTokens: inTok,
+    outputTokens: outTok,
+    totalTokens: inTok + outTok,
+    costUsd: typeof costUsd === "number" ? costUsd : null
+  };
 }
 
 const DEFAULT_UI_PREFS = {
@@ -207,6 +317,10 @@ async function handleMessage(message) {
     return await optimizePrompt(message);
   }
 
+  if (message.type === "ASKBETTER_REFINE") {
+    return await refineText(message);
+  }
+
   if (message.type === "ASKBETTER_FETCH_MODELS") {
     return await fetchModelsForProvider(message.payload || {});
   }
@@ -234,13 +348,15 @@ async function optimizePrompt(message) {
   const settings = await readSettings();
   const preset = mode === "phrase_better" ? "grammar" : normalizePreset(message.preset, settings);
   const site = normalizeSite(message.site);
-  return await rewriteText({ prompt, preset, site, settings, mode });
+  const variantCount = mode === "phrase_better" ? 1 : settings.askBetterOptionCount;
+  return await rewriteText({ prompt, preset, site, settings, mode, variantCount });
 }
 
-async function rewriteText({ prompt, preset, site, settings, mode }) {
+async function rewriteText({ prompt, preset, site, settings, mode, variantCount }) {
   const apiKey = getApiKeyForProvider(settings);
   const model = getModelForProvider(settings);
   const provider = normalizeProvider(settings.provider);
+  const count = mode === "phrase_better" ? 1 : normalizeAskBetterOptionCount(variantCount);
 
   if (!prompt) {
     return { ok: false, code: "EMPTY_PROMPT", message: "Prompt is empty." };
@@ -260,9 +376,14 @@ async function rewriteText({ prompt, preset, site, settings, mode }) {
   }
 
   try {
-    let optimizedPrompt = await callProvider({ provider, apiKey, model, prompt, preset, settings, mode });
+    const primary = await callProvider({ provider, apiKey, model, prompt, preset, settings, mode, variantCount: count });
+    let text = primary.text;
+    let usage = primary.usage;
+    let variants = count > 1 ? parsePhraseVariants(text, count) : [];
 
-    if (isLikelyIncompleteOutput(optimizedPrompt)) {
+    // The single-shot completion retry only applies when there is exactly one
+    // rewrite to guard against truncation; multi-variant output is parsed as-is.
+    if (count <= 1 && isLikelyIncompleteOutput(text)) {
       const retry = await callProvider({
         provider,
         apiKey,
@@ -273,12 +394,18 @@ async function rewriteText({ prompt, preset, site, settings, mode }) {
         mode,
         completionPass: true
       });
-      if (retry && retry.trim()) {
-        optimizedPrompt = retry;
+      if (retry && retry.text && retry.text.trim()) {
+        text = retry.text;
+        usage = mergeUsage(usage, retry.usage);
       }
     }
 
-    if (!optimizedPrompt) {
+    if (count > 1 && !variants.length && text && text.trim()) {
+      variants = [text.trim()];
+    }
+
+    const primaryText = count > 1 ? String((variants[0] || "")).trim() : String(text || "").trim();
+    if (!primaryText) {
       return {
         ok: false,
         code: "EMPTY_MODEL_OUTPUT",
@@ -286,25 +413,90 @@ async function rewriteText({ prompt, preset, site, settings, mode }) {
       };
     }
 
-    await recordUsage({ provider, model, mode });
-    return { ok: true, optimizedPrompt };
+    const costUsd = estimateCostUsd(provider, model, usage && usage.inputTokens, usage && usage.outputTokens);
+    await recordUsage({ provider, model, mode, usage, costUsd });
+    await recordHistory({ original: prompt, optimized: primaryText, preset, provider, model, mode });
+
+    const result = {
+      ok: true,
+      optimizedPrompt: primaryText,
+      usage: buildUsagePayload(provider, model, usage, costUsd)
+    };
+    if (count > 1 && variants.length > 1) {
+      result.variants = variants;
+    }
+    return result;
   } catch (error) {
     return mapProviderError(error);
   }
 }
 
-async function callProvider({ provider, apiKey, model, prompt, preset, settings, mode, completionPass, variantCount }) {
-  if (provider === "openai") {
-    return await callOpenAI({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount });
+// Follow-up refinement: apply a single requested change to already-generated text
+// (the preview's "Refine" box). Chains, because each refine sends the latest text.
+async function refineText(message) {
+  const base = typeof message.base === "string" ? message.base.trim() : "";
+  const instruction = typeof message.instruction === "string" ? message.instruction.trim() : "";
+  const site = normalizeSite(message.site);
+  const settings = await readSettings();
+  const apiKey = getApiKeyForProvider(settings);
+  const model = getModelForProvider(settings);
+  const provider = normalizeProvider(settings.provider);
+
+  if (!base) {
+    return { ok: false, code: "EMPTY_PROMPT", message: "Nothing to refine." };
   }
-  if (provider === "anthropic") {
-    return await callAnthropic({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount });
+  if (!instruction) {
+    return { ok: false, code: "EMPTY_PROMPT", message: "Describe the change first." };
   }
-  return await callGemini({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount });
+
+  const askBetterEnabled = settings.enableAskBetterMode !== false;
+  if (!settings.enableAI || !askBetterEnabled || !isSiteEnabled(settings, site) || !apiKey) {
+    return { ok: false, code: "DISABLED_OR_MISSING_KEY", message: "AI disabled or key missing" };
+  }
+
+  try {
+    const systemOverride = buildRefineInstruction();
+    const userText = `Text to revise:\n${base}\n\nRequested change: ${instruction}`;
+    const result = await callProvider({ provider, apiKey, model, prompt: userText, settings, mode: "ask_better", systemOverride });
+    const refined = String(result.text || "").trim();
+    if (!refined) {
+      return { ok: false, code: "EMPTY_MODEL_OUTPUT", message: "Model returned an empty response." };
+    }
+    const costUsd = estimateCostUsd(provider, model, result.usage && result.usage.inputTokens, result.usage && result.usage.outputTokens);
+    await recordUsage({ provider, model, mode: "ask_better", usage: result.usage, costUsd });
+    await recordHistory({ original: base, optimized: refined, preset: "refine", provider, model, mode: "ask_better" });
+    return { ok: true, optimizedPrompt: refined, usage: buildUsagePayload(provider, model, result.usage, costUsd) };
+  } catch (error) {
+    return mapProviderError(error);
+  }
 }
 
-async function callGemini({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount }) {
-  const systemText = buildSystemInstruction({ preset, settings, mode, completionPass, variantCount });
+function buildRefineInstruction() {
+  return [
+    "You revise an existing piece of text according to a single change the user requests.",
+    "Apply only the requested change and keep everything else as close to the original as possible.",
+    "Do not invent concrete details the user did not provide.",
+    "Return only the revised text as plain text.",
+    "Do not include commentary, markdown fences, quotes, or explanations.",
+    "Keep the result complete and end with a complete sentence."
+  ].join(" ");
+}
+
+// Each callX returns { text, usage } where usage is { inputTokens, outputTokens }
+// or null when the provider omits token counts. A caller may pass systemOverride
+// to supply the system instruction directly (used by refineText).
+async function callProvider({ provider, apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride }) {
+  if (provider === "openai") {
+    return await callOpenAI({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride });
+  }
+  if (provider === "anthropic") {
+    return await callAnthropic({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride });
+  }
+  return await callGemini({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride });
+}
+
+async function callGemini({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride }) {
+  const systemText = systemOverride || buildSystemInstruction({ preset, settings, mode, completionPass, variantCount });
 
   const normalizedModel = normalizeGeminiModel(model || DEFAULT_SETTINGS.geminiModel);
   const response = await fetch(
@@ -347,11 +539,11 @@ async function callGemini({ apiKey, model, prompt, preset, settings, mode, compl
   }
 
   const data = await response.json();
-  return extractGeminiText(data).trim();
+  return { text: extractGeminiText(data).trim(), usage: extractGeminiUsage(data) };
 }
 
-async function callOpenAI({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount }) {
-  const instructions = buildSystemInstruction({ preset, settings, mode, completionPass, variantCount });
+async function callOpenAI({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride }) {
+  const instructions = systemOverride || buildSystemInstruction({ preset, settings, mode, completionPass, variantCount });
   const normalizedModel = normalizeOpenAIModel(model || DEFAULT_SETTINGS.openaiModel);
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
@@ -381,11 +573,11 @@ async function callOpenAI({ apiKey, model, prompt, preset, settings, mode, compl
   }
 
   const data = await response.json();
-  return extractOpenAIText(data).trim();
+  return { text: extractOpenAIText(data).trim(), usage: extractOpenAIUsage(data) };
 }
 
-async function callAnthropic({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount }) {
-  const system = buildSystemInstruction({ preset, settings, mode, completionPass, variantCount });
+async function callAnthropic({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride }) {
+  const system = systemOverride || buildSystemInstruction({ preset, settings, mode, completionPass, variantCount });
   const normalizedModel = normalizeAnthropicModel(model || DEFAULT_SETTINGS.anthropicModel);
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -422,7 +614,7 @@ async function callAnthropic({ apiKey, model, prompt, preset, settings, mode, co
   }
 
   const data = await response.json();
-  return extractAnthropicText(data).trim();
+  return { text: extractAnthropicText(data).trim(), usage: extractAnthropicUsage(data) };
 }
 
 async function fetchModelsForProvider(payload) {
@@ -705,6 +897,30 @@ function extractAnthropicText(data) {
     .trim();
 }
 
+function extractGeminiUsage(data) {
+  const u = data && data.usageMetadata;
+  if (!u) {
+    return null;
+  }
+  return { inputTokens: Number(u.promptTokenCount) || 0, outputTokens: Number(u.candidatesTokenCount) || 0 };
+}
+
+function extractOpenAIUsage(data) {
+  const u = data && data.usage;
+  if (!u) {
+    return null;
+  }
+  return { inputTokens: Number(u.input_tokens) || 0, outputTokens: Number(u.output_tokens) || 0 };
+}
+
+function extractAnthropicUsage(data) {
+  const u = data && data.usage;
+  if (!u) {
+    return null;
+  }
+  return { inputTokens: Number(u.input_tokens) || 0, outputTokens: Number(u.output_tokens) || 0 };
+}
+
 function readApiErrorMessage(body) {
   if (!body || typeof body !== "object") {
     return "";
@@ -756,9 +972,12 @@ function buildSystemInstruction({ preset, settings, mode, completionPass, varian
   const instruction = getPresetInstruction(preset, settings);
   const customGuidance = String(settings && settings.customPromptAdditions ? settings.customPromptAdditions : "").trim();
   const keepUserVoice = !!(settings && settings.keepUserVoice);
+  const count = Number(variantCount) > 1 ? Math.min(Math.round(Number(variantCount)), 3) : 1;
   const parts = [
     "You rewrite prompts for end users.",
-    "Return only one rewritten prompt as plain text.",
+    count > 1
+      ? `Return exactly ${count} alternative rewritten prompts and nothing else.`
+      : "Return only one rewritten prompt as plain text.",
     "Do not include commentary, markdown fences, or explanations.",
     "Preserve all critical requirements and constraints from the original prompt.",
     "Do not invent concrete details the user did not provide — no specific facts, names, numbers, dates, audiences, tools, or domain requirements. When a detail is missing, keep it general instead of fabricating it.",
@@ -766,6 +985,15 @@ function buildSystemInstruction({ preset, settings, mode, completionPass, varian
     "The rewritten prompt must be complete and end with a complete sentence.",
     `Preset behavior: ${instruction}`
   ];
+
+  if (count > 1) {
+    parts.push(
+      `Make the ${count} rewrites meaningfully distinct in approach or emphasis while all honoring the preset and the original intent.`
+    );
+    parts.push(
+      "Put each rewrite on its own line, prefixed with its number and a period, like '1. ', '2. '. Do not use line breaks inside a single rewrite, and do not add blank lines, bullets, headings, or any other commentary."
+    );
+  }
 
   if (preset === "structured") {
     parts.push(
@@ -871,6 +1099,7 @@ function toPublicSettings(settings) {
     anthropicModel: settings.anthropicModel,
     activeModel: getModelForProvider(settings),
     defaultPreset: normalizePreset(settings.defaultPreset, settings),
+    askBetterOptionCount: normalizeAskBetterOptionCount(settings.askBetterOptionCount),
     enableChatGPT: !!settings.enableChatGPT,
     enableGemini: !!settings.enableGemini,
     enableClaude: !!settings.enableClaude,
@@ -1014,6 +1243,7 @@ async function readSettings() {
     anthropicModel: normalizeAnthropicModel(raw.anthropicModel || DEFAULT_SETTINGS.anthropicModel),
     anthropicKeyVerified: !!raw.anthropicKeyVerified,
     defaultPreset: normalizePreset(raw.defaultPreset, { customPresets }),
+    askBetterOptionCount: normalizeAskBetterOptionCount(raw.askBetterOptionCount),
     enableChatGPT: raw.enableChatGPT !== false,
     enableGemini: raw.enableGemini !== false,
     enableClaude: raw.enableClaude !== false,
@@ -1037,6 +1267,17 @@ function normalizePhraseBetterOptionCount(value) {
   const count = Math.round(Number(value));
   if (!Number.isFinite(count) || count < 1) {
     return DEFAULT_SETTINGS.phraseBetterOptionCount;
+  }
+  if (count > 3) {
+    return 3;
+  }
+  return count;
+}
+
+function normalizeAskBetterOptionCount(value) {
+  const count = Math.round(Number(value));
+  if (!Number.isFinite(count) || count < 1) {
+    return DEFAULT_SETTINGS.askBetterOptionCount;
   }
   if (count > 3) {
     return 3;
@@ -1135,12 +1376,14 @@ async function generatePhraseBetterOptions({ prompt, settings, count }) {
 
   try {
     if (variantCount <= 1) {
-      const text = await callProvider({ provider, apiKey, model, prompt, preset: "grammar", settings, mode: "phrase_better" });
-      const cleaned = String(text || "").trim();
+      const result = await callProvider({ provider, apiKey, model, prompt, preset: "grammar", settings, mode: "phrase_better" });
+      const cleaned = String(result.text || "").trim();
       if (!cleaned) {
         return { ok: false, code: "EMPTY_MODEL_OUTPUT", message: "Model returned an empty response." };
       }
-      await recordUsage({ provider, model, mode: "phrase_better" });
+      const costUsd = estimateCostUsd(provider, model, result.usage && result.usage.inputTokens, result.usage && result.usage.outputTokens);
+      await recordUsage({ provider, model, mode: "phrase_better", usage: result.usage, costUsd });
+      await recordHistory({ original: prompt, optimized: cleaned, preset: "phrase", provider, model, mode: "phrase_better" });
       return { ok: true, options: [cleaned] };
     }
 
@@ -1154,11 +1397,13 @@ async function generatePhraseBetterOptions({ prompt, settings, count }) {
       mode: "phrase_better",
       variantCount
     });
-    const options = parsePhraseVariants(raw, variantCount);
+    const options = parsePhraseVariants(raw.text, variantCount);
     if (!options.length) {
       return { ok: false, code: "EMPTY_MODEL_OUTPUT", message: "Model returned an empty response." };
     }
-    await recordUsage({ provider, model, mode: "phrase_better" });
+    const costUsd = estimateCostUsd(provider, model, raw.usage && raw.usage.inputTokens, raw.usage && raw.usage.outputTokens);
+    await recordUsage({ provider, model, mode: "phrase_better", usage: raw.usage, costUsd });
+    await recordHistory({ original: prompt, optimized: options[0], preset: "phrase", provider, model, mode: "phrase_better" });
     return { ok: true, options };
   } catch (error) {
     return mapProviderError(error);

@@ -58,6 +58,12 @@
               </span>
               <span class="nav-label">Reports</span>
             </button>
+            <button class="nav-btn" data-section="section-history" type="button">
+              <span class="nav-icon" aria-hidden="true">
+                <span class="icon-mask icon-reports"></span>
+              </span>
+              <span class="nav-label">History</span>
+            </button>
             <button class="nav-btn" data-section="section-security" type="button">
               <span class="nav-icon" aria-hidden="true">
                 <span class="icon-mask icon-security"></span>
@@ -79,6 +85,12 @@
                 <span class="icon-mask icon-presets"></span>
               </span>
               <span class="nav-label">Presets</span>
+            </button>
+            <button class="nav-btn" data-section="section-askbetter-suggestions" type="button">
+              <span class="nav-icon" aria-hidden="true">
+                <span class="icon-mask icon-mode"></span>
+              </span>
+              <span class="nav-label">Suggestions</span>
             </button>
             <button class="nav-btn" data-section="section-custom" type="button">
               <span class="nav-icon" aria-hidden="true">
@@ -197,6 +209,10 @@
                 <span class="report-stat-value" id="statPhraseBetter">0</span>
                 <span class="report-stat-label">Phrase Better</span>
               </div>
+              <div class="report-stat">
+                <span class="report-stat-value" id="statCost">$0.00</span>
+                <span class="report-stat-label">Est. cost (approx)</span>
+              </div>
             </div>
 
             <div class="report-controls">
@@ -211,6 +227,36 @@
               <canvas id="reportChart" aria-label="Daily request count chart" role="img"></canvas>
               <p class="report-empty" id="reportEmpty" hidden>No usage yet. Your Optimize and Phrase Better activity from the last 30 days will show up here.</p>
             </div>
+          </section>
+
+          <section id="section-history" class="settings-section">
+            <div class="section-head">
+              <span class="section-badge" aria-hidden="true">
+                <span class="icon-mask icon-reports"></span>
+              </span>
+              <div>
+                <div class="section-title-row">
+                  <h2 class="section-title">History</h2>
+                  <button type="button" class="section-info-btn" data-info-section="history" aria-label="About History">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+                      <path d="M12 10.3V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                      <circle cx="12" cy="7.6" r="1.1" fill="currentColor"></circle>
+                    </svg>
+                  </button>
+                </div>
+                <p class="section-sub">Your most recent rewrites, stored locally. Copy any past result to reuse it.</p>
+              </div>
+            </div>
+
+            <div class="history-toolbar">
+              <span class="history-count" id="historyCount" aria-live="polite"></span>
+              <span class="pf-spacer" style="flex:1"></span>
+              <button type="button" id="clearHistoryBtn" class="history-clear-btn" hidden>Clear history</button>
+            </div>
+
+            <div class="history-list" id="historyList" aria-live="polite"></div>
+            <p class="history-empty" id="historyEmpty">No history yet. Rewrites you generate with Optimize or Phrase Better will appear here.</p>
           </section>
 
           <section id="section-mode" class="settings-section">
@@ -458,6 +504,40 @@
                   <button type="button" id="addCustomPresetBtn" class="add-custom-btn">Add preset</button>
                 </div>
                 <p class="inline-note">Custom presets appear in the Default preset list above and in the popup.</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="section-askbetter-suggestions" class="settings-section">
+            <div class="section-head">
+              <span class="section-badge" aria-hidden="true">
+                <span class="icon-mask icon-mode"></span>
+              </span>
+              <div>
+                <div class="section-title-row">
+                  <h2 class="section-title">Suggestions</h2>
+                  <button type="button" class="section-info-btn" data-info-section="askbetter_suggestions" aria-label="About Ask Better suggestions">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+                      <path d="M12 10.3V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                      <circle cx="12" cy="7.6" r="1.1" fill="currentColor"></circle>
+                    </svg>
+                  </button>
+                </div>
+                <p class="section-sub">Choose how many rewrite options the Optimize preview offers you to pick from.</p>
+              </div>
+            </div>
+            <div class="grid">
+              <div class="field full">
+                <label for="askBetterOptionCount">Optimize options</label>
+                <div class="csel">
+                  <select id="askBetterOptionCount" name="askBetterOptionCount" hidden>
+                    <option value="1">Show 1 rewrite (default)</option>
+                    <option value="2">Show 2 options to choose from</option>
+                    <option value="3">Show 3 options to choose from</option>
+                  </select>
+                </div>
+                <p class="inline-note">More options are generated in a single request, so they cost more per Optimize. The preview lets you switch between them before accepting.</p>
               </div>
             </div>
           </section>
@@ -789,5 +869,6 @@
     <script src="vendor/chart.umd.min.js"></script>
     <script src="options.js"></script>
     <script src="reports.js"></script>
+    <script src="history.js"></script>
   </body>
 </html>

@@ -175,8 +175,19 @@ function startAskBetter(site, siteToggleKey, selectors) {
       return;
     }
 
-    previewState = { input: targetInput, prompt, preset };
-    showPreview(targetInput, response.optimizedPrompt);
+    const variants = Array.isArray(response.variants) && response.variants.length > 1
+      ? response.variants.map((variant) => String(variant || ""))
+      : [String(response.optimizedPrompt || "")];
+    previewState = {
+      input: targetInput,
+      prompt,
+      preset,
+      variants,
+      activeIndex: 0,
+      diffMode: false,
+      usage: response.usage || null
+    };
+    showPreview(targetInput);
   }
 
   function ensurePreviewCard() {
@@ -196,8 +207,16 @@ function startAskBetter(site, siteToggleKey, selectors) {
           </svg>
         </button>
       </div>
+      <div class="pf-preview-variants" role="tablist" aria-label="Optimized options" hidden></div>
       <textarea class="pf-preview-text" spellcheck="false"></textarea>
+      <div class="pf-preview-diff" aria-live="polite" hidden></div>
+      <div class="pf-preview-refine">
+        <input type="text" class="pf-preview-refine-input" spellcheck="false" placeholder="Refine — e.g. make it shorter, more formal…" aria-label="Describe a follow-up change" />
+        <button type="button" class="pf-preview-btn pf-preview-refine-btn" data-action="refine">Refine</button>
+      </div>
+      <div class="pf-preview-cost" aria-live="polite" hidden></div>
       <div class="pf-preview-actions">
+        <button type="button" class="pf-preview-btn pf-preview-diff-toggle" data-action="diff" aria-pressed="false">Diff</button>
         <button type="button" class="pf-preview-btn pf-preview-regenerate" data-action="regenerate">Regenerate</button>
         <span class="pf-preview-spacer"></span>
         <button type="button" class="pf-preview-btn pf-preview-discard" data-action="discard">Discard</button>
@@ -207,6 +226,11 @@ function startAskBetter(site, siteToggleKey, selectors) {
 
     previewCard.addEventListener("pointerdown", (event) => event.stopPropagation());
     previewCard.addEventListener("click", (event) => {
+      const variantBtn = event.target instanceof Element ? event.target.closest("[data-variant-index]") : null;
+      if (variantBtn) {
+        selectVariant(Number(variantBtn.getAttribute("data-variant-index")));
+        return;
+      }
       const trigger = event.target instanceof Element ? event.target.closest("[data-action]") : null;
       if (!trigger) {
         return;
@@ -218,22 +242,224 @@ function startAskBetter(site, siteToggleKey, selectors) {
         closePreview();
       } else if (action === "regenerate") {
         regeneratePreview();
+      } else if (action === "diff") {
+        toggleDiff();
+      } else if (action === "refine") {
+        void refinePreview();
       }
     });
+
+    const textarea = previewCard.querySelector(".pf-preview-text");
+    if (textarea) {
+      // Keep the active variant's edits so switching tabs / diffing doesn't lose them.
+      textarea.addEventListener("input", () => {
+        if (previewState && Array.isArray(previewState.variants)) {
+          previewState.variants[previewState.activeIndex] = textarea.value;
+        }
+      });
+    }
+
+    const refineInput = previewCard.querySelector(".pf-preview-refine-input");
+    if (refineInput) {
+      refineInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          void refinePreview();
+        }
+        event.stopPropagation();
+      });
+    }
 
     document.body.appendChild(previewCard);
   }
 
-  function showPreview(input, optimizedText) {
+  function showPreview(input) {
     ensurePreviewCard();
+    if (previewState) {
+      previewState.diffMode = false;
+    }
+    renderVariants();
     const textarea = previewCard.querySelector(".pf-preview-text");
     if (textarea) {
-      textarea.value = String(optimizedText || "");
+      textarea.value = getActiveText();
     }
+    renderDiffMode();
+    updateCostFooter();
     setPreviewBusy(false);
+    const refineInput = previewCard.querySelector(".pf-preview-refine-input");
+    if (refineInput) {
+      refineInput.value = "";
+    }
     previewCard.style.display = "flex";
     placePreviewNearInput(input);
     if (textarea) {
+      textarea.focus();
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    }
+  }
+
+  function getActiveText() {
+    if (!previewState || !Array.isArray(previewState.variants)) {
+      return "";
+    }
+    return String(previewState.variants[previewState.activeIndex] || "");
+  }
+
+  function setActiveText(text) {
+    if (previewState && Array.isArray(previewState.variants)) {
+      previewState.variants[previewState.activeIndex] = String(text || "");
+    }
+    const textarea = previewCard && previewCard.querySelector(".pf-preview-text");
+    if (textarea) {
+      textarea.value = String(text || "");
+    }
+    if (previewState && previewState.diffMode) {
+      renderDiff();
+    }
+  }
+
+  // Render the variant tabs when Ask Better returned more than one rewrite.
+  function renderVariants() {
+    const wrap = previewCard && previewCard.querySelector(".pf-preview-variants");
+    if (!wrap) {
+      return;
+    }
+    const variants = previewState && Array.isArray(previewState.variants) ? previewState.variants : [];
+    if (variants.length <= 1) {
+      wrap.hidden = true;
+      wrap.textContent = "";
+      return;
+    }
+    wrap.hidden = false;
+    wrap.textContent = "";
+    variants.forEach((_variant, index) => {
+      const pill = document.createElement("button");
+      pill.type = "button";
+      pill.className = "pf-preview-variant" + (index === previewState.activeIndex ? " pf-is-active" : "");
+      pill.setAttribute("data-variant-index", String(index));
+      pill.setAttribute("role", "tab");
+      pill.setAttribute("aria-selected", String(index === previewState.activeIndex));
+      pill.textContent = `Option ${index + 1}`;
+      wrap.appendChild(pill);
+    });
+  }
+
+  function selectVariant(index) {
+    if (!previewState || !Array.isArray(previewState.variants)) {
+      return;
+    }
+    if (!Number.isInteger(index) || index < 0 || index >= previewState.variants.length) {
+      return;
+    }
+    // Persist current edits before switching away.
+    const textarea = previewCard.querySelector(".pf-preview-text");
+    if (textarea) {
+      previewState.variants[previewState.activeIndex] = textarea.value;
+    }
+    previewState.activeIndex = index;
+    renderVariants();
+    if (textarea) {
+      textarea.value = getActiveText();
+    }
+    if (previewState.diffMode) {
+      renderDiff();
+    } else if (textarea) {
+      textarea.focus();
+    }
+  }
+
+  function toggleDiff() {
+    if (!previewState) {
+      return;
+    }
+    previewState.diffMode = !previewState.diffMode;
+    renderDiffMode();
+  }
+
+  function renderDiffMode() {
+    const textarea = previewCard.querySelector(".pf-preview-text");
+    const diffBox = previewCard.querySelector(".pf-preview-diff");
+    const toggle = previewCard.querySelector(".pf-preview-diff-toggle");
+    const diffOn = !!(previewState && previewState.diffMode);
+    if (toggle) {
+      toggle.classList.toggle("pf-is-active", diffOn);
+      toggle.setAttribute("aria-pressed", String(diffOn));
+    }
+    if (textarea) {
+      textarea.hidden = diffOn;
+    }
+    if (diffBox) {
+      diffBox.hidden = !diffOn;
+    }
+    if (diffOn) {
+      renderDiff();
+    }
+  }
+
+  function renderDiff() {
+    const diffBox = previewCard && previewCard.querySelector(".pf-preview-diff");
+    if (!diffBox || !previewState) {
+      return;
+    }
+    diffBox.textContent = "";
+    diffBox.appendChild(buildDiffFragment(previewState.prompt, getActiveText()));
+  }
+
+  function updateCostFooter() {
+    const costEl = previewCard && previewCard.querySelector(".pf-preview-cost");
+    if (!costEl) {
+      return;
+    }
+    const label = formatUsage(previewState && previewState.usage);
+    costEl.textContent = label;
+    costEl.hidden = !label;
+  }
+
+  async function refinePreview() {
+    if (!previewState || !previewCard) {
+      return;
+    }
+    const refineInput = previewCard.querySelector(".pf-preview-refine-input");
+    const instruction = refineInput ? refineInput.value.trim() : "";
+    if (!instruction) {
+      showToast("Describe the change first");
+      if (refineInput) {
+        refineInput.focus();
+      }
+      return;
+    }
+    const base = getActiveText().trim();
+    if (!base) {
+      return;
+    }
+    setPreviewBusy(true);
+    const response = await sendMessage({
+      type: "ASKBETTER_REFINE",
+      base,
+      instruction,
+      site
+    });
+    if (!isPreviewOpen()) {
+      return;
+    }
+    setPreviewBusy(false);
+    if (!response || !response.ok) {
+      const message = response && response.code === "DISABLED_OR_MISSING_KEY"
+        ? "AI disabled or key missing"
+        : (response && response.message) || "Refine failed";
+      showToast(message);
+      return;
+    }
+    if (response.usage) {
+      previewState.usage = response.usage;
+      updateCostFooter();
+    }
+    setActiveText(response.optimizedPrompt);
+    if (refineInput) {
+      refineInput.value = "";
+    }
+    const textarea = previewCard.querySelector(".pf-preview-text");
+    if (textarea && !previewState.diffMode) {
       textarea.focus();
       textarea.setSelectionRange(textarea.value.length, textarea.value.length);
     }
@@ -282,7 +508,8 @@ function startAskBetter(site, siteToggleKey, selectors) {
       return;
     }
     const textarea = previewCard.querySelector(".pf-preview-text");
-    const nextText = textarea ? textarea.value : "";
+    // In diff mode the textarea is hidden, so read from the persisted variant.
+    const nextText = previewState.diffMode ? getActiveText() : (textarea ? textarea.value : getActiveText());
     const input = previewState.input && document.contains(previewState.input)
       ? previewState.input
       : findPromptInput(selectors);
@@ -321,9 +548,20 @@ function startAskBetter(site, siteToggleKey, selectors) {
       showToast((response && response.message) || "Optimization failed");
       return;
     }
+    previewState.variants = Array.isArray(response.variants) && response.variants.length > 1
+      ? response.variants.map((variant) => String(variant || ""))
+      : [String(response.optimizedPrompt || "")];
+    previewState.activeIndex = 0;
+    previewState.usage = response.usage || null;
+    renderVariants();
     const textarea = previewCard.querySelector(".pf-preview-text");
     if (textarea) {
-      textarea.value = String(response.optimizedPrompt || "");
+      textarea.value = getActiveText();
+    }
+    updateCostFooter();
+    if (previewState.diffMode) {
+      renderDiff();
+    } else if (textarea) {
       textarea.focus();
       textarea.setSelectionRange(textarea.value.length, textarea.value.length);
     }
@@ -669,6 +907,89 @@ function showToast(message) {
   showToast.timer = window.setTimeout(() => {
     toast.classList.remove("pf-toast-visible");
   }, 1800);
+}
+
+// Split text into word + whitespace tokens (both preserved) for a word-level diff.
+function tokenizeForDiff(text) {
+  return String(text || "").match(/\s+|[^\s]+/g) || [];
+}
+
+// Build a word-level diff (original → revised) as DOM nodes: unchanged text plain,
+// removed words struck, added words highlighted. Whitespace is never flagged so the
+// result reads naturally. Uses an LCS table over tokens.
+function buildDiffFragment(original, revised) {
+  const a = tokenizeForDiff(original);
+  const b = tokenizeForDiff(revised);
+  const n = a.length;
+  const m = b.length;
+  const dp = [];
+  for (let i = 0; i <= n; i += 1) {
+    dp.push(new Uint32Array(m + 1));
+  }
+  for (let i = n - 1; i >= 0; i -= 1) {
+    for (let j = m - 1; j >= 0; j -= 1) {
+      dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+
+  const frag = document.createDocumentFragment();
+  const push = (cls, text) => {
+    if (!text) {
+      return;
+    }
+    const useClass = cls && !/^\s+$/.test(text) ? cls : "";
+    const span = document.createElement("span");
+    if (useClass) {
+      span.className = useClass;
+    }
+    span.textContent = text;
+    frag.appendChild(span);
+  };
+
+  let i = 0;
+  let j = 0;
+  while (i < n && j < m) {
+    if (a[i] === b[j]) {
+      push("", a[i]);
+      i += 1;
+      j += 1;
+    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+      push("pf-diff-del", a[i]);
+      i += 1;
+    } else {
+      push("pf-diff-add", b[j]);
+      j += 1;
+    }
+  }
+  while (i < n) {
+    push("pf-diff-del", a[i]);
+    i += 1;
+  }
+  while (j < m) {
+    push("pf-diff-add", b[j]);
+    j += 1;
+  }
+  return frag;
+}
+
+// Format the per-request token/cost estimate for the preview footer. Both figures
+// are approximate — pricing is a rough per-family estimate maintained in background.js.
+function formatUsage(usage) {
+  if (!usage) {
+    return "";
+  }
+  const tokens = Number(usage.totalTokens) || 0;
+  const parts = [];
+  if (tokens > 0) {
+    parts.push(`≈ ${tokens.toLocaleString()} tokens`);
+  }
+  if (typeof usage.costUsd === "number" && usage.costUsd >= 0) {
+    const cost = usage.costUsd > 0 && usage.costUsd < 0.01
+      ? "<$0.01"
+      : `$${usage.costUsd.toFixed(usage.costUsd < 1 ? 4 : 2)}`;
+    parts.push(`≈ ${cost}`);
+  }
+  return parts.length ? `This request: ${parts.join(" · ")}` : "";
 }
 
 function normalizeOffset(rawOffset) {

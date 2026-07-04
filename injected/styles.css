@@ -272,3 +272,99 @@
 .pf-preview-is-busy .pf-preview-text {
   opacity: 0.7;
 }
+
+.pf-preview-variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pf-preview-variant {
+  border-radius: 999px;
+  padding: 5px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+  color: #f4f0eb;
+  font: 600 12px/1.2 var(--pf-font-ui);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.pf-preview-variant:hover {
+  background: rgba(232, 153, 30, 0.16);
+  border-color: rgba(232, 153, 30, 0.55);
+}
+
+.pf-preview-variant.pf-is-active {
+  border-color: rgba(245, 174, 58, 0.9);
+  background: rgba(232, 153, 30, 0.22);
+  color: #f5ae3a;
+}
+
+.pf-preview-diff {
+  flex: 1;
+  min-height: 120px;
+  max-height: 320px;
+  overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(10, 9, 12, 0.9);
+  color: #f4f0eb;
+  font: 500 13px/1.5 var(--pf-font-ui);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.pf-diff-add {
+  background: rgba(126, 224, 161, 0.22);
+  color: #b8f0cd;
+  border-radius: 3px;
+}
+
+.pf-diff-del {
+  background: rgba(255, 122, 122, 0.18);
+  color: #ffb3b3;
+  text-decoration: line-through;
+  border-radius: 3px;
+}
+
+.pf-preview-refine {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.pf-preview-refine-input {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(10, 9, 12, 0.9);
+  color: #f4f0eb;
+  font: 500 12px/1.4 var(--pf-font-ui);
+  outline: none;
+}
+
+.pf-preview-refine-input:focus {
+  border-color: rgba(232, 153, 30, 0.75);
+}
+
+.pf-preview-refine-btn {
+  flex: 0 0 auto;
+}
+
+.pf-preview-cost {
+  color: #9a8f83;
+  font: 500 11px/1.3 var(--pf-font-ui);
+}
+
+.pf-preview-diff-toggle.pf-is-active {
+  border-color: rgba(245, 174, 58, 0.9);
+  background: rgba(232, 153, 30, 0.22);
+  color: #f5ae3a;
+}

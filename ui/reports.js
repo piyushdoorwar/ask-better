@@ -78,13 +78,22 @@
     const total = entries.length;
     let ask = 0;
     let phrase = 0;
+    let cost = 0;
     for (const e of entries) {
       if (e.mode === "phrase_better") phrase++;
       else ask++;
+      if (typeof e.costUsd === "number" && e.costUsd > 0) cost += e.costUsd;
     }
     if (el("statTotal")) el("statTotal").textContent = String(total);
     if (el("statAskBetter")) el("statAskBetter").textContent = String(ask);
     if (el("statPhraseBetter")) el("statPhraseBetter").textContent = String(phrase);
+    if (el("statCost")) el("statCost").textContent = formatCost(cost);
+  }
+
+  function formatCost(cost) {
+    if (!(cost > 0)) return "$0.00";
+    if (cost < 0.01) return "<$0.01";
+    return `$${cost.toFixed(cost < 1 ? 3 : 2)}`;
   }
 
   function updateRange(win) {

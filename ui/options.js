@@ -10,6 +10,7 @@ const DEFAULT_SETTINGS = {
   anthropicModel: "claude-sonnet-4-6",
   anthropicKeyVerified: false,
   defaultPreset: "structured",
+  askBetterOptionCount: 1,
   enableChatGPT: true,
   enableGemini: true,
   enableClaude: true,
@@ -52,6 +53,25 @@ const SECTION_INFO_CONTENT = {
       "Phrase Better adds a right-click action for selected text on any page.",
       "When an experience is off, its sections are hidden from the left menu; turn it back on here to bring them back.",
       "Use AskBetter → Integrations to choose which surfaces the Optimize button appears on."
+    ]
+  },
+  askbetter_suggestions: {
+    title: "Ask Better suggestions",
+    description: "Choose how many rewrite options the Optimize preview offers.",
+    points: [
+      "Show 1 (default), 2, or 3 rewrites; the preview lets you switch between options before accepting.",
+      "All options are generated in a single request, so 2 or 3 options cost more per Optimize than 1.",
+      "The rewrite style still comes from AskBetter → Presets and any Custom Prompt Additions."
+    ]
+  },
+  history: {
+    title: "History",
+    description: "A local-only list of your most recent rewrites (original → optimized).",
+    points: [
+      "Each successful Optimize, Refine, and Phrase Better result is saved with its provider and model.",
+      "Copy any original or optimized text to reuse it elsewhere.",
+      "Only the most recent 100 entries are kept, and everything is stored in this browser profile.",
+      "Clear stored key/data in the Security section (or the Clear history button here) wipes this list."
     ]
   },
   phrasebetter_suggestions: {
@@ -138,6 +158,7 @@ const enableGeminiEl = document.getElementById("enableGemini");
 const enableClaudeEl = document.getElementById("enableClaude");
 const enableAskBetterModeEl = document.getElementById("enableAskBetterMode");
 const enablePhraseBetterModeEl = document.getElementById("enablePhraseBetterMode");
+const askBetterOptionCountEl = document.getElementById("askBetterOptionCount");
 const phraseBetterOptionCountEl = document.getElementById("phraseBetterOptionCount");
 const phraseBetterPresetEl = document.getElementById("phraseBetterPreset");
 const phraseBetterKeepVoiceEl = document.getElementById("phraseBetterKeepVoice");
@@ -426,6 +447,10 @@ function bindAutoSave() {
   enablePhraseBetterModeEl.addEventListener("change", async () => {
     await savePartial({ enablePhraseBetterMode: !!enablePhraseBetterModeEl.checked });
     applyGroupVisibility();
+  });
+
+  askBetterOptionCountEl.addEventListener("change", async () => {
+    await savePartial({ askBetterOptionCount: normalizeAskBetterOptionCount(askBetterOptionCountEl.value) });
   });
 
   phraseBetterOptionCountEl.addEventListener("change", async () => {
@@ -868,6 +893,7 @@ function fillForm(settings) {
   renderCustomPresetOptions();
   renderCustomPresets();
   defaultPresetEl.value = normalizePreset(normalized.defaultPreset);
+  askBetterOptionCountEl.value = String(normalized.askBetterOptionCount);
   keepUserVoiceEl.checked = !!normalized.keepUserVoice;
   enableAIEl.checked = !!normalized.enableAI;
   enableAskBetterModeEl.checked = normalized.enableAskBetterMode !== false;
@@ -1076,6 +1102,7 @@ function migrateSettings(rawSettings) {
     anthropicModel: normalizeModel(raw.anthropicModel, DEFAULT_SETTINGS.anthropicModel),
     anthropicKeyVerified: !!raw.anthropicKeyVerified,
     defaultPreset: normalizePreset(raw.defaultPreset, normalizeCustomPresets(raw.customPresets)),
+    askBetterOptionCount: normalizeAskBetterOptionCount(raw.askBetterOptionCount),
     enableChatGPT: raw.enableChatGPT !== false,
     enableGemini: raw.enableGemini !== false,
     enableClaude: raw.enableClaude !== false,
@@ -1099,6 +1126,17 @@ function normalizePhraseBetterOptionCount(value) {
   const count = Math.round(Number(value));
   if (!Number.isFinite(count) || count < 1) {
     return DEFAULT_SETTINGS.phraseBetterOptionCount;
+  }
+  if (count > 3) {
+    return 3;
+  }
+  return count;
+}
+
+function normalizeAskBetterOptionCount(value) {
+  const count = Math.round(Number(value));
+  if (!Number.isFinite(count) || count < 1) {
+    return DEFAULT_SETTINGS.askBetterOptionCount;
   }
   if (count > 3) {
     return 3;

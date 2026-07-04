@@ -10,6 +10,7 @@ const DEFAULT_SETTINGS = {
   anthropicModel: "claude-sonnet-4-6",
   anthropicKeyVerified: false,
   defaultPreset: "structured",
+  askBetterOptionCount: 1,
   enableChatGPT: true,
   enableGemini: true,
   enableClaude: true,
@@ -171,7 +172,11 @@ function normalizePhraseBetterOptionCount(value) {
 }
 
 async function updateSettings(partial) {
-  const current = await readSettings();
+  // Merge into the RAW stored settings (not the popup's reconstructed view) so
+  // keys the popup doesn't render — askBetterOptionCount, phrase-better modifiers,
+  // etc. — are preserved rather than silently dropped.
+  const stored = await chrome.storage.local.get(["settings"]);
+  const current = stored.settings || {};
   const next = { ...current, ...partial };
   await chrome.storage.local.set({ settings: next });
 }

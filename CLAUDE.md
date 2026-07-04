@@ -85,6 +85,8 @@ prompt-optimizer-ask-better/
 │   ├── options.css           # Options styling
 │   ├── options.js            # Options page logic
 │   ├── models.js             # Model dropdown source: live /v1/models fetch + 24h cache + self-healing selection, no hardcoded lists (loaded before popup.js/options.js)
+│   ├── reports.js            # Reports section (Chart.js usage dashboard, reads usageLog)
+│   ├── history.js            # History section (reads promptHistory, copy/clear)
 │   ├── theme.css             # Global theme (variables, dark mode)
 │
 ├── site/                      # Landing page & documentation (GitHub Pages)
@@ -160,13 +162,14 @@ Pattern: **Message-based communication** between background script, content scri
    - Looks up user's API provider & key from `chrome.storage.local`
    - Builds optimized prompt using the selected preset
    - Calls appropriate AI API (OpenAI, Gemini, or Claude)
-   - Returns optimized text to content script
+   - Returns `{ ok, optimizedPrompt, variants?, usage? }` to the content script (`variants` when `askBetterOptionCount` > 1; `usage` is the token/cost estimate)
 
 3. **Content script receives response**
-   - Inserts optimized text into the prompt input box
-   - Shows brief confirmation UI
+   - Shows the result in the non-destructive preview card (variants / diff / refine / cost); Accept writes into the prompt input box
 
-4. **User can review & submit** the optimized prompt to the AI
+4. **User can review, refine, & submit** the optimized prompt to the AI
+
+**Other message types:** `ASKBETTER_REFINE` `{ base, instruction, site }` → follow-up refinement of preview text; `ASKBETTER_GET_PUBLIC_SETTINGS`, `ASKBETTER_TEST_KEY`, `ASKBETTER_FETCH_MODELS`, `ASKBETTER_GET/SAVE_BUTTON_OFFSET`, and the `ASKBETTER_TRIGGER_OPTIMIZE` shortcut dispatch.
 
 ### State Management
 
@@ -192,6 +195,7 @@ Pattern: **Message-based communication** between background script, content scri
 | `ui/popup.html` | Popup UI template |
 | `ui/popup.js` | Popup event handlers & state management |
 | `ui/models.js` | Model dropdown source — live `/v1/models` fetch (no hardcoded lists), 24h cache, and `chooseModel()` self-healing. Loaded before `popup.js`/`options.js`; both share its `getProviderModels()` / `refreshProviderModels()` / `chooseModel()` helpers. |
+| `ui/history.js` | History section — reads local `promptHistory`, renders original→optimized pairs newest-first with copy/clear (loaded in `options.html`). |
 | `ui/options.html` | Settings page template |
 | `ui/options.js` | Settings page logic (API key config, preset selection) |
 | `ui/theme.css` | Global CSS variables (colors, fonts, dark mode) |
@@ -214,6 +218,32 @@ Pattern: **Message-based communication** between background script, content scri
 - Actions: **Accept** (write into the input), **Regenerate** (re-run the same prompt/preset), **Discard** (close, original untouched). `Esc` discards.
 - The preview text is editable, so users can tweak before accepting.
 - Implemented entirely in `content/core.js` (`showPreview` / `acceptPreview` / `regeneratePreview` / `closePreview`); styles are `pf-preview-*` in `injected/styles.css`.
+- The card also hosts four newer features (all in `content/core.js`, styles `pf-preview-*` / `pf-diff-*`):
+  - **Multi-variant switcher** — when Ask Better returns more than one rewrite (`askBetterOptionCount` > 1), variant pills ("Option 1/2/3") let the user switch between rewrites; per-variant edits are preserved via `selectVariant` / `getActiveText` / `setActiveText` and the textarea `input` listener.
+  - **Diff view** — a **Diff** toggle renders a word-level diff (original → current text) via the top-level `buildDiffFragment` (LCS over word/whitespace tokens; `pf-diff-add` / `pf-diff-del`, whitespace never flagged). `toggleDiff` / `renderDiffMode` / `renderDiff`.
+  - **Follow-up / chain refinement** — a "Refine" input sends `ASKBETTER_REFINE` with the current text + a change instruction; the result replaces the active variant and chains (each refine operates on the latest text). `refinePreview`.
+  - **Token/cost footer** — `formatUsage` shows the per-request `≈ N tokens · ≈ $X` estimate from the response's `usage` payload (see Token & Cost Estimates).
+
+### Prompt History (local, last 100)
+
+- A **History** panel (Common group, `section-history`) lists recent rewrites (**original → optimized**) newest-first, each with provider/model/mode and **Copy optimized** / **Copy original** buttons, plus **Clear history**.
+- Source data is the local `promptHistory` array — `recordHistory()` in `background.js` appends one entry per successful Ask Better optimize, **Refine**, and Phrase Better result; capped to the most recent 100, texts truncated to 4000 chars. Never sent anywhere.
+- Rendered by `ui/history.js` (reads `chrome.storage.local` directly, copy via `navigator.clipboard` with an `execCommand` fallback, lazy render on section open).
+
+### Multi-variant Optimize
+
+- `askBetterOptionCount` (1–3, **default 1** so out-of-box behavior and cost are unchanged) controls how many rewrites the Optimize preview offers. Set in **Options → AskBetter → Suggestions** (`section-askbetter-suggestions`), mirroring Phrase Better's Suggestions.
+- When > 1, the ask-better branch of `buildSystemInstruction` requests N numbered single-line variants; `rewriteText` parses them with the shared `parsePhraseVariants` and returns a `variants` array (and `optimizedPrompt` = variants[0] for back-compat). The single-shot completion-retry only runs for the 1-variant case.
+
+### Follow-up Refinement
+
+- `ASKBETTER_REFINE` → `refineText` in `background.js` applies a single requested change to already-generated text using `buildRefineInstruction()` (a `systemOverride` passed through `callProvider`). Records usage + history like a normal optimize. Ask Better only (Phrase Better has no preview).
+
+### Token & Cost Estimates
+
+- Each provider call now returns `{ text, usage }`; `usage` is `{ inputTokens, outputTokens }` extracted from `usageMetadata` (Gemini), `usage` (OpenAI Responses / Anthropic), or `null`.
+- `estimateCostUsd(provider, model, in, out)` uses `PRICING_PER_MTOK` — an **approximate** per-family price table (USD per 1M tokens, pattern-matched cheapest-specific-first with a mid-tier fallback). It is a guide, not a bill; the UI always labels it "approx".
+- The optimize/refine response carries a `usage` payload (`buildUsagePayload`) shown in the preview footer. Token counts + `costUsd` are also written into `usageLog`, and the Reports panel sums them into an **Est. cost (approx)** stat (`statCost`).
 
 ### Custom User Presets
 
@@ -355,7 +385,9 @@ User selects provider & enters API key in the extension options page. Selection 
 - **`enableChatGPT` / `enableGemini` / `enableClaude`**: Per-surface injection toggles
 - **`uiPrefs.buttonOffsets`**: Draggable button offset per surface (`chatgpt`/`gemini`/`claude`)
 - **`modelCache`**: Live model lists per provider, `{ [provider]: { models: string[], ts } }`, refreshed at most every 24h (see Dynamic Model Lists). Stored at the top level, **not** inside `settings`.
-- **`usageLog`**: Local-only usage history for the Reports section — an array of `{ ts, provider, model, mode }`, one entry per successful request, appended by `recordUsage()` in `background.js`. Pruned to the last 30 days (and capped at 5000) on every write; the Reports view also re-filters to 30 days on read. Never sent anywhere. Top-level key, not inside `settings`.
+- **`usageLog`**: Local-only usage history for the Reports section — an array of `{ ts, provider, model, mode, inputTokens, outputTokens, costUsd }`, one entry per successful request, appended by `recordUsage()` in `background.js`. Pruned to the last 30 days (and capped at 5000) on every write; the Reports view also re-filters to 30 days on read and sums `costUsd` into the Est. cost stat. Never sent anywhere. Top-level key, not inside `settings`.
+- **`promptHistory`**: Local-only rewrite history for the History section — an array of `{ ts, original, optimized, preset, provider, model, mode }`, one entry per successful optimize/refine/phrase result, appended by `recordHistory()` in `background.js`. Capped to the most recent 100 (texts truncated to 4000 chars). Never sent anywhere. Top-level key, not inside `settings`.
+- **`settings.askBetterOptionCount`**: 1–3 (default 1) — number of rewrites the Optimize preview offers (Multi-variant Optimize).
 
 ---
 
@@ -390,8 +422,8 @@ Full settings page accessible from the popup or extension management UI.
 
 **Sidebar menu is grouped by app**, each group wrapped in a `<div class="menu-group" data-group="...">` (tab-style: one `.settings-section` shown at a time, switched by `activateSection` via each nav button's `data-section`). Group headers use `.menu-title` / `.menu-title--group`:
 
-- **Common** — `section-models` (provider, model, and the global **Enable AI** toggle), `section-mode` (**both** Ask Better + Phrase Better on/off), `section-reports` (local usage dashboard), `section-security` (API key verify + clear data)
-- **AskBetter** — `section-integrations` (Enable on ChatGPT/Gemini/Claude), `section-presets`, `section-custom`
+- **Common** — `section-models` (provider, model, and the global **Enable AI** toggle), `section-mode` (**both** Ask Better + Phrase Better on/off), `section-reports` (local usage dashboard), `section-history` (local rewrite history), `section-security` (API key verify + clear data)
+- **AskBetter** — `section-integrations` (Enable on ChatGPT/Gemini/Claude), `section-presets`, `section-askbetter-suggestions` (**how many rewrite options** the preview offers, `askBetterOptionCount`), `section-custom`
 - **PhraseBetter** — `section-phrasebetter-presets` (**preset** + on-top **adjustment toggles**), `section-phrasebetter-suggestions` (how many options to show)
 
 **Hide-when-off:** `applyGroupVisibility()` toggles `hidden` on the `askbetter` / `phrasebetter` `.menu-group` based on `enableAskBetterMode` / `enablePhraseBetterMode`; if the active section is in a group that just hid, it falls back to `section-models`. Called on load (end of `fillForm`) and from the two mode-toggle handlers. Mode lives in **Common** so the toggles are always reachable. Section info-modal copy lives in `SECTION_INFO_CONTENT` keyed by `data-info-section` (`modes`, `phrasebetter_presets`, `phrasebetter_suggestions`, …). All toggles/fields keep stable IDs, so moving them between panels doesn't touch the JS bindings.
