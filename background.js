@@ -1339,7 +1339,8 @@ async function handlePhraseBetterContextMenu(info, tab) {
     return;
   }
 
-  const shown = await showPhraseBetterChooserInTab(tab.id, info.frameId, response.options);
+  const tokenCount = response.usage && Number(response.usage.totalTokens) > 0 ? Number(response.usage.totalTokens) : 0;
+  const shown = await showPhraseBetterChooserInTab(tab.id, info.frameId, response.options, tokenCount);
   if (!shown) {
     await showPageToastInTab(tab.id, info.frameId, "Phrase Better works in editable text fields.");
   }
@@ -1384,7 +1385,7 @@ async function generatePhraseBetterOptions({ prompt, settings, count }) {
       const costUsd = estimateCostUsd(provider, model, result.usage && result.usage.inputTokens, result.usage && result.usage.outputTokens);
       await recordUsage({ provider, model, mode: "phrase_better", usage: result.usage, costUsd });
       await recordHistory({ original: prompt, optimized: cleaned, preset: "phrase", provider, model, mode: "phrase_better" });
-      return { ok: true, options: [cleaned] };
+      return { ok: true, options: [cleaned], usage: buildUsagePayload(provider, model, result.usage, costUsd) };
     }
 
     const raw = await callProvider({
@@ -1404,7 +1405,7 @@ async function generatePhraseBetterOptions({ prompt, settings, count }) {
     const costUsd = estimateCostUsd(provider, model, raw.usage && raw.usage.inputTokens, raw.usage && raw.usage.outputTokens);
     await recordUsage({ provider, model, mode: "phrase_better", usage: raw.usage, costUsd });
     await recordHistory({ original: prompt, optimized: options[0], preset: "phrase", provider, model, mode: "phrase_better" });
-    return { ok: true, options };
+    return { ok: true, options, usage: buildUsagePayload(provider, model, raw.usage, costUsd) };
   } catch (error) {
     return mapProviderError(error);
   }
@@ -1437,7 +1438,7 @@ function parsePhraseVariants(raw, count) {
   return result.slice(0, count);
 }
 
-async function showPhraseBetterChooserInTab(tabId, frameId, options) {
+async function showPhraseBetterChooserInTab(tabId, frameId, options, tokenCount) {
   try {
     const results = await chrome.scripting.executeScript({
       target: {
@@ -1445,7 +1446,10 @@ async function showPhraseBetterChooserInTab(tabId, frameId, options) {
         frameIds: typeof frameId === "number" ? [frameId] : undefined
       },
       func: showPhraseBetterChooserOnPage,
-      args: [Array.isArray(options) ? options.map((option) => String(option || "")) : []]
+      args: [
+        Array.isArray(options) ? options.map((option) => String(option || "")) : [],
+        Number(tokenCount) > 0 ? Number(tokenCount) : 0
+      ]
     });
     return !!(results && results[0] && results[0].result && results[0].result.ok);
   } catch (_error) {
@@ -1529,7 +1533,7 @@ function capturePhraseBetterSelectionOnPage() {
   return { ok: !!captured };
 }
 
-function showPhraseBetterChooserOnPage(options) {
+function showPhraseBetterChooserOnPage(options, tokenCount) {
   const chooserId = "askbetter-phrase-chooser";
   const existing = document.getElementById(chooserId);
   if (existing) {
@@ -1695,6 +1699,16 @@ function showPhraseBetterChooserOnPage(options) {
   list.style.gap = "6px";
   list.style.overflowY = "auto";
   card.appendChild(list);
+
+  const tokens = Number(tokenCount) > 0 ? Number(tokenCount) : 0;
+  if (tokens > 0) {
+    const foot = document.createElement("div");
+    foot.textContent = `This request: ≈ ${tokens.toLocaleString()} tokens`;
+    foot.style.color = "#9a8f83";
+    foot.style.fontSize = "11px";
+    foot.style.fontWeight = "500";
+    card.appendChild(foot);
+  }
 
   let closed = false;
   const cleanup = () => {
