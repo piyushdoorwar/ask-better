@@ -1903,18 +1903,18 @@ function showPageBusyIndicatorOnPage(message) {
     indicator.style.display = "inline-flex";
     indicator.style.alignItems = "center";
     indicator.style.gap = "6px";
-    indicator.style.minHeight = "24px";
-    indicator.style.padding = "4px 10px";
+    indicator.style.minHeight = "26px";
+    indicator.style.padding = "5px 11px";
     indicator.style.borderRadius = "999px";
     indicator.style.border = "1px solid rgba(255, 255, 255, 0.12)";
     indicator.style.background = "rgba(20, 20, 20, 0.96)";
     indicator.style.color = "#ffffff";
-    indicator.style.font = '500 11px/1.2 "Google Sans Text", "Google Sans", "Segoe UI", Arial, sans-serif';
+    indicator.style.font = '500 12.5px/1.2 "Google Sans Text", "Google Sans", "Segoe UI", Arial, sans-serif';
     indicator.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.32)";
     indicator.style.pointerEvents = "none";
     indicator.innerHTML = `
-      <span style="width:13px;height:13px;display:inline-flex;align-items:center;justify-content:center;">
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="width:13px;height:13px;display:block;animation:askbetter-page-busy-spin 900ms linear infinite;">
+      <span style="width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="width:14px;height:14px;display:block;animation:askbetter-page-busy-spin 900ms linear infinite;">
           <circle cx="12" cy="12" r="8.5" fill="none" stroke="rgba(245,245,245,0.22)" stroke-width="3" stroke-linecap="round" stroke-dasharray="20 34"></circle>
           <circle cx="12" cy="3.5" r="2" fill="#ff6a1a"></circle>
           <circle cx="20.5" cy="12" r="2" fill="#ff6a1a" opacity="0.92"></circle>

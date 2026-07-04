@@ -105,28 +105,28 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 24px;
-  padding: 4px 10px;
+  min-height: 26px;
+  padding: 5px 11px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(20, 20, 20, 0.96);
   color: #f8fafc;
-  font: 500 11px/1.2 var(--pf-font-ui);
+  font: 500 12.5px/1.2 var(--pf-font-ui);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
   pointer-events: none;
 }
 
 .pf-busy-spinner {
-  width: 13px;
-  height: 13px;
+  width: 14px;
+  height: 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
 .pf-busy-spinner svg {
-  width: 13px;
-  height: 13px;
+  width: 14px;
+  height: 14px;
   display: block;
   animation: pf-busy-spin 900ms linear infinite;
 }
