@@ -1282,3 +1282,7 @@
         color: var(--text-muted);
         font-size: 13px;
       }
+
+      .report-empty[hidden] {
+        display: none;
+      }
