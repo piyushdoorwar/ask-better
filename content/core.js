@@ -707,7 +707,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
           <circle class="pf-busy-head pf-busy-head-left" cx="3.5" cy="12" r="2"></circle>
         </svg>
       </span>
-      <span class="pf-busy-text">AskBetter is working…</span>
+      <span class="pf-busy-text">Ask Better is working…</span>
     `;
     busyIndicator.style.display = "none";
     document.body.appendChild(busyIndicator);

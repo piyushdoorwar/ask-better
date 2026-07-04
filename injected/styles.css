@@ -79,29 +79,29 @@
   z-index: 2147483002;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 32px;
-  padding: 7px 10px;
+  gap: 6px;
+  min-height: 24px;
+  padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(20, 20, 20, 0.96);
   color: #f8fafc;
-  font: 500 12px/1.2 var(--pf-font-ui);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.36);
+  font: 500 11px/1.2 var(--pf-font-ui);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
   pointer-events: none;
 }
 
 .pf-busy-spinner {
-  width: 16px;
-  height: 16px;
+  width: 13px;
+  height: 13px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
 .pf-busy-spinner svg {
-  width: 16px;
-  height: 16px;
+  width: 13px;
+  height: 13px;
   display: block;
   animation: pf-busy-spin 900ms linear infinite;
 }
