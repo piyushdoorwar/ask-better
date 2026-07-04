@@ -1735,17 +1735,31 @@ function showPhraseBetterChooserOnPage(options, tokenCount) {
   };
 
   const confirmApplied = () => {
-    list.remove();
-    head.remove();
+    // Collapse the full-width chooser into a small, sleek "Applied" pill that sits
+    // right where the chooser was (near the selected text), rather than a big card.
+    card.textContent = "";
+    card.style.width = "auto";
+    card.style.maxWidth = "min(240px, calc(100vw - 24px))";
+    card.style.maxHeight = "none";
+    card.style.padding = "7px 12px";
+    card.style.gap = "6px";
     const done = document.createElement("div");
-    done.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" aria-hidden="true" focusable="false" style="display:block"><path d="M5 12.5L10 17L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Applied</span>';
+    done.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true" focusable="false" style="display:block"><path d="M5 12.5L10 17L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Applied</span>';
     done.style.display = "inline-flex";
     done.style.alignItems = "center";
     done.style.gap = "6px";
-    done.style.padding = "4px 2px";
     done.style.color = "#7ee0a1";
     done.style.fontWeight = "600";
+    done.style.fontSize = "12px";
     card.appendChild(done);
+
+    // Re-clamp the shrunken pill so it stays on-screen next to the anchor.
+    const rect = card.getBoundingClientRect();
+    const pillWidth = Math.max(90, Math.round(rect.width || 120));
+    if (anchorRect) {
+      card.style.left = `${Math.min(Math.max(anchorRect.left, 8), Math.max(8, window.innerWidth - pillWidth - 8))}px`;
+    }
+
     window.setTimeout(cleanup, 700);
   };
 
