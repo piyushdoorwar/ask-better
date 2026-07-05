@@ -739,38 +739,37 @@
                 <label for="apiKey">API key</label>
                 <div id="apiKeyEditor">
                   <input id="apiKey" name="apiKey" type="password" autocomplete="off" placeholder="AIza..." />
-                  <div class="sub-actions">
-                    <button type="button" id="testKeyBtn">Test key</button>
-                    <span id="testKeyStatus"></span>
-                    <a
-                      id="generateKeyLink"
-                      class="gen-key-btn"
-                      href="https://aistudio.google.com/apikey"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      hidden
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <circle cx="8" cy="15" r="4" stroke="currentColor" stroke-width="1.8"/>
-                        <path d="M12 11l8-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        <path d="M18 5l2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        <path d="M16 9l1 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                      </svg>
-                      Generate API key
-                    </a>
-                  </div>
                 </div>
-                <div id="keyLockedBanner" class="key-locked-banner" hidden>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/>
-                    <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <div id="keyLockedBanner" class="key-locked-card" hidden>
+                  <svg class="key-locked-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="5.5" y="10.5" width="13" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M8.5 10.5V7.7a3.5 3.5 0 0 1 7 0v2.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                   </svg>
-                  API key verified and saved. Editing is locked. Use clear data to reset key setup.
+                  <span class="key-locked-mask" id="maskedApiKey">••••••••••••••••</span>
+                  <span class="key-locked-status">Verified &amp; locked</span>
                 </div>
-              </div>
-              <div class="field full">
-                <button type="button" id="clearDataBtn">Clear stored key/data</button>
-                <p class="note">Clears local settings and UI preferences from this browser profile.</p>
+                <div class="security-actions">
+                  <button type="button" id="testKeyBtn">Verify key</button>
+                  <button type="button" id="clearDataBtn">Clear stored key &amp; data</button>
+                  <a
+                    id="generateKeyLink"
+                    class="gen-key-btn"
+                    href="https://aistudio.google.com/apikey"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    hidden
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="8" cy="15" r="4" stroke="currentColor" stroke-width="1.8"/>
+                      <path d="M12 11l8-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                      <path d="M18 5l2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                      <path d="M16 9l1 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                    Generate API key
+                  </a>
+                  <span id="testKeyStatus"></span>
+                </div>
+                <p class="note">Keys are stored in your browser only and are never synced or sent to any AskBetter server.</p>
               </div>
             </div>
           </section>
@@ -855,7 +854,7 @@
             <li>Optimize request: your current prompt is sent only to the selected provider API, Google Gemini, OpenAI, or Anthropic.</li>
             <li>Request metadata: selected provider model and preset instruction are sent with the request.</li>
             <li>Custom Prompt Additions: if set, they are sent as additional guidance with optimize requests.</li>
-            <li>Key test: a direct provider key validation call is made when you click Test key.</li>
+            <li>Key verification: a direct provider key validation call is made when you click Verify key.</li>
           </ul>
 
           <h4>What Is Not Sent</h4>

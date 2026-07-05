@@ -71,7 +71,7 @@ const SECTION_INFO_CONTENT = {
       "Each successful Optimize, Refine, and Phrase Better result is saved with its provider and preset/model.",
       "Copy any optimized text to reuse it elsewhere.",
       "Only the most recent 100 entries are kept, and everything is stored in this browser profile.",
-      "Clear stored key/data in the Security section (or the Clear history button here) wipes this list."
+      "Clear stored key & data in the Security section (or the Clear history button here) wipes this list."
     ]
   },
   phrasebetter_suggestions: {
@@ -131,16 +131,17 @@ const SECTION_INFO_CONTENT = {
       "The chart stacks daily request counts; switch the breakdown between provider and app (Ask Better vs Phrase Better).",
       "Data is stored only in this browser profile and is never sent anywhere.",
       "Entries older than 30 days are dropped automatically, so the view always reflects a rolling 30-day window.",
-      "Clear stored key/data in the Security section also wipes this usage history."
+      "Clear stored key & data in the Security section also wipes this usage history."
     ]
   },
   security: {
     title: "Security",
     description: "This section is for key setup, verification, and reset controls.",
     points: [
-      "Test key checks the selected provider key before locking it.",
+      "Verify key checks the selected provider key before locking it.",
+      "Re-verify key tests the saved key without exposing it in the page.",
       "After successful verification, key editing is locked for safety.",
-      "Use Clear stored key/data to reset local settings and unlock key setup again."
+      "Use Clear stored key & data to reset local settings and unlock key setup again."
     ]
   }
 };
@@ -206,6 +207,7 @@ const statusMsgText = document.getElementById("statusMsgText");
 const testKeyStatus = document.getElementById("testKeyStatus");
 const generateKeyLinkEl = document.getElementById("generateKeyLink");
 const keyLockedBannerEl = document.getElementById("keyLockedBanner");
+const maskedApiKeyEl = document.getElementById("maskedApiKey");
 const apiKeyEditorEl = document.getElementById("apiKeyEditor");
 const navButtons = Array.from(document.querySelectorAll(".nav-btn"));
 const sections = Array.from(document.querySelectorAll(".settings-section"));
@@ -824,13 +826,11 @@ function bindSecurityActions() {
   });
 
   testKeyBtn.addEventListener("click", async () => {
-    if (keyLocked) {
-      return;
-    }
-
     const provider = normalizeProvider((currentSettings && currentSettings.provider) || providerSelectEl.value);
     const meta = getProviderMeta(provider);
-    const apiKey = apiKeyEl.value.trim();
+    const apiKey = keyLocked
+      ? String((currentSettings && currentSettings[meta.keyField]) || "").trim()
+      : apiKeyEl.value.trim();
 
     if (!apiKey) {
       testKeyStatus.textContent = "API key is missing.";
@@ -1016,9 +1016,20 @@ function renderProviderInfo(provider) {
 
 function applyKeyLockState() {
   apiKeyEl.disabled = keyLocked;
-  testKeyBtn.hidden = keyLocked;
+  testKeyBtn.textContent = keyLocked ? "Re-verify key" : "Verify key";
   keyLockedBannerEl.hidden = !keyLocked;
   apiKeyEditorEl.hidden = keyLocked;
+  updateMaskedApiKey();
+}
+
+function updateMaskedApiKey() {
+  if (!maskedApiKeyEl) {
+    return;
+  }
+  const meta = getProviderMeta((currentSettings && currentSettings.provider) || providerSelectEl.value);
+  const storedKey = String((currentSettings && currentSettings[meta.keyField]) || "").trim();
+  const prefix = storedKey ? storedKey.slice(0, Math.min(4, storedKey.length)) : meta.keyMaskPrefix;
+  maskedApiKeyEl.textContent = `${prefix}${"•".repeat(24)}`;
 }
 
 function updateMissingKeyLinkVisibility() {
@@ -1094,6 +1105,7 @@ function getProviderMeta(provider) {
       models: getProviderModels("openai"),
       keyUrl: OPENAI_KEY_URL,
       keyPlaceholder: "sk-...",
+      keyMaskPrefix: "sk-",
       modelLabel: "OpenAI model"
     };
   }
@@ -1107,6 +1119,7 @@ function getProviderMeta(provider) {
       models: getProviderModels("anthropic"),
       keyUrl: ANTHROPIC_KEY_URL,
       keyPlaceholder: "sk-ant-...",
+      keyMaskPrefix: "sk-a",
       modelLabel: "Claude model"
     };
   }
@@ -1119,6 +1132,7 @@ function getProviderMeta(provider) {
     models: getProviderModels("gemini"),
     keyUrl: GEMINI_KEY_URL,
     keyPlaceholder: "AIza...",
+    keyMaskPrefix: "AIza",
     modelLabel: "Gemini model"
   };
 }
