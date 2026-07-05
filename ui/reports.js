@@ -9,23 +9,41 @@
   const RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
   const DAYS = 30;
 
-  // Palette tuned for the dark amber theme; one colour per series.
-  const PROVIDER_COLORS = {
-    gemini: "#6aa9ff",
-    openai: "#19c37d",
-    anthropic: "#e8991e",
-    other: "#9a8f83"
+  // Single-hue amber palette — shades of yellow only, no multi-colour series.
+  // Each series is a [topStop, bottomStop] pair for a vertical bar gradient;
+  // the matching *_SOLID entry is the flat colour used in the legend dots.
+  const PROVIDER_GRAD = {
+    gemini: ["#ffd27a", "#f0b24a"],
+    openai: ["#f6b545", "#e2901a"],
+    anthropic: ["#cf8a24", "#b0710f"],
+    other: ["#9c7326", "#6f4f10"]
   };
+  const PROVIDER_SOLID = { gemini: "#f0b24a", openai: "#e2901a", anthropic: "#b0710f", other: "#6f4f10" };
   const PROVIDER_LABELS = { gemini: "Gemini", openai: "OpenAI", anthropic: "Anthropic", other: "Other" };
   const PROVIDER_ORDER = ["gemini", "openai", "anthropic", "other"];
 
-  const MODE_COLORS = { ask_better: "#e8991e", phrase_better: "#6aa9ff" };
+  const MODE_GRAD = {
+    ask_better: ["#f9c05a", "#e8991e"],
+    phrase_better: ["#a5710f", "#734d08"]
+  };
+  const MODE_SOLID = { ask_better: "#e8991e", phrase_better: "#8a5c0d" };
   const MODE_LABELS = { ask_better: "Ask Better", phrase_better: "Phrase Better" };
   const MODE_ORDER = ["ask_better", "phrase_better"];
 
+  // Build a vertical gradient (top → bottom) for a bar dataset; falls back to the
+  // flat bottom colour until the chart area exists (first paint / hidden canvas).
+  function makeGradient(chartObj, pair) {
+    const area = chartObj && chartObj.chartArea;
+    const ctx = chartObj && chartObj.ctx;
+    if (!area || !ctx) return pair[1];
+    const g = ctx.createLinearGradient(0, area.top, 0, area.bottom);
+    g.addColorStop(0, pair[0]);
+    g.addColorStop(1, pair[1]);
+    return g;
+  }
+
   const TEXT = "#f4f0eb";
   const MUTED = "rgba(244, 240, 235, 0.55)";
-  const GRID = "rgba(244, 240, 235, 0.08)";
 
   let entries = null; // cached last-30-day entries
   let chart = null;
@@ -79,15 +97,27 @@
     let ask = 0;
     let phrase = 0;
     let cost = 0;
+    let tokens = 0;
     for (const e of entries) {
       if (e.mode === "phrase_better") phrase++;
       else ask++;
       if (typeof e.costUsd === "number" && e.costUsd > 0) cost += e.costUsd;
+      if (typeof e.inputTokens === "number" && e.inputTokens > 0) tokens += e.inputTokens;
+      if (typeof e.outputTokens === "number" && e.outputTokens > 0) tokens += e.outputTokens;
     }
     if (el("statTotal")) el("statTotal").textContent = String(total);
     if (el("statAskBetter")) el("statAskBetter").textContent = String(ask);
     if (el("statPhraseBetter")) el("statPhraseBetter").textContent = String(phrase);
+    if (el("statTokens")) el("statTokens").textContent = formatTokens(tokens);
     if (el("statCost")) el("statCost").textContent = formatCost(cost);
+  }
+
+  // Compact token count for the "approx" stat (e.g., 12.3K, 1.2M).
+  function formatTokens(n) {
+    if (!(n > 0)) return "0";
+    if (n >= 1e6) return `${(n / 1e6).toFixed(n < 1e7 ? 1 : 0)}M`;
+    if (n >= 1e3) return `${(n / 1e3).toFixed(n < 1e4 ? 1 : 0)}K`;
+    return String(n);
   }
 
   function formatCost(cost) {
@@ -105,15 +135,17 @@
     range.textContent = `${startStr} – ${endStr}`;
   }
 
-  // Turn the cached entries into stacked-bar datasets for the active grouping.
+  // Turn the cached entries into stacked-bar datasets + legend for the grouping.
   function buildDatasets(win) {
     const dayIndex = new Map();
     win.keys.forEach((k, i) => dayIndex.set(k, i));
 
     const isProvider = group === "provider";
-    const colors = isProvider ? PROVIDER_COLORS : MODE_COLORS;
+    const gradMap = isProvider ? PROVIDER_GRAD : MODE_GRAD;
+    const solidMap = isProvider ? PROVIDER_SOLID : MODE_SOLID;
     const labelsMap = isProvider ? PROVIDER_LABELS : MODE_LABELS;
     const order = isProvider ? PROVIDER_ORDER : MODE_ORDER;
+    const fallbackPair = isProvider ? PROVIDER_GRAD.other : MODE_GRAD.phrase_better;
 
     const buckets = new Map(); // seriesKey -> number[DAYS]
     for (const e of entries) {
@@ -125,17 +157,55 @@
     }
 
     // Keep known series in a stable order; drop empty ones to reduce legend noise.
-    return order
-      .filter((key) => buckets.has(key))
-      .map((key) => ({
+    const present = order.filter((key) => buckets.has(key));
+    const datasets = present.map((key) => {
+      const pair = gradMap[key] || fallbackPair;
+      return {
         label: labelsMap[key] || key,
         data: buckets.get(key),
-        backgroundColor: colors[key] || PROVIDER_COLORS.other,
+        backgroundColor: (context) => makeGradient(context.chart, pair),
         borderWidth: 0,
-        borderRadius: 3,
-        maxBarThickness: 16,
+        borderRadius: 5,
+        borderSkipped: "bottom",
+        maxBarThickness: 22,
         stack: "usage"
-      }));
+      };
+    });
+    const legend = present.map((key) => ({
+      label: labelsMap[key] || key,
+      color: solidMap[key] || fallbackPair[1]
+    }));
+    return { datasets, legend };
+  }
+
+  // Custom legend (top-right of the chart card) — colored dot + label.
+  function renderLegend(legend) {
+    const box = el("reportLegend");
+    if (!box) return;
+    box.textContent = "";
+    for (const item of legend) {
+      const el2 = document.createElement("span");
+      el2.className = "report-legend-item";
+      const dot = document.createElement("span");
+      dot.className = "report-legend-dot";
+      dot.style.background = item.color;
+      const label = document.createElement("span");
+      label.textContent = item.label;
+      el2.appendChild(dot);
+      el2.appendChild(label);
+      box.appendChild(el2);
+    }
+  }
+
+  function destroyChart() {
+    if (chart) { chart.destroy(); chart = null; }
+    // Defensive: clear any orphan Chart bound to the canvas (prevents the
+    // "Canvas is already in use" error when the section is re-rendered).
+    const canvas = el("reportChart");
+    if (canvas && typeof Chart !== "undefined" && typeof Chart.getChart === "function") {
+      const orphan = Chart.getChart(canvas);
+      if (orphan) orphan.destroy();
+    }
   }
 
   function drawChart(win) {
@@ -147,12 +217,14 @@
     if (empty) empty.hidden = hasData;
     canvas.style.visibility = hasData ? "visible" : "hidden";
     if (!hasData) {
-      if (chart) { chart.destroy(); chart = null; }
+      destroyChart();
+      renderLegend([]);
       return;
     }
 
-    const datasets = buildDatasets(win);
-    if (chart) { chart.destroy(); chart = null; }
+    const { datasets, legend } = buildDatasets(win);
+    renderLegend(legend);
+    destroyChart();
 
     chart = new Chart(canvas.getContext("2d"), {
       type: "bar",
@@ -166,20 +238,19 @@
           x: {
             stacked: true,
             grid: { display: false },
-            ticks: { color: MUTED, maxRotation: 0, autoSkip: true, autoSkipPadding: 12, font: { size: 10 } }
+            border: { display: false },
+            ticks: { color: MUTED, maxRotation: 0, autoSkip: true, autoSkipPadding: 14, font: { size: 10 } }
           },
           y: {
             stacked: true,
             beginAtZero: true,
-            grid: { color: GRID },
-            ticks: { color: MUTED, precision: 0, font: { size: 10 } }
+            grid: { display: false },
+            border: { display: false },
+            ticks: { display: false }
           }
         },
         plugins: {
-          legend: {
-            position: "bottom",
-            labels: { color: TEXT, usePointStyle: true, pointStyle: "circle", boxWidth: 8, padding: 14, font: { size: 11 } }
-          },
+          legend: { display: false },
           tooltip: {
             backgroundColor: "#161310",
             borderColor: "rgba(244,240,235,0.14)",
@@ -233,6 +304,11 @@
       requestAnimationFrame(() => { void render(); });
     }
   }
+
+  // Exposed so options.js can render Reports when it's reached via a URL hash
+  // (#reports) on refresh — the section only becomes active after this script's
+  // own load-time check has already run.
+  window.AskBetterReports = { render };
 
   function init() {
     bindToggle();

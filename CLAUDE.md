@@ -311,8 +311,10 @@ User selects provider & enters API key in the extension options page. Selection 
 ### Usage Reports (local, 30-day)
 
 - A **Reports** panel (Common group, `section-reports`) shows a rolling 30-day usage dashboard: total requests, an Ask Better / Phrase Better split, and a stacked bar chart of daily request counts.
-- The chart is **Chart.js**, vendored locally at `ui/vendor/chart.umd.min.js` (MV3 blocks remote scripts) and driven by `ui/reports.js`. A segmented toggle re-stacks the bars by **provider** or **app/mode**, with a fixed colour per series, themed for the dark amber UI.
+- The chart is **Chart.js v4** (`ui/vendor/chart.umd.min.js`, vendored — MV3 blocks remote scripts), driven by `ui/reports.js`, laid out inside a bordered `.report-chart-card` with an HTML header (`.report-chart-title` + a **custom** `.report-legend`; Chart.js's built-in legend is disabled). A segmented toggle re-stacks the bars by **provider** or **app/mode**.
+- **Single-hue amber palette** (`PROVIDER_GRAD` / `MODE_GRAD` + `*_SOLID` in `reports.js`) — every series is a shade of amber (no multi-colour), rendered as a vertical top→bottom **gradient** per bar via a scriptable `backgroundColor` + `makeGradient()`; legend dots use the flat `*_SOLID` colour. Bars have `borderRadius: 5` / `borderSkipped:"bottom"` (rounded tops), and both axes are visually hidden (grid/border/ticks off; y ticks off, x keeps subtle auto-skipped date ticks) for the clean card look.
 - Source data is the local `usageLog` (see State & Persistence) — `recordUsage()` in `background.js` appends one entry per successful Optimize / Phrase Better request; nothing is sent anywhere. `reports.js` reads it directly from `chrome.storage.local`, filters to 30 days, and renders lazily when the section is first opened (the canvas must be visible for Chart.js to size correctly).
+- **Deep-link / refresh safety:** `reports.js` exposes `window.AskBetterReports.render()`; `applyHashRoute()` in `options.js` calls it (next animation frame) when `#reports` is opened on refresh, since the section only becomes active *after* reports.js's own load-time check. `drawChart` also destroys any orphan `Chart.getChart(canvas)` before creating a new one to avoid the "Canvas is already in use" error on re-render.
 
 ### Local-First Storage
 

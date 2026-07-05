@@ -205,6 +205,10 @@
                 <span class="report-stat-label">Phrase Better</span>
               </div>
               <div class="report-stat">
+                <span class="report-stat-value" id="statTokens">0</span>
+                <span class="report-stat-label">Tokens (approx)</span>
+              </div>
+              <div class="report-stat">
                 <span class="report-stat-value" id="statCost">$0.00</span>
                 <span class="report-stat-label">Est. cost (approx)</span>
               </div>
@@ -218,9 +222,15 @@
               </div>
             </div>
 
-            <div class="report-chart-wrap">
-              <canvas id="reportChart" aria-label="Daily request count chart" role="img"></canvas>
-              <p class="report-empty" id="reportEmpty" hidden>No usage yet. Your Optimize and Phrase Better activity from the last 30 days will show up here.</p>
+            <div class="report-chart-card">
+              <div class="report-chart-head">
+                <span class="report-chart-title">Daily requests · last 30 days</span>
+                <span class="report-legend" id="reportLegend"></span>
+              </div>
+              <div class="report-chart-wrap">
+                <canvas id="reportChart" aria-label="Daily request count chart" role="img"></canvas>
+                <p class="report-empty" id="reportEmpty" hidden>No usage yet. Your Optimize and Phrase Better activity from the last 30 days will show up here.</p>
+              </div>
             </div>
           </section>
 

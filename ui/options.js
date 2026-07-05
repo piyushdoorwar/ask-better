@@ -506,6 +506,11 @@ function applyHashRoute() {
       window.AskBetterHistory.refresh();
     }
   }
+  // Reports renders lazily and Chart.js needs the section visible to size the
+  // canvas, so render on the next frame once the section is shown.
+  if (targetId === "section-reports" && window.AskBetterReports) {
+    requestAnimationFrame(() => window.AskBetterReports.render());
+  }
 }
 
 // Hide an app's whole menu group when its mode is off. If the section currently
