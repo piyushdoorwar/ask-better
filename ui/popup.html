@@ -30,8 +30,30 @@
         </div>
       </div>
 
+      <div class="field-grid">
+        <div class="field">
+          <label for="providerSelect">Provider</label>
+          <div class="csel">
+            <select id="providerSelect" hidden>
+              <option value="gemini" data-icon="../assets/icons/ui/gemini-color.svg">Google Gemini</option>
+              <option value="openai" data-icon="../assets/icons/ui/openai.svg">OpenAI</option>
+              <option value="anthropic" data-icon="../assets/icons/ui/claude-color.svg">Anthropic Claude</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label id="modelLabel" for="modelSelect">Gemini model</label>
+          <div class="csel">
+            <!-- Options are populated at runtime from the provider's live model
+                 list (see ui/models.js / popup.js renderModelOptions). -->
+            <select id="modelSelect" hidden></select>
+          </div>
+          <p class="model-hint" id="modelHint" hidden>Add your API key in settings to load models.</p>
+        </div>
+      </div>
+
       <div class="field">
-        <label for="defaultPreset">Optimize preset</label>
+        <label for="defaultPreset">ASK BETTER PRESET</label>
         <div class="csel">
           <select id="defaultPreset" hidden>
             <optgroup label="Core">
@@ -56,28 +78,6 @@
               <option value="implementation_plan">Implementation plan</option>
             </optgroup>
           </select>
-        </div>
-      </div>
-
-      <div class="field-grid">
-        <div class="field">
-          <label for="providerSelect">Provider</label>
-          <div class="csel">
-            <select id="providerSelect" hidden>
-              <option value="gemini" data-icon="../assets/icons/ui/gemini-color.svg">Google Gemini</option>
-              <option value="openai" data-icon="../assets/icons/ui/openai.svg">OpenAI</option>
-              <option value="anthropic" data-icon="../assets/icons/ui/claude-color.svg">Anthropic Claude</option>
-            </select>
-          </div>
-        </div>
-        <div class="field">
-          <label id="modelLabel" for="modelSelect">Gemini model</label>
-          <div class="csel">
-            <!-- Options are populated at runtime from the provider's live model
-                 list (see ui/models.js / popup.js renderModelOptions). -->
-            <select id="modelSelect" hidden></select>
-          </div>
-          <p class="model-hint" id="modelHint" hidden>Add your API key in settings to load models.</p>
         </div>
       </div>
 
