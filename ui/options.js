@@ -782,7 +782,7 @@ function renderCustomPresets() {
     removeButton.className = "custom-chip-remove";
     removeButton.setAttribute("data-id", preset.id);
     removeButton.setAttribute("aria-label", `Remove preset: ${preset.name}`);
-    removeButton.textContent = "x";
+    removeButton.textContent = "×";
 
     item.appendChild(info);
     item.appendChild(removeButton);
@@ -963,7 +963,7 @@ function renderCustomAdditions() {
     removeButton.className = "custom-chip-remove";
     removeButton.setAttribute("data-index", String(i));
     removeButton.setAttribute("aria-label", `Remove addition: ${item}`);
-    removeButton.textContent = "x";
+    removeButton.textContent = "×";
 
     chip.appendChild(label);
     chip.appendChild(removeButton);

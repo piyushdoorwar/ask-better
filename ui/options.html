@@ -522,7 +522,7 @@
                   <p class="inline-note">Reusable instructions applied as extra guidance during optimization — stacked on top of the preset above.</p>
                 </div>
                 <div class="quick-additions">
-                  <p class="quick-additions-title">Quick tags (click to add)</p>
+                  <p class="quick-additions-title">Quick tags · click to add</p>
 
                   <div class="quick-category">
                     <p class="quick-category-title">Tone</p>
@@ -530,7 +530,7 @@
                       <button type="button" class="quick-tag" data-snippet="Use sassy rephrases where appropriate while staying respectful and helpful.">Sassy rephrases</button>
                       <button type="button" class="quick-tag" data-snippet="Keep the tone confident, practical, and concise.">Confident tone</button>
                       <button type="button" class="quick-tag" data-snippet="Use plain language and avoid jargon unless necessary.">Plain language</button>
-                      <button type="button" class="quick-tag" data-snippet="Keep a professional but approachable tone.">Professional and friendly</button>
+                      <button type="button" class="quick-tag" data-snippet="Keep a professional but approachable tone.">Professional &amp; friendly</button>
                       <button type="button" class="quick-tag" data-snippet="Be direct and cut filler phrases.">Direct no fluff</button>
                       <button type="button" class="quick-tag" data-snippet="Use an empathetic but firm tone.">Empathetic but firm</button>
                       <button type="button" class="quick-tag" data-snippet="Use a high-energy and engaging tone without exaggeration.">High-energy voice</button>
@@ -661,41 +661,44 @@
                 <p class="section-sub">Enable where the Ask Better Optimize button should appear.</p>
               </div>
             </div>
-            <div class="toggle-grid">
-              <div class="toggle-row">
-                <label for="enableChatGPT" class="toggle-label-icon">
-                  <img class="csel-icon" src="../assets/icons/ui/openai.svg" alt="" aria-hidden="true" />
-                  <span class="csel-sep"></span>
-                  Enable on ChatGPT
-                </label>
-                <span class="switch">
-                  <input id="enableChatGPT" name="enableChatGPT" type="checkbox" />
-                  <span class="slider"></span>
+            <div class="integration-grid">
+              <div class="integration-card">
+                <span class="integration-logo">
+                  <img src="../assets/icons/ui/openai.svg" alt="" aria-hidden="true" />
                 </span>
+                <div class="integration-foot">
+                  <span class="integration-name">ChatGPT</span>
+                  <span class="switch">
+                    <input id="enableChatGPT" name="enableChatGPT" type="checkbox" aria-label="Enable Optimize button on ChatGPT" />
+                    <span class="slider"></span>
+                  </span>
+                </div>
               </div>
 
-              <div class="toggle-row">
-                <label for="enableGemini" class="toggle-label-icon">
-                  <img class="csel-icon" src="../assets/icons/ui/gemini-color.svg" alt="" aria-hidden="true" />
-                  <span class="csel-sep"></span>
-                  Enable on Gemini
-                </label>
-                <span class="switch">
-                  <input id="enableGemini" name="enableGemini" type="checkbox" />
-                  <span class="slider"></span>
+              <div class="integration-card">
+                <span class="integration-logo">
+                  <img src="../assets/icons/ui/gemini-color.svg" alt="" aria-hidden="true" />
                 </span>
+                <div class="integration-foot">
+                  <span class="integration-name">Gemini</span>
+                  <span class="switch">
+                    <input id="enableGemini" name="enableGemini" type="checkbox" aria-label="Enable Optimize button on Gemini" />
+                    <span class="slider"></span>
+                  </span>
+                </div>
               </div>
 
-              <div class="toggle-row">
-                <label for="enableClaude" class="toggle-label-icon">
-                  <img class="csel-icon" src="../assets/icons/ui/claude-color.svg" alt="" aria-hidden="true" />
-                  <span class="csel-sep"></span>
-                  Enable on Claude
-                </label>
-                <span class="switch">
-                  <input id="enableClaude" name="enableClaude" type="checkbox" />
-                  <span class="slider"></span>
+              <div class="integration-card">
+                <span class="integration-logo">
+                  <img src="../assets/icons/ui/claude-color.svg" alt="" aria-hidden="true" />
                 </span>
+                <div class="integration-foot">
+                  <span class="integration-name">Claude</span>
+                  <span class="switch">
+                    <input id="enableClaude" name="enableClaude" type="checkbox" aria-label="Enable Optimize button on Claude" />
+                    <span class="slider"></span>
+                  </span>
+                </div>
               </div>
             </div>
           </section>
