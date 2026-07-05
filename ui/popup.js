@@ -40,7 +40,17 @@ const providerSelectEl = document.getElementById("providerSelect");
 const modelLabelEl = document.getElementById("modelLabel");
 const modelSelectEl = document.getElementById("modelSelect");
 const modelHintEl = document.getElementById("modelHint");
+const keepUserVoiceToggle = document.getElementById("keepUserVoiceToggle");
+const shortcutModEl = document.getElementById("shortcutMod");
 const openSettingsBtn = document.getElementById("openSettingsBtn");
+
+// Show the platform-appropriate modifier in the shortcut hint (⌘ on macOS).
+if (shortcutModEl) {
+  const isMac = /Mac|iPhone|iPad|iPod/i.test(
+    (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || ""
+  );
+  shortcutModEl.textContent = isMac ? "⌘" : "Ctrl";
+}
 
 init().catch(() => {
   statusText.textContent = "Unable to load settings.";
@@ -54,6 +64,9 @@ async function init() {
   renderCustomPresetOptions();
   defaultPresetEl.value = normalizePreset(settings.defaultPreset);
   phraseBetterPresetEl.value = normalizePhrasePreset(settings.phraseBetterPreset);
+  if (keepUserVoiceToggle) {
+    keepUserVoiceToggle.checked = !!settings.keepUserVoice;
+  }
   providerSelectEl.value = normalizeProvider(settings.provider);
   const model = getProviderModel(settings);
   renderModelOptions(model);
@@ -69,6 +82,12 @@ async function init() {
   phraseBetterPresetEl.addEventListener("change", async () => {
     await updateSettings({ phraseBetterPreset: normalizePhrasePreset(phraseBetterPresetEl.value) });
   });
+
+  if (keepUserVoiceToggle) {
+    keepUserVoiceToggle.addEventListener("change", async () => {
+      await updateSettings({ keepUserVoice: !!keepUserVoiceToggle.checked });
+    });
+  }
 
   providerSelectEl.addEventListener("change", async () => {
     const provider = normalizeProvider(providerSelectEl.value);

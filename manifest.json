@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "AskBetter",
   "description": "Prompt optimizer and text rephraser for ChatGPT, Gemini, Claude, and editable text on the web.",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "permissions": [
     "activeTab",
     "contextMenus",

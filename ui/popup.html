@@ -11,41 +11,26 @@
     <div class="panel">
       <div class="header">
         <div class="brand">
-          <img class="brand-icon" src="../assets/icons/icon.svg" alt="AskBetter icon" />
-          <h1>AskBetter</h1>
+          <span class="brand-mark">
+            <img class="brand-icon" src="../assets/icons/icon.svg" alt="AskBetter icon" />
+          </span>
+          <div class="brand-text">
+            <h1>AskBetter</h1>
+            <span class="brand-sub">Prompt optimizer</span>
+          </div>
         </div>
         <span class="badge">LOCAL</span>
       </div>
 
       <div class="status" id="statusBox">
-        <div class="status-top">
+        <span class="status-dot" aria-hidden="true"></span>
+        <div class="status-body">
           <span class="eyebrow">Connection</span>
-          <span class="status-dot" aria-hidden="true"></span>
+          <div id="statusText"></div>
         </div>
-        <div id="statusText"></div>
       </div>
 
       <div class="field">
-        <p class="section-title">Provider &amp; model</p>
-        <label for="providerSelect">Provider</label>
-        <div class="csel">
-          <select id="providerSelect" hidden>
-            <option value="gemini" data-icon="../assets/icons/ui/gemini-color.svg">Google Gemini</option>
-            <option value="openai" data-icon="../assets/icons/ui/openai.svg">OpenAI</option>
-            <option value="anthropic" data-icon="../assets/icons/ui/claude-color.svg">Anthropic Claude</option>
-          </select>
-        </div>
-        <label id="modelLabel" for="modelSelect">Gemini model</label>
-        <div class="csel">
-          <!-- Options are populated at runtime from the provider's live model
-               list (see ui/models.js / popup.js renderModelOptions). -->
-          <select id="modelSelect" hidden></select>
-        </div>
-        <p class="model-hint" id="modelHint" hidden>Add your API key in settings to load models.</p>
-      </div>
-
-      <div class="field">
-        <p class="section-title">Ask Better</p>
         <label for="defaultPreset">Optimize preset</label>
         <div class="csel">
           <select id="defaultPreset" hidden>
@@ -74,9 +59,30 @@
         </div>
       </div>
 
+      <div class="field-grid">
+        <div class="field">
+          <label for="providerSelect">Provider</label>
+          <div class="csel">
+            <select id="providerSelect" hidden>
+              <option value="gemini" data-icon="../assets/icons/ui/gemini-color.svg">Google Gemini</option>
+              <option value="openai" data-icon="../assets/icons/ui/openai.svg">OpenAI</option>
+              <option value="anthropic" data-icon="../assets/icons/ui/claude-color.svg">Anthropic Claude</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label id="modelLabel" for="modelSelect">Gemini model</label>
+          <div class="csel">
+            <!-- Options are populated at runtime from the provider's live model
+                 list (see ui/models.js / popup.js renderModelOptions). -->
+            <select id="modelSelect" hidden></select>
+          </div>
+          <p class="model-hint" id="modelHint" hidden>Add your API key in settings to load models.</p>
+        </div>
+      </div>
+
       <div class="field">
-        <p class="section-title">Phrase Better</p>
-        <label for="phraseBetterPreset">Rephrase preset</label>
+        <label for="phraseBetterPreset">Phrase Better preset</label>
         <div class="csel">
           <select id="phraseBetterPreset" hidden>
             <option value="fix_grammar">Fix grammar (default)</option>
@@ -85,6 +91,26 @@
             <option value="formal">Formal message</option>
           </select>
         </div>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-copy">
+          <span class="toggle-name">Keep my voice</span>
+          <span class="toggle-desc">Preserve tone &amp; style</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="keepUserVoiceToggle" />
+          <span class="slider" aria-hidden="true"></span>
+        </label>
+      </div>
+
+      <div class="shortcut-hint">
+        <span class="shortcut-text">Optimize any prompt</span>
+        <span class="shortcut-keys">
+          <kbd id="shortcutMod">Ctrl</kbd>
+          <kbd>&#8679;</kbd>
+          <kbd>O</kbd>
+        </span>
       </div>
 
       <button class="open-settings" id="openSettingsBtn">Open settings</button>

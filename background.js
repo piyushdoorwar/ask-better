@@ -1650,18 +1650,18 @@ function showPhraseBetterChooserOnPage(options, tokenCount) {
   card.style.position = "fixed";
   card.style.zIndex = "2147483003";
   card.style.boxSizing = "border-box";
-  card.style.width = "min(420px, calc(100vw - 24px))";
+  card.style.width = "min(440px, calc(100vw - 24px))";
   card.style.maxHeight = "min(60vh, 460px)";
   card.style.display = "flex";
   card.style.flexDirection = "column";
-  card.style.gap = "8px";
-  card.style.padding = "12px";
-  card.style.borderRadius = "14px";
+  card.style.gap = "10px";
+  card.style.padding = "14px";
+  card.style.borderRadius = "16px";
   card.style.border = "1px solid rgba(232, 153, 30, 0.5)";
   card.style.background = "rgba(22, 19, 16, 0.98)";
   card.style.color = "#f4f0eb";
   card.style.font = FONT;
-  card.style.boxShadow = "0 18px 48px rgba(0, 0, 0, 0.55)";
+  card.style.boxShadow = "0 24px 60px -18px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.04)";
 
   const head = document.createElement("div");
   head.style.display = "flex";
@@ -1670,7 +1670,12 @@ function showPhraseBetterChooserOnPage(options, tokenCount) {
   head.style.gap = "8px";
 
   const title = document.createElement("span");
-  title.textContent = variants.length > 1 ? "Phrase Better — choose one" : "Phrase Better suggestion";
+  title.innerHTML =
+    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20l4-1L19 8a2.1 2.1 0 0 0-3-3L5 16l-1 4z"></path></svg>' +
+    "<span>" + (variants.length > 1 ? "Re-phrase — choose one" : "Re-phrase") + "</span>";
+  title.style.display = "inline-flex";
+  title.style.alignItems = "center";
+  title.style.gap = "7px";
   title.style.fontWeight = "700";
   title.style.fontSize = "12px";
   title.style.color = "#f5ae3a";
@@ -1772,19 +1777,20 @@ function showPhraseBetterChooserOnPage(options, tokenCount) {
     row.style.textAlign = "left";
     row.style.width = "100%";
     row.style.cursor = "pointer";
-    row.style.padding = "9px 10px";
-    row.style.borderRadius = "10px";
-    row.style.border = "1px solid rgba(255, 255, 255, 0.14)";
-    row.style.background = "rgba(255, 255, 255, 0.05)";
+    row.style.padding = "12px 13px";
+    row.style.borderRadius = "11px";
+    row.style.border = "1px solid rgba(255, 255, 255, 0.10)";
+    row.style.background = "rgba(255, 255, 255, 0.04)";
     row.style.color = "#f4f0eb";
+    row.style.lineHeight = "1.6";
     row.style.font = FONT;
     row.addEventListener("mouseenter", () => {
-      row.style.background = "rgba(232, 153, 30, 0.18)";
-      row.style.borderColor = "rgba(232, 153, 30, 0.7)";
+      row.style.background = "rgba(232, 153, 30, 0.16)";
+      row.style.borderColor = "rgba(232, 153, 30, 0.6)";
     });
     row.addEventListener("mouseleave", () => {
-      row.style.background = "rgba(255, 255, 255, 0.05)";
-      row.style.borderColor = "rgba(255, 255, 255, 0.14)";
+      row.style.background = "rgba(255, 255, 255, 0.04)";
+      row.style.borderColor = "rgba(255, 255, 255, 0.10)";
     });
 
     if (variants.length > 1) {

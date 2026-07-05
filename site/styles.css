@@ -1,3 +1,13 @@
+/* Manrope — vendored locally (no remote font fetch). */
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("fonts/manrope-variable.woff2") format("woff2-variations"),
+       url("fonts/manrope-variable.woff2") format("woff2");
+}
+
 /* ── Design tokens ─────────────────────────────────────────────────────── */
 :root {
   color-scheme: dark;
@@ -26,9 +36,12 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  background: var(--bg);
+  background:
+    radial-gradient(1100px 640px at 12% -6%, rgba(232, 153, 30, 0.10), transparent 60%),
+    radial-gradient(900px 560px at 108% 112%, rgba(232, 153, 30, 0.06), transparent 60%),
+    var(--bg);
   color: var(--text);
-  font-family: Cantarell, Ubuntu, Inter, "Segoe UI", sans-serif;
+  font-family: "Manrope", Cantarell, Ubuntu, Inter, "Segoe UI", sans-serif;
   line-height: 1.5;
 }
 
@@ -174,9 +187,10 @@ nav a:hover {
 }
 
 .button.primary {
-  background: var(--accent);
+  background: linear-gradient(135deg, #f7b84a 0%, #e8991e 100%);
   border-color: var(--accent-bright);
   color: #1a1100;
+  box-shadow: 0 8px 20px -6px rgba(232, 153, 30, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .button.secondary {

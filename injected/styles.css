@@ -9,15 +9,15 @@
   border: 1px solid rgba(245, 174, 58, 0.9);
   border-radius: 999px;
   padding: 7px 14px;
-  background: linear-gradient(135deg, #f5ae3a 0%, #e8991e 100%);
-  color: #2a1c05;
-  font: 700 12px/1.2 var(--pf-font-ui);
+  background: linear-gradient(135deg, #f7b84a 0%, #e8991e 100%);
+  color: #1a1100;
+  font: 800 12px/1.2 var(--pf-font-ui);
   letter-spacing: 0.01em;
   cursor: grab;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
-  box-shadow: 0 4px 14px rgba(232, 153, 30, 0.28);
+  box-shadow: 0 6px 16px -6px rgba(232, 153, 30, 0.55);
   transition: transform 120ms ease, opacity 120ms ease, border-color 120ms ease, box-shadow 120ms ease, filter 120ms ease;
 }
 
@@ -140,7 +140,7 @@
 }
 
 .pf-busy-head {
-  fill: #ff6a1a;
+  fill: #f5ae3a;
 }
 
 .pf-busy-head-right {
@@ -175,15 +175,15 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  width: min(420px, calc(100vw - 24px));
+  width: min(440px, calc(100vw - 24px));
   max-height: min(60vh, 460px);
-  padding: 12px;
-  border-radius: 14px;
+  padding: 14px;
+  border-radius: 16px;
   border: 1px solid rgba(232, 153, 30, 0.5);
   background: rgba(22, 19, 16, 0.98);
   color: #f4f0eb;
   font: 500 13px/1.4 var(--pf-font-ui);
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .pf-preview-head {
@@ -263,29 +263,31 @@
 }
 
 .pf-preview-btn {
-  border-radius: 999px;
-  padding: 7px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.06);
-  color: #f4f0eb;
+  border-radius: 9px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  color: rgba(244, 240, 235, 0.82);
   font: 600 12px/1.2 var(--pf-font-ui);
   cursor: pointer;
   transition: background 120ms ease, border-color 120ms ease, opacity 120ms ease;
 }
 
 .pf-preview-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .pf-preview-accept {
-  border-color: rgba(245, 174, 58, 0.85);
-  background: linear-gradient(135deg, #f5ae3a 0%, #e8991e 100%);
+  padding: 8px 16px;
+  border-color: #f5ae3a;
+  background: linear-gradient(135deg, #f7b84a 0%, #e8991e 100%);
   color: #1a1100;
-  font-weight: 700;
+  font-weight: 800;
+  box-shadow: 0 6px 16px -6px rgba(232, 153, 30, 0.55);
 }
 
 .pf-preview-accept:hover {
-  background: linear-gradient(135deg, #f7b94f 0%, #f0a527 100%);
+  background: linear-gradient(135deg, #f9c05a 0%, #f0a527 100%);
   border-color: #ffffff;
 }
 
@@ -305,24 +307,24 @@
 }
 
 .pf-preview-variant {
-  border-radius: 999px;
-  padding: 5px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.05);
-  color: #f4f0eb;
-  font: 600 12px/1.2 var(--pf-font-ui);
+  border-radius: 8px;
+  padding: 6px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: rgba(244, 240, 235, 0.6);
+  font: 700 12px/1.2 var(--pf-font-ui);
   cursor: pointer;
   transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 
 .pf-preview-variant:hover {
-  background: rgba(232, 153, 30, 0.16);
-  border-color: rgba(232, 153, 30, 0.55);
+  background: rgba(232, 153, 30, 0.12);
+  border-color: rgba(232, 153, 30, 0.5);
 }
 
 .pf-preview-variant.pf-is-active {
-  border-color: rgba(245, 174, 58, 0.9);
-  background: rgba(232, 153, 30, 0.22);
+  border-color: rgba(232, 153, 30, 0.6);
+  background: rgba(232, 153, 30, 0.18);
   color: #f5ae3a;
 }
 
@@ -381,6 +383,15 @@
 
 .pf-preview-refine-btn {
   flex: 0 0 auto;
+  border-color: rgba(232, 153, 30, 0.45);
+  background: rgba(232, 153, 30, 0.14);
+  color: #f4f0eb;
+  font-weight: 700;
+}
+
+.pf-preview-refine-btn:hover {
+  background: rgba(232, 153, 30, 0.22);
+  border-color: rgba(232, 153, 30, 0.7);
 }
 
 .pf-preview-cost {

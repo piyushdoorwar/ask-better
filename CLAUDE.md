@@ -87,9 +87,11 @@ prompt-optimizer-ask-better/
 │   ├── models.js             # Model dropdown source: live /v1/models fetch + 24h cache + self-healing selection, no hardcoded lists (loaded before popup.js/options.js)
 │   ├── reports.js            # Reports section (Chart.js usage dashboard, reads usageLog)
 │   ├── history.js            # History section (reads promptHistory, copy/clear)
-│   ├── theme.css             # Global theme (variables, dark mode)
+│   ├── theme.css             # Global theme (variables, dark mode, redesign tokens, Manrope @font-face)
+│   ├── fonts/                # Vendored Manrope variable woff2 (manrope-variable.woff2) — local-first, no remote fetch
 │
 ├── site/                      # Landing page & documentation (GitHub Pages)
+│   ├── fonts/                # Vendored Manrope (same file as ui/fonts)
 │   ├── index.html            # Homepage
 │   ├── styles.css            # Site styling
 │   ├── app.js                # Site scripts
@@ -462,7 +464,7 @@ Full settings page accessible from the popup or extension management UI.
   - Text (light): `#f4f0eb`
   - Muted: `#9a8f83`
 
-- **Typography**: Cantarell, Ubuntu, Inter, Segoe UI, sans-serif
+- **Typography**: Manrope (primary), falling back to Cantarell, Ubuntu, Inter, Segoe UI, sans-serif. Manrope is **vendored locally** as a single variable woff2 (`ui/fonts/manrope-variable.woff2`, weights 400–800) and declared via `@font-face` in `ui/theme.css` — no remote Google-Fonts fetch, preserving the local-first promise. The landing site vendors the same file at `site/fonts/manrope-variable.woff2`. The injected content-script UI (`injected/styles.css`, in-page overlays) keeps its own system font stack (`--pf-font-ui`) since it can't rely on the extension-page font.
 
 - **Components**: Buttons (primary/secondary), inputs, dropdowns, checkboxes
 
@@ -613,6 +615,10 @@ Currently minimal. Can be extended for:
 All color values are stored in `ui/theme.css` as CSS variables for easy theming.
 
 **Single source of truth**: the palette is one warm amber theme kept in sync with `site/styles.css` — there is no purple. The popup/options reference `ui/theme.css` variables. The **injected** UI can't read those variables (content scripts load standalone), so `injected/styles.css` and the inline-styled overlays (`showPhraseBetterChooserOnPage` in `background.js`) use the same amber **literals** (`#e8991e` / `#f5ae3a`). When changing brand color, update `site/styles.css`, `ui/theme.css`, and those injected literals together.
+
+**Redesign tokens** (in `ui/theme.css`): the visual language uses Manrope, larger radii (`--radius: 11px`, `--radius-card: 13px`, `--radius-lg: 16px`, `--radius-xl: 18px`, `--radius-pill`), gradient panel surfaces (`--panel-gradient`, `--panel-gradient-2`), glossy deep shadows (`--card-shadow`, `--card-shadow-lg`), a warm accent-gradient button (`--accent-btn` + `--accent-btn-glow`), and an icon-tile treatment (`--tile-bg` / `--tile-border`). A shared `@keyframes ab-pulse` drives the "connected" status dot. Popup + options consume these; the injected overlays mirror the equivalent literals (16px card radius, `linear-gradient(135deg,#f7b84a,#e8991e)` accept/optimize buttons, `0 24px 60px -18px rgba(0,0,0,.75)` card shadow).
+
+**Popup "Keep my voice" toggle**: the popup exposes the existing `keepUserVoice` setting via a toggle (`#keepUserVoiceToggle`, `ui/popup.js`), the same setting the options **Presets** section shows ("Keep user voice") and that `buildSystemInstruction` in `background.js` applies to Ask Better rewrites. The popup also renders a static, platform-aware `Ctrl/⌘ ⇧ O` shortcut hint (`#shortcutMod` set in `popup.js`).
 
 **Icons are SVG, never emoji** — all visible UI glyphs (Optimize button sparkle, preview/chooser close & check) are inline SVGs using `fill`/`stroke: currentColor`, mirroring `site/assets/icons/`.
 

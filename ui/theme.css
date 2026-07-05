@@ -1,8 +1,19 @@
+/* Manrope — vendored locally (local-first: no remote font fetch).
+   Single variable font covering weights 400–800. */
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('fonts/manrope-variable.woff2') format('woff2-variations'),
+       url('fonts/manrope-variable.woff2') format('woff2');
+}
+
 :root {
   color-scheme: dark;
 
   /* AskBetter font stack */
-  --font-ui: 'Cantarell', 'Ubuntu', 'Inter', 'Segoe UI', sans-serif;
+  --font-ui: 'Manrope', 'Cantarell', 'Ubuntu', 'Inter', 'Segoe UI', sans-serif;
 
   /* Brand palette — single source of truth, synced with site/styles.css */
   --accent: #e8991e;
@@ -60,8 +71,32 @@
 
   /* Radii */
   --radius-sm: 6px;
-  --radius: 8px;
-  --radius-card: 12px;
+  --radius: 11px;
+  --radius-card: 13px;
+  --radius-lg: 16px;
+  --radius-xl: 18px;
+  --radius-pill: 999px;
+
+  /* Redesign surfaces — gradient panels, glossy cards, deep shadows */
+  --panel-gradient: linear-gradient(180deg, #1b1712 0%, #141110 100%);
+  --panel-gradient-2: linear-gradient(180deg, #141110 0%, #100d0b 100%);
+  --card-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --card-shadow-lg: 0 34px 90px -30px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  /* Accent button — warm gradient + glow (redesign primary) */
+  --accent-btn: linear-gradient(135deg, #f7b84a 0%, #e8991e 100%);
+  --accent-btn-glow: 0 8px 20px -6px rgba(232, 153, 30, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  --accent-btn-glow-sm: 0 6px 16px -6px rgba(232, 153, 30, 0.55);
+
+  /* Icon tile (section headers / brand mark) */
+  --tile-bg: linear-gradient(145deg, rgba(232, 153, 30, 0.30), rgba(15, 13, 11, 0.96));
+  --tile-border: rgba(232, 153, 30, 0.40);
+}
+
+/* Pulsing "connected" dot used on the popup + options status */
+@keyframes ab-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(38, 162, 105, 0.45); }
+  50% { box-shadow: 0 0 0 4px rgba(38, 162, 105, 0); }
 }
 
 * {
@@ -98,9 +133,9 @@ body {
   font-family: var(--font-ui);
   color: var(--text);
   background:
-    radial-gradient(900px 520px at 0% 0%, rgba(232, 153, 30, 0.07), transparent 60%),
-    radial-gradient(620px 420px at 100% 100%, rgba(232, 153, 30, 0.04), transparent 60%),
-    var(--bg);
+    radial-gradient(1100px 640px at 12% -6%, rgba(232, 153, 30, 0.10), transparent 60%),
+    radial-gradient(900px 560px at 108% 112%, rgba(232, 153, 30, 0.06), transparent 60%),
+    #0a0908;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -245,10 +280,11 @@ body {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 8px 10px 8px 12px;
-  background: var(--bg-elevated-2);
+  padding: 9px 11px 9px 12px;
+  background: var(--bg-elevated);
   border: 1px solid var(--border-light);
   border-radius: var(--radius);
+  box-shadow: var(--surface-gloss);
   color: var(--text);
   font-family: inherit;
   font-size: 13px;
