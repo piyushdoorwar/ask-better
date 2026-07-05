@@ -222,16 +222,18 @@ const providerInfoEl = document.getElementById("providerInfo");
 const PROVIDER_INFO = {
   gemini: {
     free: true,
+    endpoint: "generativelanguage.googleapis.com",
     rows: [
       { label: "Free API tier", value: "Available (rate-limited)", ok: true },
       { label: "Requires billing", value: "No — free tier works out of the box", ok: true },
-      { label: "Rate limits", value: "15 req/min · 1 500 req/day on free tier" },
+      { label: "Rate limits", value: "15 req/min · 1,500 req/day (free tier)" },
       { label: "Paid usage", value: "Pay-as-you-go via Google AI Studio" },
     ],
     note: "Best starting point — no credit card needed.",
   },
   openai: {
     free: false,
+    endpoint: "api.openai.com",
     rows: [
       { label: "Free API tier", value: "Not available", warn: true },
       { label: "Requires billing", value: "Yes — prepaid credits required", warn: true },
@@ -242,6 +244,7 @@ const PROVIDER_INFO = {
   },
   anthropic: {
     free: false,
+    endpoint: "api.anthropic.com",
     rows: [
       { label: "Free API tier", value: "Not available", warn: true },
       { label: "Requires billing", value: "Yes — prepaid credits required", warn: true },
@@ -981,6 +984,21 @@ function renderProviderInfo(provider) {
   if (!providerInfoEl) return;
   const info = PROVIDER_INFO[provider];
   if (!info) { providerInfoEl.innerHTML = ""; return; }
+  const meta = getProviderMeta(provider);
+  const storedKey = String(currentSettings && currentSettings[meta.keyField] || "").trim();
+  const verified = !!(currentSettings && currentSettings[meta.verifiedField] && storedKey);
+  const statusText = verified ? "Connected & verified" : storedKey ? "Saved — verify to connect" : "API key not set";
+  const statusClass = verified ? " pi-ok" : storedKey ? " pi-warn" : "";
+  const statusRows = [
+    { label: "Status", value: statusText, className: statusClass, dot: verified },
+    { label: "Endpoint", value: info.endpoint },
+    { label: "Model list", value: "Auto-refreshes every 24h" }
+  ].map(r =>
+    `<div class="pi-row">` +
+    `<span class="pi-label">${r.label}</span>` +
+    `<span class="pi-val${r.className || ""}">${r.dot ? '<span class="pi-dot" aria-hidden="true"></span>' : ""}${r.value}</span>` +
+    `</div>`
+  ).join("");
   const rows = info.rows.map(r =>
     `<div class="pi-row">` +
     `<span class="pi-label">${r.label}</span>` +
@@ -988,8 +1006,12 @@ function renderProviderInfo(provider) {
     `</div>`
   ).join("");
   providerInfoEl.innerHTML =
+    `<div class="pi-panel"><div class="pi-rows">${statusRows}</div></div>` +
+    `<div class="pi-panel">` +
+    `<div class="pi-panel-title">Provider details</div>` +
     `<div class="pi-rows">${rows}</div>` +
-    `<p class="pi-note">${info.note}</p>`;
+    `<p class="pi-note"><span class="pi-note-dot" aria-hidden="true"></span>${info.note}</p>` +
+    `</div>`;
 }
 
 function applyKeyLockState() {
