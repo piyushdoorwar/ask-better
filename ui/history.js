@@ -154,8 +154,7 @@
     const bits = [];
     const prov = providerLabel(entry.provider);
     if (prov) bits.push(prov);
-    if (entry.preset) bits.push(String(entry.preset).replace(/_/g, " "));
-    else if (entry.model) bits.push(String(entry.model));
+    if (entry.model) bits.push(String(entry.model));
     if (bits.length) {
       const detail = document.createElement("span");
       detail.className = "history-item-detail";
@@ -172,7 +171,7 @@
     }
     item.appendChild(meta);
 
-    item.appendChild(buildTextBlock("Original", entry.original, true));
+    item.appendChild(buildTextBlock("Original:", entry.original, true));
     item.appendChild(buildTextBlock("Optimized", entry.optimized, false));
 
     const copyOptimized = document.createElement("button");
