@@ -93,12 +93,6 @@
               </span>
               <span class="nav-label">Suggestions</span>
             </button>
-            <button class="nav-btn" data-section="section-custom" type="button">
-              <span class="nav-icon" aria-hidden="true">
-                <span class="icon-mask icon-custom"></span>
-              </span>
-              <span class="nav-label">Custom Prompt Additions</span>
-            </button>
           </div>
 
           <div class="menu-group" data-group="phrasebetter">
@@ -453,31 +447,30 @@
             <div class="grid">
               <div class="field full">
                 <label for="defaultPreset">Default preset</label>
-                <div class="csel">
-                  <select id="defaultPreset" name="defaultPreset" hidden>
-                    <optgroup label="Core Rewrite">
-                      <option value="structured">Story structured</option>
-                      <option value="concise">Concise</option>
-                      <option value="grammar">Fix grammar</option>
-                      <option value="clarity">Improve clarity</option>
-                    </optgroup>
-                    <optgroup label="Communication Style">
-                      <option value="persuasive">Persuasive</option>
-                      <option value="executive">Executive brief</option>
-                      <option value="coaching">Coaching tone</option>
-                      <option value="email_rewrite">Email rephrase/rewrite</option>
-                    </optgroup>
-                    <optgroup label="Critical Thinking">
-                      <option value="devils_advocate">Devil's advocate</option>
-                      <option value="first_principles">First principles</option>
-                      <option value="risk_audit">Risk audit</option>
-                    </optgroup>
-                    <optgroup label="Build and Delivery">
-                      <option value="technical_spec">Technical spec</option>
-                      <option value="implementation_plan">Implementation plan</option>
-                    </optgroup>
-                  </select>
-                </div>
+                <select id="defaultPreset" name="defaultPreset" hidden>
+                  <optgroup label="Core Rewrite">
+                    <option value="structured">Story structured</option>
+                    <option value="concise">Concise</option>
+                    <option value="grammar">Fix grammar</option>
+                    <option value="clarity">Improve clarity</option>
+                  </optgroup>
+                  <optgroup label="Communication Style">
+                    <option value="persuasive">Persuasive</option>
+                    <option value="executive">Executive brief</option>
+                    <option value="coaching">Coaching tone</option>
+                    <option value="email_rewrite">Email rephrase/rewrite</option>
+                  </optgroup>
+                  <optgroup label="Critical Thinking">
+                    <option value="devils_advocate">Devil's advocate</option>
+                    <option value="first_principles">First principles</option>
+                    <option value="risk_audit">Risk audit</option>
+                  </optgroup>
+                  <optgroup label="Build and Delivery">
+                    <option value="technical_spec">Technical spec</option>
+                    <option value="implementation_plan">Implementation plan</option>
+                  </optgroup>
+                </select>
+                <div id="presetChips" class="preset-chips" role="radiogroup" aria-label="Default preset"></div>
                 <div class="toggle-row preset-toggle-row">
                   <label for="keepUserVoice" class="toggle-label-icon">
                     <svg class="csel-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -497,7 +490,7 @@
                 <p class="inline-note">When enabled, rewrites preserve your tone and writing style as much as possible.</p>
               </div>
 
-              <div class="field full">
+              <div class="field full custom-presets-block">
                 <label>Custom presets</label>
                 <div id="customPresetsEditor" class="custom-editor">
                   <div id="customPresetsList" class="custom-preset-list" aria-live="polite"></div>
@@ -521,6 +514,86 @@
                   <button type="button" id="addCustomPresetBtn" class="add-custom-btn">Add preset</button>
                 </div>
                 <p class="inline-note">Custom presets appear in the Default preset list above and in the popup.</p>
+              </div>
+
+              <div class="field full merged-additions">
+                <div class="merged-subhead">
+                  <h3 class="merged-subtitle">Custom prompt additions</h3>
+                  <p class="inline-note">Reusable instructions applied as extra guidance during optimization — stacked on top of the preset above.</p>
+                </div>
+                <div class="quick-additions">
+                  <p class="quick-additions-title">Quick tags (click to add)</p>
+
+                  <div class="quick-category">
+                    <p class="quick-category-title">Tone</p>
+                    <div class="quick-tag-list">
+                      <button type="button" class="quick-tag" data-snippet="Use sassy rephrases where appropriate while staying respectful and helpful.">Sassy rephrases</button>
+                      <button type="button" class="quick-tag" data-snippet="Keep the tone confident, practical, and concise.">Confident tone</button>
+                      <button type="button" class="quick-tag" data-snippet="Use plain language and avoid jargon unless necessary.">Plain language</button>
+                      <button type="button" class="quick-tag" data-snippet="Keep a professional but approachable tone.">Professional and friendly</button>
+                      <button type="button" class="quick-tag" data-snippet="Be direct and cut filler phrases.">Direct no fluff</button>
+                      <button type="button" class="quick-tag" data-snippet="Use an empathetic but firm tone.">Empathetic but firm</button>
+                      <button type="button" class="quick-tag" data-snippet="Use a high-energy and engaging tone without exaggeration.">High-energy voice</button>
+                    </div>
+                  </div>
+
+                  <div class="quick-category">
+                    <p class="quick-category-title">Thinking</p>
+                    <div class="quick-tag-list">
+                      <button type="button" class="quick-tag" data-snippet="Think smart: prioritize high-signal insights and cut low-value filler.">Thinking smart</button>
+                      <button type="button" class="quick-tag" data-snippet="Surface hidden assumptions and tighten weak reasoning.">Assumption check</button>
+                      <button type="button" class="quick-tag" data-snippet="Offer concrete, actionable next steps instead of generic advice.">Action-first</button>
+                      <button type="button" class="quick-tag" data-snippet="Break reasoning into clear step-by-step logic before conclusions.">Step-by-step logic</button>
+                      <button type="button" class="quick-tag" data-snippet="Prioritize recommendations by expected impact and effort.">Impact prioritization</button>
+                      <button type="button" class="quick-tag" data-snippet="Account for practical constraints such as time, budget, and dependencies.">Constraint aware</button>
+                      <button type="button" class="quick-tag" data-snippet="Compare at least two options with trade-offs before final recommendation.">Compare options</button>
+                    </div>
+                  </div>
+
+                  <div class="quick-category">
+                    <p class="quick-category-title">Perspective</p>
+                    <div class="quick-tag-list">
+                      <button type="button" class="quick-tag" data-snippet="Play devil's advocate and challenge weak points before finalizing.">Devil's advocate</button>
+                      <button type="button" class="quick-tag" data-snippet="Include one alternative approach with trade-offs.">Alternative approach</button>
+                      <button type="button" class="quick-tag" data-snippet="Ask one clarifying question if key requirements are ambiguous.">Clarifying question</button>
+                      <button type="button" class="quick-tag" data-snippet="Adopt a user-centric perspective and optimize for real user outcomes.">User-centric lens</button>
+                      <button type="button" class="quick-tag" data-snippet="Use systems thinking and explain upstream and downstream effects.">Systems thinking</button>
+                      <button type="button" class="quick-tag" data-snippet="Review recommendations like a skeptical reviewer and stress-test assumptions.">Skeptical reviewer</button>
+                      <button type="button" class="quick-tag" data-snippet="Include long-term implications, not only short-term gains.">Long-term view</button>
+                    </div>
+                  </div>
+
+                  <div class="quick-category">
+                    <p class="quick-category-title">Output</p>
+                    <div class="quick-tag-list">
+                      <button type="button" class="quick-tag" data-snippet="End with a short summary of key decisions.">Decision summary</button>
+                      <button type="button" class="quick-tag" data-snippet="Keep responses focused and avoid repeating the same point.">No repetition</button>
+                      <button type="button" class="quick-tag" data-snippet="Prioritize concrete examples over abstract explanation.">Use examples</button>
+                      <button type="button" class="quick-tag" data-snippet="Provide a concise checklist the user can execute immediately.">Checklist output</button>
+                      <button type="button" class="quick-tag" data-snippet="Include measurable success criteria where possible.">Success criteria</button>
+                      <button type="button" class="quick-tag" data-snippet="Use short bullets for key points and keep paragraphs compact.">Compact bullets</button>
+                      <button type="button" class="quick-tag" data-snippet="Finish with the single highest-priority next action.">Top next action</button>
+                    </div>
+                  </div>
+                </div>
+
+                <label for="customAdditionInput">Reusable additions</label>
+                <div id="customAdditionsEditor" class="custom-editor">
+                  <div id="customAdditionsList" class="custom-chip-list" aria-live="polite"></div>
+                  <p id="customAdditionsEmpty" class="custom-empty">No additions yet. Add tags above or create your own.</p>
+                </div>
+                <div class="custom-input-row">
+                  <input
+                    id="customAdditionInput"
+                    class="custom-addition-input"
+                    type="text"
+                    placeholder="Add custom attribute (e.g., Think like a strict reviewer)"
+                    autocomplete="off"
+                  />
+                  <button type="button" id="addCustomAdditionBtn" class="add-custom-btn">Add</button>
+                </div>
+                <textarea id="customPromptAdditions" class="visually-hidden" aria-hidden="true" tabindex="-1"></textarea>
+                <p class="inline-note">Saved automatically and sent only to the selected provider API when you run Optimize.</p>
               </div>
             </div>
           </section>
@@ -623,104 +696,6 @@
                   <input id="enableClaude" name="enableClaude" type="checkbox" />
                   <span class="slider"></span>
                 </span>
-              </div>
-            </div>
-          </section>
-
-          <section id="section-custom" class="settings-section">
-            <div class="section-head">
-              <span class="section-badge" aria-hidden="true">
-                <span class="icon-mask icon-custom"></span>
-              </span>
-              <div>
-                <div class="section-title-row">
-                  <h2 class="section-title">Custom Prompt Additions</h2>
-                  <button type="button" class="section-info-btn" data-info-section="custom" aria-label="About Custom Prompt Additions">
-                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
-                      <path d="M12 10.3V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
-                      <circle cx="12" cy="7.6" r="1.1" fill="currentColor"></circle>
-                    </svg>
-                  </button>
-                </div>
-                <p class="section-sub">Add reusable instructions that are applied as extra guidance during optimization.</p>
-              </div>
-            </div>
-            <div class="grid">
-              <div class="field full">
-                <div class="quick-additions">
-                  <p class="quick-additions-title">Quick tags (click to add)</p>
-
-                  <div class="quick-category">
-                    <p class="quick-category-title">Tone</p>
-                    <div class="quick-tag-list">
-                      <button type="button" class="quick-tag" data-snippet="Use sassy rephrases where appropriate while staying respectful and helpful.">Sassy rephrases</button>
-                      <button type="button" class="quick-tag" data-snippet="Keep the tone confident, practical, and concise.">Confident tone</button>
-                      <button type="button" class="quick-tag" data-snippet="Use plain language and avoid jargon unless necessary.">Plain language</button>
-                      <button type="button" class="quick-tag" data-snippet="Keep a professional but approachable tone.">Professional and friendly</button>
-                      <button type="button" class="quick-tag" data-snippet="Be direct and cut filler phrases.">Direct no fluff</button>
-                      <button type="button" class="quick-tag" data-snippet="Use an empathetic but firm tone.">Empathetic but firm</button>
-                      <button type="button" class="quick-tag" data-snippet="Use a high-energy and engaging tone without exaggeration.">High-energy voice</button>
-                    </div>
-                  </div>
-
-                  <div class="quick-category">
-                    <p class="quick-category-title">Thinking</p>
-                    <div class="quick-tag-list">
-                      <button type="button" class="quick-tag" data-snippet="Think smart: prioritize high-signal insights and cut low-value filler.">Thinking smart</button>
-                      <button type="button" class="quick-tag" data-snippet="Surface hidden assumptions and tighten weak reasoning.">Assumption check</button>
-                      <button type="button" class="quick-tag" data-snippet="Offer concrete, actionable next steps instead of generic advice.">Action-first</button>
-                      <button type="button" class="quick-tag" data-snippet="Break reasoning into clear step-by-step logic before conclusions.">Step-by-step logic</button>
-                      <button type="button" class="quick-tag" data-snippet="Prioritize recommendations by expected impact and effort.">Impact prioritization</button>
-                      <button type="button" class="quick-tag" data-snippet="Account for practical constraints such as time, budget, and dependencies.">Constraint aware</button>
-                      <button type="button" class="quick-tag" data-snippet="Compare at least two options with trade-offs before final recommendation.">Compare options</button>
-                    </div>
-                  </div>
-
-                  <div class="quick-category">
-                    <p class="quick-category-title">Perspective</p>
-                    <div class="quick-tag-list">
-                      <button type="button" class="quick-tag" data-snippet="Play devil's advocate and challenge weak points before finalizing.">Devil's advocate</button>
-                      <button type="button" class="quick-tag" data-snippet="Include one alternative approach with trade-offs.">Alternative approach</button>
-                      <button type="button" class="quick-tag" data-snippet="Ask one clarifying question if key requirements are ambiguous.">Clarifying question</button>
-                      <button type="button" class="quick-tag" data-snippet="Adopt a user-centric perspective and optimize for real user outcomes.">User-centric lens</button>
-                      <button type="button" class="quick-tag" data-snippet="Use systems thinking and explain upstream and downstream effects.">Systems thinking</button>
-                      <button type="button" class="quick-tag" data-snippet="Review recommendations like a skeptical reviewer and stress-test assumptions.">Skeptical reviewer</button>
-                      <button type="button" class="quick-tag" data-snippet="Include long-term implications, not only short-term gains.">Long-term view</button>
-                    </div>
-                  </div>
-
-                  <div class="quick-category">
-                    <p class="quick-category-title">Output</p>
-                    <div class="quick-tag-list">
-                      <button type="button" class="quick-tag" data-snippet="End with a short summary of key decisions.">Decision summary</button>
-                      <button type="button" class="quick-tag" data-snippet="Keep responses focused and avoid repeating the same point.">No repetition</button>
-                      <button type="button" class="quick-tag" data-snippet="Prioritize concrete examples over abstract explanation.">Use examples</button>
-                      <button type="button" class="quick-tag" data-snippet="Provide a concise checklist the user can execute immediately.">Checklist output</button>
-                      <button type="button" class="quick-tag" data-snippet="Include measurable success criteria where possible.">Success criteria</button>
-                      <button type="button" class="quick-tag" data-snippet="Use short bullets for key points and keep paragraphs compact.">Compact bullets</button>
-                      <button type="button" class="quick-tag" data-snippet="Finish with the single highest-priority next action.">Top next action</button>
-                    </div>
-                  </div>
-                </div>
-
-                <label for="customAdditionInput">Reusable additions</label>
-                <div id="customAdditionsEditor" class="custom-editor">
-                  <div id="customAdditionsList" class="custom-chip-list" aria-live="polite"></div>
-                  <p id="customAdditionsEmpty" class="custom-empty">No additions yet. Add tags above or create your own.</p>
-                </div>
-                <div class="custom-input-row">
-                  <input
-                    id="customAdditionInput"
-                    class="custom-addition-input"
-                    type="text"
-                    placeholder="Add custom attribute (e.g., Think like a strict reviewer)"
-                    autocomplete="off"
-                  />
-                  <button type="button" id="addCustomAdditionBtn" class="add-custom-btn">Add</button>
-                </div>
-                <textarea id="customPromptAdditions" class="visually-hidden" aria-hidden="true" tabindex="-1"></textarea>
-                  <p class="inline-note">Saved automatically and sent only to the selected provider API when you run Optimize.</p>
               </div>
             </div>
           </section>

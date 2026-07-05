@@ -440,7 +440,6 @@ const SECTION_SLUGS = {
   "integrations": "section-integrations",
   "ask-better-presets": "section-presets",
   "ask-better-suggestions": "section-askbetter-suggestions",
-  "custom-prompt-additions": "section-custom",
   "phrase-better-presets": "section-phrasebetter-presets",
   "phrase-better-suggestions": "section-phrasebetter-suggestions"
 };
@@ -552,7 +551,9 @@ function bindAutoSave() {
   });
 
   defaultPresetEl.addEventListener("change", async () => {
-    await savePartial({ defaultPreset: normalizePreset(defaultPresetEl.value) });
+    const value = normalizePreset(defaultPresetEl.value);
+    syncPresetChipSelection(value);
+    await savePartial({ defaultPreset: value });
   });
 
   keepUserVoiceEl.addEventListener("change", async () => {
@@ -743,10 +744,7 @@ function persistCustomPresets() {
   const current = currentSettings || {};
   const normalizedDefault = normalizePreset(current.defaultPreset || defaultPresetEl.value);
   defaultPresetEl.value = normalizedDefault;
-  const shell = defaultPresetEl.closest(".csel");
-  if (shell && shell._rebuildCustomSelect) {
-    shell._rebuildCustomSelect();
-  }
+  renderPresetChips();
 
   window.clearTimeout(customSaveTimer);
   setStatus("Saving...");
@@ -812,6 +810,61 @@ function renderCustomPresetOptions() {
     group.appendChild(option);
   }
   defaultPresetEl.appendChild(group);
+}
+
+// Render the Default-preset picker as category-grouped chips backed by the hidden
+// #defaultPreset <select> (still the source of truth for save/popup). Reads the
+// select's optgroups so built-in and custom presets both become chips.
+const presetChipsEl = document.getElementById("presetChips");
+
+function renderPresetChips() {
+  if (!presetChipsEl) return;
+  const selected = defaultPresetEl.value;
+  presetChipsEl.textContent = "";
+  for (const group of defaultPresetEl.querySelectorAll("optgroup")) {
+    const options = Array.from(group.querySelectorAll("option"));
+    if (!options.length) continue;
+
+    const cat = document.createElement("div");
+    cat.className = "preset-chip-category";
+
+    const title = document.createElement("p");
+    title.className = "preset-chip-category-title";
+    title.textContent = group.label;
+    cat.appendChild(title);
+
+    const list = document.createElement("div");
+    list.className = "preset-chip-list";
+    for (const opt of options) {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "preset-chip";
+      chip.dataset.value = opt.value;
+      chip.textContent = opt.textContent;
+      chip.setAttribute("role", "radio");
+      const isSelected = opt.value === selected;
+      chip.classList.toggle("is-selected", isSelected);
+      chip.setAttribute("aria-checked", isSelected ? "true" : "false");
+      chip.addEventListener("click", async () => {
+        const value = normalizePreset(opt.value);
+        defaultPresetEl.value = value;
+        syncPresetChipSelection(value);
+        await savePartial({ defaultPreset: value });
+      });
+      list.appendChild(chip);
+    }
+    cat.appendChild(list);
+    presetChipsEl.appendChild(cat);
+  }
+}
+
+function syncPresetChipSelection(value) {
+  if (!presetChipsEl) return;
+  for (const chip of presetChipsEl.querySelectorAll(".preset-chip")) {
+    const isSelected = chip.dataset.value === value;
+    chip.classList.toggle("is-selected", isSelected);
+    chip.setAttribute("aria-checked", isSelected ? "true" : "false");
+  }
 }
 
 function addCustomAdditionFromInput() {
@@ -1021,6 +1074,7 @@ function fillForm(settings) {
   renderCustomPresetOptions();
   renderCustomPresets();
   defaultPresetEl.value = normalizePreset(normalized.defaultPreset);
+  renderPresetChips();
   setCountCards(askBetterOptionCountEl, normalized.askBetterOptionCount);
   keepUserVoiceEl.checked = !!normalized.keepUserVoice;
   enableAIEl.checked = !!normalized.enableAI;

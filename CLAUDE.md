@@ -249,9 +249,9 @@ Pattern: **Message-based communication** between background script, content scri
 
 ### Custom User Presets
 
-- Beyond the built-in presets, users can define their own `{ id, name, instruction }` presets in **Options → Presets → Custom presets**.
+- Beyond the built-in presets, users can define their own `{ id, name, instruction }` presets in **Options → AskBetter → Presets & Additions → Custom presets**.
 - Stored in `chrome.storage.local` under `settings.customPresets`; ids are namespaced `custom_*`.
-- Custom presets appear in the Default-preset dropdown (Options + popup) under a "Custom" optgroup.
+- Custom presets appear as a **Custom** group in the options Default-preset chips (via a hidden-select `optgroup[data-custom]`, see Ask Better presets note in §9) and in the popup's Default-preset dropdown.
 - The background worker resolves the instruction in `getPresetInstruction(preset, settings)`; `normalizePreset(value, settings)` validates custom ids against the stored list.
 
 ### 15+ Presets
@@ -425,10 +425,12 @@ Full settings page accessible from the popup or extension management UI.
 **Sidebar menu is grouped by app**, each group wrapped in a `<div class="menu-group" data-group="...">` (tab-style: one `.settings-section` shown at a time, switched by `activateSection` via each nav button's `data-section`). Group headers use `.menu-title` / `.menu-title--group`:
 
 - **Common** — `section-models` (provider, model, and the global **Enable AI** toggle), `section-mode` (**both** Ask Better + Phrase Better on/off), `section-reports` (local usage dashboard), `section-history` (local rewrite history), `section-security` (API key verify + clear data)
-- **AskBetter** — `section-integrations` (Enable on ChatGPT/Gemini/Claude), `section-presets`, `section-askbetter-suggestions` (**how many rewrite options** the preview offers, `askBetterOptionCount`), `section-custom`
+- **AskBetter** — `section-integrations` (Enable on ChatGPT/Gemini/Claude), `section-presets` (**Presets & Additions** — merged panel: default-preset chips + Keep-user-voice, **Custom presets**, and **Custom prompt additions**/quick tags; the old standalone `section-custom` was folded in here), `section-askbetter-suggestions` (**how many rewrite options** the preview offers, `askBetterOptionCount`)
 - **PhraseBetter** — `section-phrasebetter-presets` (**preset** + on-top **adjustment toggles**), `section-phrasebetter-suggestions` (how many options to show)
 
 **Deep-linkable sections (URL hash):** each section maps to a friendly hash slug via `SECTION_SLUGS` in `ui/options.js` (e.g. `#phrase-better-presets`, `#ask-better-suggestions`, `#history`). `activateSection(id, writeUrl=true)` writes the slug with `history.replaceState` (which never fires `hashchange`, so no routing loop); `applyHashRoute()` (called on load + `hashchange`) opens the section the hash points at, skipping any section whose `.menu-group` is hidden. History is special-cased as `#history-page-N`: `ui/history.js` exposes `window.AskBetterHistory` (`goToPage` / `getPage` / `refresh`), reads the initial page from the hash at init, and dispatches an `askbetter:history-page` CustomEvent on page change that `bindHashRouting()` mirrors back into the URL — so a refresh returns to the exact section **and** history page.
+
+**Ask Better presets (chips + merged panel):** `section-presets` is the merged **Presets & Additions** panel. The Default preset is rendered as category-grouped **chips** (`.preset-chips` / `.preset-chip`, selected chip gets `.is-selected` + `--accent-gradient` amber styling) by `renderPresetChips()` in `ui/options.js`, backed by the hidden `#defaultPreset` `<select>` (still the source of truth for save + popup). Chips are built from the select's `<optgroup>`s, so custom presets (added as `optgroup[data-custom]` by `renderCustomPresetOptions()`) automatically appear as a **Custom** chip group. `syncPresetChipSelection()` mirrors the active chip on change. Below the chips: the **Keep user voice** toggle, the **Custom presets** editor (`.custom-presets-block`), and the folded-in **Custom prompt additions** block (`.merged-additions` — quick tags + reusable additions). Thin `border-top` dividers separate the three blocks.
 
 **Phrase Better presets (card grid):** `section-phrasebetter-presets` renders the four presets as a 2×2 `.preset-card-grid` of `.preset-card` buttons (selected card gets `.is-selected` + `--accent-glow`) backed by a hidden `#phraseBetterPreset` `<select>` (still the source of truth). `phraseBetterPresetCards` + `syncPhrasePresetCards()` in `ui/options.js` keep cards and select in sync; the optional adjustments are the same four toggles in a 2×2 `.toggle-grid` (no longer full-width rows).
 
