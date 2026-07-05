@@ -68,8 +68,8 @@ const SECTION_INFO_CONTENT = {
     title: "History",
     description: "A local-only list of your most recent rewrites (original → optimized).",
     points: [
-      "Each successful Optimize, Refine, and Phrase Better result is saved with its provider and model.",
-      "Copy any original or optimized text to reuse it elsewhere.",
+      "Each successful Optimize, Refine, and Phrase Better result is saved with its provider and preset/model.",
+      "Copy any optimized text to reuse it elsewhere.",
       "Only the most recent 100 entries are kept, and everything is stored in this browser profile.",
       "Clear stored key/data in the Security section (or the Clear history button here) wipes this list."
     ]

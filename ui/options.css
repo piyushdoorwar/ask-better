@@ -1379,7 +1379,7 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        margin-bottom: 12px;
+        margin-bottom: 16px;
       }
 
       .history-count {
@@ -1407,48 +1407,68 @@
       .history-list {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 14px;
       }
 
       .history-item {
-        border: 1px solid var(--border);
-        background: var(--bg-panel);
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(24, 22, 18, 0.86);
         border-radius: var(--radius-card);
-        padding: 15px 16px;
+        padding: 18px 56px 18px 20px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
       }
 
       .history-item-meta {
         display: flex;
-        flex-wrap: wrap;
         align-items: center;
-        gap: 8px;
-        margin-bottom: 8px;
-        font-size: 11px;
+        gap: 10px;
+        margin-bottom: 14px;
+        min-width: 0;
+        font-size: 13px;
         color: var(--text-muted);
       }
 
       .history-tag {
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        font-weight: 600;
+        font-size: 12px;
+        font-weight: 800;
         color: var(--accent);
+        background: rgba(232, 153, 30, 0.14);
+        border: 1px solid rgba(232, 153, 30, 0.42);
+        border-radius: 6px;
+        padding: 4px 9px;
+        white-space: nowrap;
+      }
+
+      .history-item-detail {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .history-time {
+        margin-left: auto;
+        white-space: nowrap;
+        color: var(--text-muted);
       }
 
       .history-item-block {
-        margin: 6px 0;
+        margin: 8px 0 0;
       }
 
       .history-item-label {
-        display: block;
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
+        display: inline;
+        font-size: 14px;
+        text-transform: none;
+        letter-spacing: 0;
         color: var(--text-muted);
-        margin-bottom: 2px;
+        margin-right: 4px;
       }
 
       .history-item-text {
-        font-size: 13px;
+        font-size: 15px;
         color: var(--text);
         line-height: 1.45;
         white-space: pre-wrap;
@@ -1456,30 +1476,102 @@
       }
 
       .history-item-text.is-original {
+        display: inline;
         color: var(--text-secondary);
       }
 
-      .history-item-actions {
-        display: flex;
-        gap: 8px;
-        margin-top: 10px;
+      .history-item-block:has(.history-item-text:not(.is-original)) {
+        border-left: 2px solid rgba(232, 153, 30, 0.85);
+        padding-left: 14px;
+        margin-top: 12px;
       }
 
-      .history-action-btn {
+      .history-item-block:has(.history-item-text:not(.is-original)) .history-item-label {
+        display: none;
+      }
+
+      .history-copy-btn {
+        position: absolute;
+        right: 16px;
+        bottom: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
         border: 1px solid var(--border);
         background: var(--bg-elevated-2);
         color: var(--text-secondary);
+        border-radius: 9px;
+        cursor: pointer;
+        transition: background 120ms ease, color 120ms ease, border-color 120ms ease, transform 120ms ease;
+      }
+
+      .history-copy-btn:hover {
+        color: var(--text);
+        border-color: var(--accent);
+        transform: translateY(-1px);
+      }
+
+      .history-copy-btn.is-copied {
+        color: var(--green);
+        border-color: rgba(48, 211, 132, 0.4);
+        background: rgba(48, 211, 132, 0.1);
+      }
+
+      .history-copy-icon,
+      .history-check-icon {
+        width: 17px;
+        height: 17px;
+      }
+
+      .history-check-icon,
+      .history-copy-btn.is-copied .history-copy-icon {
+        display: none;
+      }
+
+      .history-copy-btn.is-copied .history-check-icon {
+        display: block;
+      }
+
+      .history-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .history-pagination[hidden] {
+        display: none;
+      }
+
+      .history-page-status {
+        color: var(--text-muted);
+        font-size: 12px;
+      }
+
+      .history-page-btn {
+        border: 1px solid var(--border);
+        background: var(--bg-elevated);
+        color: var(--text-secondary);
         font-family: inherit;
         font-size: 12px;
-        padding: 5px 12px;
+        font-weight: 700;
+        padding: 7px 12px;
         border-radius: var(--radius-sm);
         cursor: pointer;
         transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
       }
 
-      .history-action-btn:hover {
+      .history-page-btn:hover:not(:disabled) {
         color: var(--text);
         border-color: var(--accent);
+      }
+
+      .history-page-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
       }
 
       .history-empty {

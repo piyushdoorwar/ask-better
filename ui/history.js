@@ -8,6 +8,7 @@
 (function () {
   const PROVIDER_LABELS = { gemini: "Gemini", openai: "OpenAI", anthropic: "Anthropic" };
   const MODE_LABELS = { ask_better: "Ask Better", phrase_better: "Phrase Better" };
+  const PAGE_SIZE = 5;
 
   const els = {};
   function el(id) {
@@ -16,6 +17,7 @@
   }
 
   let entries = null;
+  let currentPage = 1;
 
   function providerLabel(p) {
     const v = String(p || "").toLowerCase();
@@ -31,6 +33,29 @@
       hour: "numeric",
       minute: "2-digit"
     });
+  }
+
+  function formatRelativeWhen(ts) {
+    const value = Number(ts) || 0;
+    if (!value) return "";
+    const diffMs = Date.now() - value;
+    if (!Number.isFinite(diffMs)) return formatWhen(ts);
+    const absMs = Math.abs(diffMs);
+    const suffix = diffMs < 0 ? "from now" : "ago";
+    const minute = 60 * 1000;
+    const hour = 60 * minute;
+    const day = 24 * hour;
+    if (absMs < minute) return "Just now";
+    if (absMs < hour) {
+      const minutes = Math.round(absMs / minute);
+      return `${minutes}m ${suffix}`;
+    }
+    if (absMs < day) {
+      const hours = Math.round(absMs / hour);
+      return `${hours}h ${suffix}`;
+    }
+    if (absMs < 2 * day && diffMs >= 0) return "Yesterday";
+    return formatWhen(ts);
   }
 
   async function loadHistory() {
@@ -67,10 +92,14 @@
       }
     }
     if (button) {
-      const original = button.textContent;
-      button.textContent = "Copied";
+      const originalLabel = button.getAttribute("aria-label") || "Copy optimized version";
+      button.classList.add("is-copied");
+      button.setAttribute("aria-label", "Copied optimized version");
       window.clearTimeout(button._copyTimer);
-      button._copyTimer = window.setTimeout(() => { button.textContent = original; }, 1200);
+      button._copyTimer = window.setTimeout(() => {
+        button.classList.remove("is-copied");
+        button.setAttribute("aria-label", originalLabel);
+      }, 1200);
     }
   }
 
@@ -104,41 +133,89 @@
     meta.appendChild(tag);
 
     const bits = [];
-    const when = formatWhen(entry.ts);
-    if (when) bits.push(when);
     const prov = providerLabel(entry.provider);
     if (prov) bits.push(prov);
-    if (entry.model) bits.push(String(entry.model));
+    if (entry.preset) bits.push(String(entry.preset).replace(/_/g, " "));
+    else if (entry.model) bits.push(String(entry.model));
     if (bits.length) {
       const detail = document.createElement("span");
+      detail.className = "history-item-detail";
       detail.textContent = bits.join(" · ");
       meta.appendChild(detail);
+    }
+
+    const when = formatRelativeWhen(entry.ts);
+    if (when) {
+      const time = document.createElement("span");
+      time.className = "history-time";
+      time.textContent = when;
+      meta.appendChild(time);
     }
     item.appendChild(meta);
 
     item.appendChild(buildTextBlock("Original", entry.original, true));
     item.appendChild(buildTextBlock("Optimized", entry.optimized, false));
 
-    const actions = document.createElement("div");
-    actions.className = "history-item-actions";
-
     const copyOptimized = document.createElement("button");
     copyOptimized.type = "button";
-    copyOptimized.className = "history-action-btn";
-    copyOptimized.textContent = "Copy optimized";
+    copyOptimized.className = "history-copy-btn";
+    copyOptimized.setAttribute("aria-label", "Copy optimized version");
+    copyOptimized.title = "Copy optimized version";
+    copyOptimized.innerHTML = `
+      <svg class="history-copy-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="9" y="9" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.8"></rect>
+        <path d="M6 15H5.8C4.81 15 4 14.19 4 13.2V5.8C4 4.81 4.81 4 5.8 4H13.2C14.19 4 15 4.81 15 5.8V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+      </svg>
+      <svg class="history-check-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M5 12.5L9.2 16.5L19 7" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>`;
     copyOptimized.addEventListener("click", () => copyText(entry.optimized, copyOptimized));
-
-    const copyOriginal = document.createElement("button");
-    copyOriginal.type = "button";
-    copyOriginal.className = "history-action-btn";
-    copyOriginal.textContent = "Copy original";
-    copyOriginal.addEventListener("click", () => copyText(entry.original, copyOriginal));
-
-    actions.appendChild(copyOptimized);
-    actions.appendChild(copyOriginal);
-    item.appendChild(actions);
+    item.appendChild(copyOptimized);
 
     return item;
+  }
+
+  function renderPagination(totalItems) {
+    const pagination = el("historyPagination");
+    if (!pagination) return;
+
+    const pageCount = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+    currentPage = Math.min(Math.max(currentPage, 1), pageCount);
+    pagination.textContent = "";
+    pagination.hidden = totalItems <= PAGE_SIZE;
+    if (pagination.hidden) return;
+
+    const prev = document.createElement("button");
+    prev.type = "button";
+    prev.className = "history-page-btn";
+    prev.textContent = "Previous";
+    prev.disabled = currentPage === 1;
+    prev.addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage -= 1;
+        render();
+      }
+    });
+
+    const label = document.createElement("span");
+    label.className = "history-page-status";
+    label.textContent = `Page ${currentPage} of ${pageCount}`;
+
+    const next = document.createElement("button");
+    next.type = "button";
+    next.className = "history-page-btn";
+    next.textContent = "Next";
+    next.disabled = currentPage === pageCount;
+    next.addEventListener("click", () => {
+      if (currentPage < pageCount) {
+        currentPage += 1;
+        render();
+      }
+    });
+
+    pagination.appendChild(prev);
+    pagination.appendChild(label);
+    pagination.appendChild(next);
   }
 
   function render() {
@@ -149,8 +226,12 @@
     if (!list) return;
 
     const items = Array.isArray(entries) ? entries : [];
+    const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+    currentPage = Math.min(Math.max(currentPage, 1), pageCount);
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const visibleItems = items.slice(start, start + PAGE_SIZE);
     list.textContent = "";
-    for (const entry of items) {
+    for (const entry of visibleItems) {
       list.appendChild(renderItem(entry));
     }
 
@@ -159,9 +240,10 @@
     if (clearBtn) clearBtn.hidden = !hasItems;
     if (count) {
       count.textContent = hasItems
-        ? `${items.length} ${items.length === 1 ? "entry" : "entries"} (most recent first)`
+        ? `Showing ${start + 1}-${start + visibleItems.length} of ${items.length} records`
         : "";
     }
+    renderPagination(items.length);
   }
 
   async function refresh() {
@@ -181,6 +263,7 @@
         // best-effort
       }
       entries = [];
+      currentPage = 1;
       render();
     });
   }
