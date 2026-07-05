@@ -362,56 +362,66 @@
                 <p class="section-sub">Choose how Phrase Better rewrites your selected text.</p>
               </div>
             </div>
-            <div class="grid">
-              <div class="field full">
-                <label for="phraseBetterPreset">Phrase Better preset</label>
-                <div class="csel">
-                  <select id="phraseBetterPreset" name="phraseBetterPreset" hidden>
-                    <option value="fix_grammar">Fix grammar (default)</option>
-                    <option value="rephrase">Rephrase</option>
-                    <option value="casual">Casual reply</option>
-                    <option value="formal">Formal message</option>
-                  </select>
-                </div>
-                <p class="inline-note"><strong>Fix grammar</strong> (default) makes the smallest edits to fix grammar, spelling, and punctuation while keeping your wording. The other presets change the tone or phrasing more.</p>
-              </div>
+            <select id="phraseBetterPreset" name="phraseBetterPreset" hidden>
+              <option value="fix_grammar">Fix grammar (default)</option>
+              <option value="rephrase">Rephrase</option>
+              <option value="casual">Casual reply</option>
+              <option value="formal">Formal message</option>
+            </select>
+            <div class="preset-card-grid" role="radiogroup" aria-label="Phrase Better preset">
+              <button type="button" class="preset-card" data-preset="fix_grammar" role="radio" aria-checked="true">
+                <span class="preset-card-title">Fix grammar (default)</span>
+                <span class="preset-card-desc">Smallest edits for grammar, spelling &amp; punctuation.</span>
+              </button>
+              <button type="button" class="preset-card" data-preset="rephrase" role="radio" aria-checked="false">
+                <span class="preset-card-title">Rephrase</span>
+                <span class="preset-card-desc">Reword more freely while keeping the meaning.</span>
+              </button>
+              <button type="button" class="preset-card" data-preset="casual" role="radio" aria-checked="false">
+                <span class="preset-card-title">Casual reply</span>
+                <span class="preset-card-desc">Relaxed, conversational tone.</span>
+              </button>
+              <button type="button" class="preset-card" data-preset="formal" role="radio" aria-checked="false">
+                <span class="preset-card-title">Formal message</span>
+                <span class="preset-card-desc">Polished, professional phrasing.</span>
+              </button>
             </div>
             <div class="toggle-grid">
-              <p class="adjust-label">Optional adjustments — stack on top of the preset, all off by default.</p>
-              <div class="toggle-row full">
+              <p class="adjust-label">Optional adjustments — stack on top of the preset.</p>
+              <div class="toggle-row">
                 <div>
                   <label for="phraseBetterKeepVoice">Keep my voice</label>
-                  <p class="inline-note">Stay close to your original wording and style — the lightest change that still fits the preset.</p>
+                  <p class="inline-note">Stay close to your original wording.</p>
                 </div>
                 <span class="switch">
                   <input id="phraseBetterKeepVoice" name="phraseBetterKeepVoice" type="checkbox" />
                   <span class="slider"></span>
                 </span>
               </div>
-              <div class="toggle-row full">
+              <div class="toggle-row">
                 <div>
                   <label for="phraseBetterPolish">Polish wording</label>
-                  <p class="inline-note">Upgrade word choice and smooth awkward phrasing for a more refined result.</p>
+                  <p class="inline-note">Upgrade word choice, smooth phrasing.</p>
                 </div>
                 <span class="switch">
                   <input id="phraseBetterPolish" name="phraseBetterPolish" type="checkbox" />
                   <span class="slider"></span>
                 </span>
               </div>
-              <div class="toggle-row full">
+              <div class="toggle-row">
                 <div>
                   <label for="phraseBetterWit">Add a little wit</label>
-                  <p class="inline-note">Give it a light, playful, slightly cheeky edge while staying tasteful.</p>
+                  <p class="inline-note">Light, playful edge — stays tasteful.</p>
                 </div>
                 <span class="switch">
                   <input id="phraseBetterWit" name="phraseBetterWit" type="checkbox" />
                   <span class="slider"></span>
                 </span>
               </div>
-              <div class="toggle-row full">
+              <div class="toggle-row">
                 <div>
                   <label for="phraseBetterHumanize">Humanize</label>
-                  <p class="inline-note">Strip the AI tells — no em dashes, no emojis, no robotic stock phrasing. Reads like a person wrote it.</p>
+                  <p class="inline-note">Strip AI tells — reads like a person.</p>
                 </div>
                 <span class="switch">
                   <input id="phraseBetterHumanize" name="phraseBetterHumanize" type="checkbox" />

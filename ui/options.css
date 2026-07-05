@@ -1035,6 +1035,53 @@
         white-space: nowrap;
       }
 
+      .preset-card-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .preset-card {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        text-align: left;
+        padding: 14px 16px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-card);
+        background: var(--bg-panel);
+        cursor: pointer;
+        transition: border-color 120ms, background 120ms, box-shadow 120ms;
+      }
+
+      .preset-card:hover {
+        border-color: var(--border-light);
+        background: var(--bg-elevated-2);
+      }
+
+      .preset-card:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--focus);
+      }
+
+      .preset-card.is-selected {
+        border-color: var(--accent);
+        background: var(--accent-glow);
+      }
+
+      .preset-card-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .preset-card-desc {
+        font-size: 12px;
+        line-height: 1.4;
+        color: var(--text-secondary);
+      }
+
       .toggle-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;

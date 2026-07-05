@@ -185,6 +185,16 @@ function bindCountCards(container, settingKey, normalizeFn) {
   });
 }
 const phraseBetterPresetEl = document.getElementById("phraseBetterPreset");
+const phraseBetterPresetCards = Array.from(document.querySelectorAll(".preset-card[data-preset]"));
+
+function syncPhrasePresetCards(value) {
+  phraseBetterPresetCards.forEach((card) => {
+    const selected = card.dataset.preset === value;
+    card.classList.toggle("is-selected", selected);
+    card.setAttribute("aria-checked", selected ? "true" : "false");
+  });
+}
+
 const phraseBetterKeepVoiceEl = document.getElementById("phraseBetterKeepVoice");
 const phraseBetterPolishEl = document.getElementById("phraseBetterPolish");
 const phraseBetterWitEl = document.getElementById("phraseBetterWit");
@@ -481,7 +491,18 @@ function bindAutoSave() {
   bindCountCards(phraseBetterOptionCountEl, "phraseBetterOptionCount", normalizePhraseBetterOptionCount);
 
   phraseBetterPresetEl.addEventListener("change", async () => {
-    await savePartial({ phraseBetterPreset: normalizePhrasePreset(phraseBetterPresetEl.value) });
+    const value = normalizePhrasePreset(phraseBetterPresetEl.value);
+    syncPhrasePresetCards(value);
+    await savePartial({ phraseBetterPreset: value });
+  });
+
+  phraseBetterPresetCards.forEach((card) => {
+    card.addEventListener("click", async () => {
+      const value = normalizePhrasePreset(card.dataset.preset);
+      phraseBetterPresetEl.value = value;
+      syncPhrasePresetCards(value);
+      await savePartial({ phraseBetterPreset: value });
+    });
   });
 
   phraseBetterKeepVoiceEl.addEventListener("change", async () => {
@@ -921,6 +942,7 @@ function fillForm(settings) {
   enablePhraseBetterModeEl.checked = normalized.enablePhraseBetterMode !== false;
   setCountCards(phraseBetterOptionCountEl, normalized.phraseBetterOptionCount);
   phraseBetterPresetEl.value = normalizePhrasePreset(normalized.phraseBetterPreset);
+  syncPhrasePresetCards(phraseBetterPresetEl.value);
   phraseBetterKeepVoiceEl.checked = !!normalized.phraseBetterKeepVoice;
   phraseBetterPolishEl.checked = !!normalized.phraseBetterPolish;
   phraseBetterWitEl.checked = !!normalized.phraseBetterWit;
