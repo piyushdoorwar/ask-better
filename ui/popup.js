@@ -41,16 +41,7 @@ const modelLabelEl = document.getElementById("modelLabel");
 const modelSelectEl = document.getElementById("modelSelect");
 const modelHintEl = document.getElementById("modelHint");
 const keepUserVoiceToggle = document.getElementById("keepUserVoiceToggle");
-const shortcutModEl = document.getElementById("shortcutMod");
 const openSettingsBtn = document.getElementById("openSettingsBtn");
-
-// Show the platform-appropriate modifier in the shortcut hint (⌘ on macOS).
-if (shortcutModEl) {
-  const isMac = /Mac|iPhone|iPad|iPod/i.test(
-    (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || ""
-  );
-  shortcutModEl.textContent = isMac ? "⌘" : "Ctrl";
-}
 
 init().catch(() => {
   statusText.textContent = "Unable to load settings.";
