@@ -470,7 +470,11 @@ Full settings page accessible from the popup or extension management UI.
   - Text (light): `#f4f0eb`
   - Muted: `#9a8f83`
 
-- **Typography**: Manrope (primary), falling back to Cantarell, Ubuntu, Inter, Segoe UI, sans-serif. Manrope is **vendored locally** as a single variable woff2 (`ui/fonts/manrope-variable.woff2`, weights 400–800) and declared via `@font-face` in `ui/theme.css` — no remote Google-Fonts fetch, preserving the local-first promise. The landing site vendors the same file at `site/fonts/manrope-variable.woff2`. The injected content-script UI (`injected/styles.css`, in-page overlays) keeps its own system font stack (`--pf-font-ui`) since it can't rely on the extension-page font.
+- **Typography**: Manrope everywhere, falling back to Cantarell, Ubuntu, Inter, Segoe UI, sans-serif. Manrope is **vendored locally** as a single variable woff2 (`ui/fonts/manrope-variable.woff2`, weights 400–800) and declared via `@font-face` in `ui/theme.css` — no remote Google-Fonts fetch, preserving the local-first promise. The landing site vendors the same file at `site/fonts/manrope-variable.woff2`.
+  - **Extension pages** (popup/options): `ui/theme.css` sets `--font-ui` (Manrope-first) on `body` **and** a global `button, input, select, textarea, optgroup { font-family: var(--font-ui) }` reset — form controls don't inherit `font-family` by default, so without this reset buttons/inputs silently fell back to the system font.
+  - **Injected content-script UI** (`injected/styles.css`: Optimize button, preview card): declares its own `@font-face` for Manrope (`src: url("../ui/fonts/manrope-variable.woff2")`) and `--pf-font-ui` is now Manrope-first. Every interactive element sets `font: … var(--pf-font-ui)` explicitly.
+  - **Inline-styled overlays injected on any page** (`showPhraseBetterChooserOnPage` / `showPageToastOnPage` / `showPageBusyIndicatorOnPage` in `background.js`): each injects a shared `<style id="askbetter-manrope-font">` `@font-face` (once) via `chrome.runtime.getURL("ui/fonts/manrope-variable.woff2")` and uses a Manrope-first `FONT` string; chooser `<button>`s set `fontFamily = "inherit"` since they don't inherit the card font.
+  - The font is exposed to page origins via `manifest.json` `web_accessible_resources` (`ui/fonts/manrope-variable.woff2`, `matches: ["<all_urls>"]`) so both the injected CSS and the runtime-URL overlays can load it on any site.
 
 - **Components**: Buttons (primary/secondary), inputs, dropdowns, checkboxes
 

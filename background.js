@@ -1540,6 +1540,23 @@ function showPhraseBetterChooserOnPage(options, tokenCount) {
     existing.remove();
   }
 
+  // Load the vendored Manrope font into the page (once) so injected overlays
+  // match the extension UI. Font is web-accessible; resolved via runtime URL.
+  try {
+    const fontStyleId = "askbetter-manrope-font";
+    if (!document.getElementById(fontStyleId)) {
+      const fontUrl = chrome.runtime.getURL("ui/fonts/manrope-variable.woff2");
+      const fontStyle = document.createElement("style");
+      fontStyle.id = fontStyleId;
+      fontStyle.textContent =
+        "@font-face{font-family:'Manrope';font-style:normal;font-weight:400 800;font-display:swap;" +
+        "src:url('" + fontUrl + "') format('woff2-variations'),url('" + fontUrl + "') format('woff2');}";
+      (document.head || document.documentElement).appendChild(fontStyle);
+    }
+  } catch (_fontError) {
+    /* font is a progressive enhancement; ignore failures */
+  }
+
   const variants = Array.isArray(options) ? options.filter((option) => String(option || "").trim()) : [];
   if (!variants.length) {
     return { ok: false, reason: "NO_OPTIONS" };
@@ -1644,7 +1661,7 @@ function showPhraseBetterChooserOnPage(options, tokenCount) {
     }
   };
 
-  const FONT = '500 13px/1.4 "Google Sans Text", "Google Sans", "Segoe UI", Arial, sans-serif';
+  const FONT = '500 13px/1.4 "Manrope", "Google Sans Text", "Google Sans", "Segoe UI", Arial, sans-serif';
   const card = document.createElement("div");
   card.id = chooserId;
   card.style.position = "fixed";
@@ -1684,6 +1701,7 @@ function showPhraseBetterChooserOnPage(options, tokenCount) {
   closeBtn.type = "button";
   closeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true" focusable="false" style="display:block"><path d="M6 6L18 18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path><path d="M18 6L6 18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path></svg>';
   closeBtn.setAttribute("aria-label", "Discard");
+  closeBtn.style.fontFamily = "inherit";
   closeBtn.style.cursor = "pointer";
   closeBtn.style.border = "none";
   closeBtn.style.background = "transparent";
@@ -1866,6 +1884,21 @@ function showPageToastOnPage(message) {
     existing.remove();
   }
 
+  try {
+    const fontStyleId = "askbetter-manrope-font";
+    if (!document.getElementById(fontStyleId)) {
+      const fontUrl = chrome.runtime.getURL("ui/fonts/manrope-variable.woff2");
+      const fontStyle = document.createElement("style");
+      fontStyle.id = fontStyleId;
+      fontStyle.textContent =
+        "@font-face{font-family:'Manrope';font-style:normal;font-weight:400 800;font-display:swap;" +
+        "src:url('" + fontUrl + "') format('woff2-variations'),url('" + fontUrl + "') format('woff2');}";
+      (document.head || document.documentElement).appendChild(fontStyle);
+    }
+  } catch (_fontError) {
+    /* ignore */
+  }
+
   const toast = document.createElement("div");
   toast.id = toastId;
   toast.textContent = String(message || "");
@@ -1879,7 +1912,7 @@ function showPageToastOnPage(message) {
   toast.style.border = "1px solid rgba(255, 255, 255, 0.12)";
   toast.style.background = "rgba(30, 30, 30, 0.96)";
   toast.style.color = "#ffffff";
-  toast.style.font = '500 12px/1.3 "Google Sans Text", "Google Sans", "Segoe UI", Arial, sans-serif';
+  toast.style.font = '500 12px/1.3 "Manrope", "Google Sans Text", "Google Sans", "Segoe UI", Arial, sans-serif';
   toast.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.35)";
   toast.style.pointerEvents = "none";
   toast.style.opacity = "0";
@@ -1900,6 +1933,22 @@ function showPageToastOnPage(message) {
 
 function showPageBusyIndicatorOnPage(message) {
   const indicatorId = "askbetter-page-busy";
+
+  try {
+    const fontStyleId = "askbetter-manrope-font";
+    if (!document.getElementById(fontStyleId)) {
+      const fontUrl = chrome.runtime.getURL("ui/fonts/manrope-variable.woff2");
+      const fontStyle = document.createElement("style");
+      fontStyle.id = fontStyleId;
+      fontStyle.textContent =
+        "@font-face{font-family:'Manrope';font-style:normal;font-weight:400 800;font-display:swap;" +
+        "src:url('" + fontUrl + "') format('woff2-variations'),url('" + fontUrl + "') format('woff2');}";
+      (document.head || document.documentElement).appendChild(fontStyle);
+    }
+  } catch (_fontError) {
+    /* ignore */
+  }
+
   let indicator = document.getElementById(indicatorId);
   if (!indicator) {
     indicator = document.createElement("div");
@@ -1915,7 +1964,7 @@ function showPageBusyIndicatorOnPage(message) {
     indicator.style.border = "1px solid rgba(255, 255, 255, 0.12)";
     indicator.style.background = "rgba(20, 20, 20, 0.96)";
     indicator.style.color = "#ffffff";
-    indicator.style.font = '500 12.5px/1.2 "Google Sans Text", "Google Sans", "Segoe UI", Arial, sans-serif';
+    indicator.style.font = '500 12.5px/1.2 "Manrope", "Google Sans Text", "Google Sans", "Segoe UI", Arial, sans-serif';
     indicator.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.32)";
     indicator.style.pointerEvents = "none";
     indicator.innerHTML = `

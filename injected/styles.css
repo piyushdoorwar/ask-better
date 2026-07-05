@@ -1,5 +1,16 @@
+/* Manrope — vendored locally, loaded into the page via web_accessible_resources.
+   Relative url() resolves against this file's extension location. */
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("../ui/fonts/manrope-variable.woff2") format("woff2-variations"),
+       url("../ui/fonts/manrope-variable.woff2") format("woff2");
+}
+
 .pf-optimize-btn {
-  --pf-font-ui: "Google Sans Text", "Google Sans", "Roboto", "Noto Sans", "Segoe UI", Arial, sans-serif;
+  --pf-font-ui: "Manrope", "Google Sans Text", "Google Sans", "Roboto", "Noto Sans", "Segoe UI", Arial, sans-serif;
   position: fixed;
   z-index: 2147483000;
   display: inline-flex;
@@ -169,7 +180,7 @@
 }
 
 .pf-preview-card {
-  --pf-font-ui: "Google Sans Text", "Google Sans", "Roboto", "Noto Sans", "Segoe UI", Arial, sans-serif;
+  --pf-font-ui: "Manrope", "Google Sans Text", "Google Sans", "Roboto", "Noto Sans", "Segoe UI", Arial, sans-serif;
   position: fixed;
   z-index: 2147483003;
   display: flex;

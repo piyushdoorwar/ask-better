@@ -1169,9 +1169,10 @@
 
       .integration-card {
         display: flex;
-        flex-direction: column;
-        gap: 22px;
-        padding: 18px;
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 18px;
         border: 1px solid var(--border);
         border-radius: var(--radius-card);
         background: var(--bg-panel);
@@ -1187,22 +1188,18 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        flex-shrink: 0;
       }
 
       .integration-logo img {
-        width: 34px;
-        height: 34px;
+        width: 30px;
+        height: 30px;
         display: block;
       }
 
-      .integration-foot {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-      }
-
       .integration-name {
+        flex: 1;
+        min-width: 0;
         font-size: 16px;
         font-weight: 700;
         color: var(--text);

@@ -140,6 +140,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Form controls don't inherit font-family by default — force Manrope everywhere. */
+button,
+input,
+select,
+textarea,
+optgroup {
+  font-family: var(--font-ui);
+}
+
 .select-shell {
   position: relative;
   display: block;

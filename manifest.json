@@ -41,6 +41,16 @@
       "description": "Optimize the current prompt with AskBetter"
     }
   },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "ui/fonts/manrope-variable.woff2"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
   "content_scripts": [
     {
       "matches": [
