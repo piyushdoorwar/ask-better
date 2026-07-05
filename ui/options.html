@@ -322,19 +322,24 @@
                 <p class="section-sub">Choose how many rephrase options Phrase Better shows before replacing your text.</p>
               </div>
             </div>
-            <div class="grid">
-              <div class="field full">
-                <label for="phraseBetterOptionCount">Phrase Better suggestions</label>
-                <div class="csel">
-                  <select id="phraseBetterOptionCount" name="phraseBetterOptionCount" hidden>
-                    <option value="1">Show 1 suggestion (apply or discard)</option>
-                    <option value="2">Show 2 options to choose from</option>
-                    <option value="3">Show 3 options to choose from</option>
-                  </select>
-                </div>
-                <p class="inline-note">Phrase Better shows the suggestion(s) so you can pick one before it replaces your text.</p>
-              </div>
+            <div class="count-cards" id="phraseBetterOptionCount" role="radiogroup" aria-label="Phrase Better suggestions">
+              <button type="button" class="count-card" data-value="1" role="radio" aria-checked="false">
+                <span class="count-card-num">1</span>
+                <span class="count-card-title">Apply directly</span>
+                <span class="count-card-desc">One suggestion — apply or discard.</span>
+              </button>
+              <button type="button" class="count-card" data-value="2" role="radio" aria-checked="false">
+                <span class="count-card-num">2</span>
+                <span class="count-card-title">Two options</span>
+                <span class="count-card-desc">Pick from two before replacing — default.</span>
+              </button>
+              <button type="button" class="count-card" data-value="3" role="radio" aria-checked="false">
+                <span class="count-card-num">3</span>
+                <span class="count-card-title">Three options</span>
+                <span class="count-card-desc">Choose from three phrasings.</span>
+              </button>
             </div>
+            <p class="inline-note">Phrase Better shows the suggestion(s) so you can pick one before it replaces your text.</p>
           </section>
 
           <section id="section-phrasebetter-presets" class="settings-section">
@@ -528,19 +533,24 @@
                 <p class="section-sub">Choose how many rewrite options the Optimize preview offers you to pick from.</p>
               </div>
             </div>
-            <div class="grid">
-              <div class="field full">
-                <label for="askBetterOptionCount">Optimize options</label>
-                <div class="csel">
-                  <select id="askBetterOptionCount" name="askBetterOptionCount" hidden>
-                    <option value="1">Show 1 rewrite (default)</option>
-                    <option value="2">Show 2 options to choose from</option>
-                    <option value="3">Show 3 options to choose from</option>
-                  </select>
-                </div>
-                <p class="inline-note">More options are generated in a single request, so they cost more per Optimize. The preview lets you switch between them before accepting.</p>
-              </div>
+            <div class="count-cards" id="askBetterOptionCount" role="radiogroup" aria-label="Optimize options">
+              <button type="button" class="count-card" data-value="1" role="radio" aria-checked="false">
+                <span class="count-card-num">1</span>
+                <span class="count-card-title">Single rewrite</span>
+                <span class="count-card-desc">One clean result. Fastest and cheapest — default.</span>
+              </button>
+              <button type="button" class="count-card" data-value="2" role="radio" aria-checked="false">
+                <span class="count-card-num">2</span>
+                <span class="count-card-title">Two options</span>
+                <span class="count-card-desc">Compare two rewrites, switch before accepting.</span>
+              </button>
+              <button type="button" class="count-card" data-value="3" role="radio" aria-checked="false">
+                <span class="count-card-num">3</span>
+                <span class="count-card-title">Three options</span>
+                <span class="count-card-desc">Widest range. Highest cost per Optimize.</span>
+              </button>
             </div>
+            <p class="inline-note">More options are generated in a single request, so they cost more per Optimize. The preview lets you switch between them before accepting.</p>
           </section>
 
           <section id="section-integrations" class="settings-section">

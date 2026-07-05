@@ -160,6 +160,29 @@ const enableAskBetterModeEl = document.getElementById("enableAskBetterMode");
 const enablePhraseBetterModeEl = document.getElementById("enablePhraseBetterMode");
 const askBetterOptionCountEl = document.getElementById("askBetterOptionCount");
 const phraseBetterOptionCountEl = document.getElementById("phraseBetterOptionCount");
+
+// "How many options" selector rendered as three big selectable cards (1/2/3).
+// Reflects the chosen count and persists it via savePartial.
+function setCountCards(container, value) {
+  if (!container) return;
+  const val = String(value);
+  container.querySelectorAll(".count-card").forEach((card) => {
+    const active = card.dataset.value === val;
+    card.classList.toggle("is-selected", active);
+    card.setAttribute("aria-checked", String(active));
+  });
+}
+
+function bindCountCards(container, settingKey, normalizeFn) {
+  if (!container) return;
+  container.querySelectorAll(".count-card").forEach((card) => {
+    card.addEventListener("click", async () => {
+      const value = normalizeFn(card.dataset.value);
+      setCountCards(container, value);
+      await savePartial({ [settingKey]: value });
+    });
+  });
+}
 const phraseBetterPresetEl = document.getElementById("phraseBetterPreset");
 const phraseBetterKeepVoiceEl = document.getElementById("phraseBetterKeepVoice");
 const phraseBetterPolishEl = document.getElementById("phraseBetterPolish");
@@ -449,13 +472,8 @@ function bindAutoSave() {
     applyGroupVisibility();
   });
 
-  askBetterOptionCountEl.addEventListener("change", async () => {
-    await savePartial({ askBetterOptionCount: normalizeAskBetterOptionCount(askBetterOptionCountEl.value) });
-  });
-
-  phraseBetterOptionCountEl.addEventListener("change", async () => {
-    await savePartial({ phraseBetterOptionCount: normalizePhraseBetterOptionCount(phraseBetterOptionCountEl.value) });
-  });
+  bindCountCards(askBetterOptionCountEl, "askBetterOptionCount", normalizeAskBetterOptionCount);
+  bindCountCards(phraseBetterOptionCountEl, "phraseBetterOptionCount", normalizePhraseBetterOptionCount);
 
   phraseBetterPresetEl.addEventListener("change", async () => {
     await savePartial({ phraseBetterPreset: normalizePhrasePreset(phraseBetterPresetEl.value) });
@@ -893,12 +911,12 @@ function fillForm(settings) {
   renderCustomPresetOptions();
   renderCustomPresets();
   defaultPresetEl.value = normalizePreset(normalized.defaultPreset);
-  askBetterOptionCountEl.value = String(normalized.askBetterOptionCount);
+  setCountCards(askBetterOptionCountEl, normalized.askBetterOptionCount);
   keepUserVoiceEl.checked = !!normalized.keepUserVoice;
   enableAIEl.checked = !!normalized.enableAI;
   enableAskBetterModeEl.checked = normalized.enableAskBetterMode !== false;
   enablePhraseBetterModeEl.checked = normalized.enablePhraseBetterMode !== false;
-  phraseBetterOptionCountEl.value = String(normalized.phraseBetterOptionCount);
+  setCountCards(phraseBetterOptionCountEl, normalized.phraseBetterOptionCount);
   phraseBetterPresetEl.value = normalizePhrasePreset(normalized.phraseBetterPreset);
   phraseBetterKeepVoiceEl.checked = !!normalized.phraseBetterKeepVoice;
   phraseBetterPolishEl.checked = !!normalized.phraseBetterPolish;

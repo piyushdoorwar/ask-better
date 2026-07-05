@@ -525,6 +525,65 @@
         line-height: 1.5;
       }
 
+      /* Suggestions "how many options" selectable cards (1 / 2 / 3) */
+      .count-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+
+      .count-card {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        text-align: left;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--radius-card);
+        background: var(--bg-panel);
+        padding: 16px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: border-color 120ms ease, background 120ms ease;
+      }
+
+      .count-card:hover {
+        border-color: rgba(232, 153, 30, 0.4);
+      }
+
+      .count-card:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--focus);
+      }
+
+      .count-card-num {
+        font-size: 24px;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 2px;
+        color: var(--text-secondary);
+      }
+
+      .count-card-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .count-card-desc {
+        font-size: 12.5px;
+        line-height: 1.45;
+        color: var(--text-muted);
+      }
+
+      .count-card.is-selected {
+        border-color: rgba(232, 153, 30, 0.55);
+        background: rgba(232, 153, 30, 0.1);
+      }
+
+      .count-card.is-selected .count-card-num {
+        color: var(--accent-bright);
+      }
+
       .quick-additions {
         margin-bottom: 12px;
         padding: 12px;
@@ -1185,7 +1244,8 @@
         }
 
         .grid,
-        .toggle-grid {
+        .toggle-grid,
+        .count-cards {
           grid-template-columns: 1fr;
         }
 
