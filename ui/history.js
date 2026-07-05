@@ -18,6 +18,25 @@
 
   let entries = null;
   let currentPage = 1;
+  let lastEmittedPage = null;
+
+  function readPageFromHash() {
+    const m = (location.hash || "").replace(/^#/, "").match(/^history-page-(\d+)$/i);
+    return m ? Math.max(1, Number(m[1])) : null;
+  }
+
+  // Let options.js mirror the active page into the URL hash.
+  function emitPageChange() {
+    if (currentPage === lastEmittedPage) return;
+    lastEmittedPage = currentPage;
+    try {
+      document.dispatchEvent(
+        new CustomEvent("askbetter:history-page", { detail: { page: currentPage } })
+      );
+    } catch (_e) {
+      // best-effort
+    }
+  }
 
   function providerLabel(p) {
     const v = String(p || "").toLowerCase();
@@ -244,6 +263,7 @@
         : "";
     }
     renderPagination(items.length);
+    emitPageChange();
   }
 
   async function refresh() {
@@ -281,7 +301,20 @@
     }
   }
 
+  async function goToPage(n) {
+    currentPage = Math.max(1, Number(n) || 1);
+    await refresh();
+  }
+
+  function getPage() {
+    return currentPage;
+  }
+
+  window.AskBetterHistory = { goToPage, getPage, refresh };
+
   function init() {
+    const hashPage = readPageFromHash();
+    if (hashPage != null) currentPage = hashPage;
     bindClear();
     bindActivation();
   }

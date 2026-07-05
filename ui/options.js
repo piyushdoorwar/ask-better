@@ -292,7 +292,22 @@ async function init() {
   fillForm(currentSettings);
   bindAutoSave();
   bindSecurityActions();
+  bindHashRouting();
+  applyHashRoute();
   setStatus("Auto-save enabled");
+}
+
+function bindHashRouting() {
+  window.addEventListener("hashchange", applyHashRoute);
+  // History pagination lives in history.js; when it changes page, reflect it in
+  // the URL so a refresh returns to the same page.
+  document.addEventListener("askbetter:history-page", (e) => {
+    const active = document.querySelector(".settings-section.active");
+    if (active && active.id === "section-history") {
+      const page = Math.max(1, (e.detail && Number(e.detail.page)) || 1);
+      writeSectionHash(`history-page-${page}`);
+    }
+  });
 }
 
 function bindNavigation() {
@@ -414,12 +429,83 @@ function closeSectionInfoModal() {
   }
 }
 
-function activateSection(targetId) {
+// Friendly URL-hash slug <-> section id. Refreshing on e.g. #phrase-better-presents
+// re-opens that section; history pages use the special #history-page-N form.
+const SECTION_SLUGS = {
+  "models": "section-models",
+  "mode": "section-mode",
+  "reports": "section-reports",
+  "history": "section-history",
+  "security": "section-security",
+  "integrations": "section-integrations",
+  "ask-better-presets": "section-presets",
+  "ask-better-suggestions": "section-askbetter-suggestions",
+  "custom-prompt-additions": "section-custom",
+  "phrase-better-presets": "section-phrasebetter-presets",
+  "phrase-better-suggestions": "section-phrasebetter-suggestions"
+};
+const SECTION_TO_SLUG = Object.fromEntries(
+  Object.entries(SECTION_SLUGS).map(([slug, id]) => [id, slug])
+);
+
+function hashForSection(targetId) {
+  if (targetId === "section-history") {
+    const page = (window.AskBetterHistory && window.AskBetterHistory.getPage()) || 1;
+    return `history-page-${page}`;
+  }
+  return SECTION_TO_SLUG[targetId] || "";
+}
+
+// replaceState never fires `hashchange`, so writing the URL here can't re-trigger
+// our own routing — no loop guard needed.
+function writeSectionHash(slug) {
+  if (!slug) return;
+  const next = `#${slug}`;
+  if (location.hash === next) return;
+  history.replaceState(null, "", next);
+}
+
+function isSectionAvailable(targetId) {
+  const btn = document.querySelector(`.nav-btn[data-section="${targetId}"]`);
+  if (!btn) return false;
+  const group = btn.closest(".menu-group");
+  return !(group && group.hidden);
+}
+
+function activateSection(targetId, writeUrl = true) {
   for (const section of sections) {
     section.classList.toggle("active", section.id === targetId);
   }
   for (const button of navButtons) {
     button.classList.toggle("active", button.getAttribute("data-section") === targetId);
+  }
+  if (writeUrl) {
+    writeSectionHash(hashForSection(targetId));
+  }
+}
+
+// Read the current URL hash and open the section it points at. Skips sections
+// whose menu group is hidden (mode off) so a stale link can't strand the user.
+function applyHashRoute() {
+  const raw = (location.hash || "").replace(/^#/, "").trim().toLowerCase();
+  if (!raw) return;
+  let targetId = null;
+  let historyPage = null;
+  const pageMatch = raw.match(/^history-page-(\d+)$/);
+  if (pageMatch) {
+    targetId = "section-history";
+    historyPage = Math.max(1, Number(pageMatch[1]));
+  } else {
+    targetId = SECTION_SLUGS[raw] || null;
+  }
+  if (!targetId || !isSectionAvailable(targetId)) return;
+  activateSection(targetId, false);
+  if (targetId === "section-history" && window.AskBetterHistory) {
+    if (historyPage != null) {
+      window.AskBetterHistory.goToPage(historyPage);
+    } else {
+      window.AskBetterHistory.refresh();
+    }
   }
 }
 
