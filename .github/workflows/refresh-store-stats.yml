@@ -1,0 +1,58 @@
+name: Refresh Chrome Web Store stats
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Daily at 10:29 UTC, offset from the busiest top-of-hour window.
+    - cron: "29 10 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: store-stats-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      changed: ${{ steps.persist.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Fetch public Chrome user count
+        run: node scripts/fetch-store-stats.mjs
+
+      - name: Persist changed Chrome user count
+        id: persist
+        run: |
+          if git diff --quiet -- site/index.html; then
+            echo "Chrome user count is already up to date."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/index.html
+          git commit -m "chore(site): refresh Chrome user count"
+          git push origin HEAD:main
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: refresh
+    if: needs.refresh.outputs.changed == 'true'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/static.yml
