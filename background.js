@@ -22,6 +22,7 @@ const DEFAULT_SETTINGS = {
   phraseBetterPolish: false,
   phraseBetterWit: false,
   phraseBetterHumanize: false,
+  phraseBetterNewLines: true,
   enableAI: true,
   keepUserVoice: false,
   keyVerified: false,
@@ -934,22 +935,39 @@ function readApiErrorMessage(body) {
 function buildSystemInstruction({ preset, settings, mode, completionPass, variantCount }) {
   if (mode === "phrase_better") {
     const count = Number(variantCount) > 1 ? Math.min(Math.round(Number(variantCount)), 3) : 1;
+    const useNewLines = !settings || settings.phraseBetterNewLines !== false;
     const presetClause =
       PHRASE_PRESET_INSTRUCTIONS[normalizePhrasePreset(settings && settings.phraseBetterPreset)] ||
       PHRASE_PRESET_INSTRUCTIONS.fix_grammar;
     const modifierClauses = getPhraseModifierClauses(settings);
+    const jsonShape = JSON.stringify({
+      variants: Array.from({ length: count }, (_value, index) => `rewrite ${index + 1}`)
+    });
+    const newLineClauses = useNewLines
+      ? [
+        "Preserve all meaningful line and paragraph breaks from the original text.",
+        "You may add natural line breaks where they improve readability, such as between a greeting and the message, before a sign-off, or between distinct concepts in a longer message. Do not add breaks arbitrarily or change meaning, tone, voice, details, or emphasis to create them.",
+        `Return valid JSON only in exactly this shape: ${jsonShape}. Encode each line break inside a JSON string as \\n. Do not wrap the JSON in markdown fences.`
+      ]
+      : [];
 
     if (count > 1) {
-      return [
+      const parts = [
         `You transform the user-selected text and provide ${count} alternative versions.`,
         presetClause,
         "Each variant must preserve the original meaning and intent, and must not add new claims, examples, or instructions that were not present in the original.",
         ...modifierClauses,
+        ...newLineClauses,
         `Return exactly ${count} variants and nothing else.`,
-        "Put each variant on its own line, prefixed with its number and a period, like '1. ', '2. '.",
-        "Do not add any other commentary, labels, markdown, bullets, headings, or explanations.",
         "Make the variants meaningfully distinct from each other in phrasing."
-      ].join(" ");
+      ];
+      if (!useNewLines) {
+        parts.push(
+          "Put each variant on its own line, prefixed with its number and a period, like '1. ', '2. '.",
+          "Do not add any other commentary, labels, markdown, bullets, headings, or explanations."
+        );
+      }
+      return parts.join(" ");
     }
 
     const parts = [
@@ -958,9 +976,15 @@ function buildSystemInstruction({ preset, settings, mode, completionPass, varian
       "Preserve the original meaning and intent.",
       "Do not add new claims, examples, or instructions that were not present in the original.",
       ...modifierClauses,
-      "Return only the rewritten text as plain text.",
-      "Do not add commentary, labels, markdown, bullets, or explanations."
+      ...newLineClauses
     ];
+
+    if (!useNewLines) {
+      parts.push(
+        "Return only the rewritten text as plain text.",
+        "Do not add commentary, labels, markdown, bullets, or explanations."
+      );
+    }
 
     if (completionPass) {
       parts.push("Previous output looked incomplete. Return the full rewritten text from the original selection.");
@@ -1106,6 +1130,7 @@ function toPublicSettings(settings) {
     enableAskBetterMode: settings.enableAskBetterMode !== false,
     enablePhraseBetterMode: settings.enablePhraseBetterMode !== false,
     phraseBetterOptionCount: normalizePhraseBetterOptionCount(settings.phraseBetterOptionCount),
+    phraseBetterNewLines: settings.phraseBetterNewLines !== false,
     enableAI: !!settings.enableAI,
     keepUserVoice: !!settings.keepUserVoice,
     customPresets: settings.customPresets.map((preset) => ({ id: preset.id, name: preset.name })),
@@ -1255,6 +1280,7 @@ async function readSettings() {
     phraseBetterPolish: !!raw.phraseBetterPolish,
     phraseBetterWit: !!raw.phraseBetterWit,
     phraseBetterHumanize: !!raw.phraseBetterHumanize,
+    phraseBetterNewLines: raw.phraseBetterNewLines !== false,
     enableAI: raw.enableAI !== false,
     keepUserVoice: !!raw.keepUserVoice,
     keyVerified: !!raw.keyVerified,
@@ -1378,7 +1404,8 @@ async function generatePhraseBetterOptions({ prompt, settings, count }) {
   try {
     if (variantCount <= 1) {
       const result = await callProvider({ provider, apiKey, model, prompt, preset: "grammar", settings, mode: "phrase_better" });
-      const cleaned = String(result.text || "").trim();
+      const parsed = parsePhraseVariants(result.text, 1, settings.phraseBetterNewLines !== false);
+      const cleaned = parsed[0] || "";
       if (!cleaned) {
         return { ok: false, code: "EMPTY_MODEL_OUTPUT", message: "Model returned an empty response." };
       }
@@ -1398,7 +1425,7 @@ async function generatePhraseBetterOptions({ prompt, settings, count }) {
       mode: "phrase_better",
       variantCount
     });
-    const options = parsePhraseVariants(raw.text, variantCount);
+    const options = parsePhraseVariants(raw.text, variantCount, settings.phraseBetterNewLines !== false);
     if (!options.length) {
       return { ok: false, code: "EMPTY_MODEL_OUTPUT", message: "Model returned an empty response." };
     }
@@ -1411,24 +1438,59 @@ async function generatePhraseBetterOptions({ prompt, settings, count }) {
   }
 }
 
-function parsePhraseVariants(raw, count) {
-  const text = String(raw || "").trim();
+function parsePhraseVariants(raw, count, preserveNewLines = false) {
+  let text = String(raw || "").trim();
   if (!text) {
     return [];
   }
-  const lines = text.split(/\r?\n+/).map((line) => line.trim()).filter(Boolean);
-  const numbered = [];
-  for (const line of lines) {
-    const match = line.match(/^\(?\d+[.)]\s*(.+)$/);
-    if (match && match[1].trim()) {
-      numbered.push(match[1].trim());
+
+  const fenced = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  if (fenced) {
+    text = fenced[1].trim();
+  }
+
+  let candidates = [];
+  let parsedJson = false;
+  try {
+    const parsed = JSON.parse(text);
+    if (typeof parsed === "string") {
+      candidates = [parsed];
+    } else if (Array.isArray(parsed)) {
+      candidates = parsed;
+    } else if (parsed && Array.isArray(parsed.variants)) {
+      candidates = parsed.variants;
+    }
+    parsedJson = candidates.length > 0;
+  } catch (_error) {
+    // Fall back to the legacy numbered-text format below. This keeps Phrase
+    // Better resilient when a model does not follow the requested JSON schema.
+  }
+
+  if (!candidates.length) {
+    const matches = Array.from(text.matchAll(/(?:^|\n)\s*\(?\d+[.)]\s+/g));
+    if (matches.length) {
+      candidates = matches.map((match, index) => {
+        const start = match.index + match[0].length;
+        const end = index + 1 < matches.length ? matches[index + 1].index : text.length;
+        return text.slice(start, end);
+      });
+    } else if (Number(count) <= 1 || preserveNewLines) {
+      candidates = [text];
+    } else {
+      candidates = text.split(/\r?\n+/);
     }
   }
-  const candidates = numbered.length ? numbered : lines;
 
   const seen = new Set();
   const result = [];
-  for (const candidate of candidates) {
+  for (let candidate of candidates) {
+    if (typeof candidate !== "string") {
+      continue;
+    }
+    candidate = candidate.replace(/\r\n?/g, "\n").trim();
+    if (preserveNewLines && !parsedJson && !candidate.includes("\n")) {
+      candidate = candidate.replace(/\\r\\n|\\n|\\r/g, "\n");
+    }
     const key = candidate.toLowerCase();
     if (candidate && !seen.has(key)) {
       seen.add(key);
@@ -1625,16 +1687,21 @@ function showPhraseBetterChooserOnPage(options, tokenCount) {
   const applyText = (nextText) => {
     if (captured.type === "input") {
       const el = captured.el;
+      // Single-line inputs cannot represent newlines; keep word boundaries intact
+      // instead of letting the browser's value sanitizer concatenate the lines.
+      const replacementText = el instanceof HTMLTextAreaElement
+        ? nextText
+        : String(nextText).replace(/[ \t]*\n+[ \t]*/g, " ");
       try {
         el.focus({ preventScroll: true });
       } catch (_error) {
         // Ignore focus failures.
       }
       try {
-        el.setRangeText(nextText, captured.start, captured.end, "end");
+        el.setRangeText(replacementText, captured.start, captured.end, "end");
       } catch (_error) {
         const value = String(el.value || "");
-        el.value = value.slice(0, captured.start) + nextText + value.slice(captured.end);
+        el.value = value.slice(0, captured.start) + replacementText + value.slice(captured.end);
       }
       dispatch(el, "input");
       dispatch(el, "change");
@@ -1646,11 +1713,25 @@ function showPhraseBetterChooserOnPage(options, tokenCount) {
       selection.removeAllRanges();
       selection.addRange(captured.range);
       captured.range.deleteContents();
-      const textNode = document.createTextNode(nextText);
-      captured.range.insertNode(textNode);
+      const fragment = document.createDocumentFragment();
+      const lines = String(nextText).split("\n");
+      let lastInsertedNode = null;
+      lines.forEach((line, index) => {
+        if (index > 0) {
+          const breakNode = document.createElement("br");
+          fragment.appendChild(breakNode);
+          lastInsertedNode = breakNode;
+        }
+        if (line) {
+          const textNode = document.createTextNode(line);
+          fragment.appendChild(textNode);
+          lastInsertedNode = textNode;
+        }
+      });
+      captured.range.insertNode(fragment);
       selection.removeAllRanges();
       const after = document.createRange();
-      after.setStartAfter(textNode);
+      after.setStartAfter(lastInsertedNode);
       after.collapse(true);
       selection.addRange(after);
       dispatch(captured.editableRoot, "input");

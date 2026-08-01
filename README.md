@@ -12,7 +12,7 @@ Get better AI responses without rewriting your prompts from scratch. AskBetter a
 ## What it does
 
 - **Ask Better** — an Optimize button appears in the ChatGPT, Gemini, and Claude prompt box (or trigger it with `Ctrl/Cmd+Shift+O`). Type your rough idea, optimize it, and review the result in a **non-destructive preview** — Accept, Regenerate, or Discard. Nothing replaces your text until you accept it.
-- **Phrase Better** — right-click any selected text anywhere on the web to clean it up: grammar, spelling, and punctuation fixed with minimal rewording. It shows **1–3 suggestions in a chooser** (configurable) so you pick before it replaces your text — and the selection is captured up front, so you don't have to wait with the text selected.
+- **Phrase Better** — right-click any selected text anywhere on the web to clean it up: grammar, spelling, and punctuation fixed with minimal rewording. It shows **1–3 suggestions in a chooser** (configurable) so you pick before it replaces your text. A default-on **Natural line breaks** setting preserves existing structure and can add paragraph breaks at greetings, sign-offs, and concept shifts.
 - **Custom presets** — beyond the built-ins, define your own reusable rewrite styles (name + instruction) in Settings; they show up in the preset picker.
 - **Proportional, no fabrication** — rewrites match the length and specificity of your input and never invent requirements, facts, or details you didn't provide.
 
