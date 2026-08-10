@@ -487,7 +487,7 @@ Full settings page accessible from the popup or extension management UI.
 - Located at `/site/` in the repo
 - Static HTML/CSS/JS site
 - Deployed automatically to GitHub Pages on every push to `main`
-- URL: `https://piyushdoorwar.github.io/prompt-optimizer-ask-better/`
+- URL: `https://piyushdoorwar.github.io/ask-better/`
 - Contains: landing page, feature highlights, preset showcase, privacy statement
 
 ### Landing Page (`/site/index.html`)
@@ -568,7 +568,7 @@ Currently minimal. Can be extended for:
 ### GitHub Pages Deployment
 
 - `/site/` is automatically deployed to GitHub Pages via GitHub Actions (or manual push)
-- URL: `https://piyushdoorwar.github.io/prompt-optimizer-ask-better/`
+- URL: `https://piyushdoorwar.github.io/ask-better/`
 
 ---
 

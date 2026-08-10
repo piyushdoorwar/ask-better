@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title description">
+  <title id="title">AskBetter — write better prompts right where you work</title>
+  <desc id="description">A branded AskBetter social card with a prompt optimization preview.</desc>
+  <defs>
+    <linearGradient id="background" x1="80" y1="20" x2="1120" y2="610" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#19130e" />
+      <stop offset="1" stop-color="#0f0d0b" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(980 90) rotate(132) scale(440 520)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#e8991e" stop-opacity=".24" />
+      <stop offset="1" stop-color="#e8991e" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="icon-background" x1="5" y1="4" x2="75" y2="76" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3b1008" />
+      <stop offset="1" stop-color="#c0440e" />
+    </linearGradient>
+    <linearGradient id="badge" x1="48" y1="11" x2="72" y2="35" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fde047" />
+      <stop offset="1" stop-color="#f59e0b" />
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="22" stdDeviation="24" flood-color="#000" flood-opacity=".36" />
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#background)" />
+  <rect width="1200" height="630" fill="url(#glow)" />
+  <path d="M0 557C234 501 339 628 569 574c189-44 302-124 631-82v138H0Z" fill="#e8991e" opacity=".035" />
+
+  <g transform="translate(76 72)">
+    <rect width="72" height="72" rx="20" fill="url(#icon-background)" />
+    <rect x="1" y="1" width="70" height="70" rx="19" fill="none" stroke="#f4c4a8" stroke-opacity=".24" stroke-width="2" />
+    <path d="M14 18h31c9 0 16 7 16 16s-7 16-16 16H32l-13 10V50h-5c-3 0-5-2-5-5V23c0-3 2-5 5-5Z" fill="#d1d5db" />
+    <rect x="19" y="29" width="25" height="5" rx="2.5" fill="#7c2d12" opacity=".9" />
+    <rect x="19" y="39" width="18" height="5" rx="2.5" fill="#9a3412" opacity=".76" />
+    <circle cx="55" cy="20" r="12" fill="url(#badge)" />
+    <path d="m55 11 2.2 6.8L64 20l-6.8 2.2L55 29l-2.2-6.8L46 20l6.8-2.2Z" fill="#fffef7" />
+  </g>
+  <text x="168" y="121" fill="#f4f0eb" font-family="Manrope, Inter, Arial, sans-serif" font-size="38" font-weight="800">AskBetter</text>
+
+  <text x="76" y="246" fill="#f4f0eb" font-family="Manrope, Inter, Arial, sans-serif" font-size="64" font-weight="800" letter-spacing="-2">Write better prompts.</text>
+  <text x="76" y="318" fill="#f5ae3a" font-family="Manrope, Inter, Arial, sans-serif" font-size="64" font-weight="800" letter-spacing="-2">Right where you work.</text>
+  <text x="80" y="374" fill="#cfc4b8" font-family="Manrope, Inter, Arial, sans-serif" font-size="24">Optimize prompts in ChatGPT, Gemini &amp; Claude.</text>
+
+  <g font-family="Manrope, Inter, Arial, sans-serif" font-size="18" font-weight="700">
+    <rect x="76" y="426" width="156" height="48" rx="24" fill="#201a15" stroke="#4b3c2d" />
+    <circle cx="103" cy="450" r="7" fill="#f5ae3a" />
+    <text x="120" y="456" fill="#ede7e0">Local-first</text>
+    <rect x="246" y="426" width="163" height="48" rx="24" fill="#201a15" stroke="#4b3c2d" />
+    <circle cx="273" cy="450" r="7" fill="#f5ae3a" />
+    <text x="290" y="456" fill="#ede7e0">No backend</text>
+    <rect x="423" y="426" width="164" height="48" rx="24" fill="#201a15" stroke="#4b3c2d" />
+    <circle cx="450" cy="450" r="7" fill="#f5ae3a" />
+    <text x="467" y="456" fill="#ede7e0">No tracking</text>
+  </g>
+
+  <g transform="translate(720 121)" filter="url(#shadow)">
+    <rect width="404" height="394" rx="28" fill="#191613" stroke="#3b332c" stroke-width="2" />
+    <circle cx="28" cy="27" r="5" fill="#e35d54" />
+    <circle cx="47" cy="27" r="5" fill="#e5ad42" />
+    <circle cx="66" cy="27" r="5" fill="#57a861" />
+    <rect x="90" y="17" width="224" height="20" rx="10" fill="#292521" />
+    <text x="202" y="31" text-anchor="middle" fill="#8f857b" font-family="Manrope, Inter, Arial, sans-serif" font-size="11">chatgpt.com</text>
+    <path d="M1 54h402" stroke="#332e29" />
+
+    <text x="28" y="93" fill="#9a8f83" font-family="Manrope, Inter, Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="1.4">YOUR PROMPT</text>
+    <rect x="24" y="108" width="356" height="72" rx="13" fill="#22201d" stroke="#3a3530" />
+    <text x="43" y="138" fill="#d3cbc3" font-family="Manrope, Inter, Arial, sans-serif" font-size="16">write a project update for stakeholders</text>
+    <rect x="257" y="148" width="105" height="22" rx="11" fill="#d4651c" />
+    <path d="m273 153 1.6 4.4 4.4 1.6-4.4 1.6-1.6 4.4-1.6-4.4-4.4-1.6 4.4-1.6Z" fill="#fff8ee" />
+    <text x="287" y="163" fill="#fff8ee" font-family="Manrope, Inter, Arial, sans-serif" font-size="11" font-weight="800">OPTIMIZE</text>
+
+    <text x="28" y="221" fill="#f5ae3a" font-family="Manrope, Inter, Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="1.4">ASKBETTER PREVIEW</text>
+    <rect x="24" y="236" width="356" height="128" rx="13" fill="#211a14" stroke="#7d4d24" />
+    <text x="43" y="267" fill="#f2ece5" font-family="Manrope, Inter, Arial, sans-serif" font-size="15">Draft a concise Q2 project update for</text>
+    <text x="43" y="293" fill="#f2ece5" font-family="Manrope, Inter, Arial, sans-serif" font-size="15">stakeholders. Summarize progress, key</text>
+    <text x="43" y="319" fill="#f2ece5" font-family="Manrope, Inter, Arial, sans-serif" font-size="15">milestones, risks, and next steps.</text>
+    <rect x="278" y="331" width="83" height="23" rx="11.5" fill="#e8991e" />
+    <text x="319.5" y="347" text-anchor="middle" fill="#1d1308" font-family="Manrope, Inter, Arial, sans-serif" font-size="11" font-weight="800">ACCEPT</text>
+  </g>
+
+  <text x="76" y="559" fill="#8f857b" font-family="Manrope, Inter, Arial, sans-serif" font-size="18" font-weight="700" letter-spacing=".6">FREE CHROME EXTENSION</text>
+</svg>
