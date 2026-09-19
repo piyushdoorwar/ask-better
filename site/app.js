@@ -1,5 +1,20 @@
+// Opt in to the hidden-until-revealed styling only now that this script is
+// running. If it never loads, the CSS leaves the content visible.
+document.documentElement.classList.add("js-reveal");
+
+const PREFERS_REDUCED_MOTION =
+  window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 // ── Scroll reveal ─────────────────────────────────────────────────────────
 (function () {
+  const targets = document.querySelectorAll("[data-reveal]");
+  const revealAll = () => targets.forEach((el) => el.classList.add("revealed"));
+
+  if (!("IntersectionObserver" in window) || PREFERS_REDUCED_MOTION) {
+    revealAll();
+    return;
+  }
+
   const obs = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -11,7 +26,7 @@
     },
     { threshold: 0.12 }
   );
-  document.querySelectorAll("[data-reveal]").forEach((el) => obs.observe(el));
+  targets.forEach((el) => obs.observe(el));
 })();
 
 // ── Browser mockup: typing animation ─────────────────────────────────────
@@ -23,6 +38,16 @@
 
   const ROUGH     = "write me an email about the q2 project status update for stakeholders";
   const OPTIMIZED = "Draft a concise Q2 project status email for stakeholders. Cover key milestones reached, current blockers, and next steps. Keep the tone clear and professional.";
+
+  // The loop never ends, so under reduced motion show the finished state
+  // instead — the mockup still makes its point, it just holds still.
+  if (PREFERS_REDUCED_MOTION) {
+    typedEl.textContent = OPTIMIZED;
+    if (cursorEl) {
+      cursorEl.hidden = true;
+    }
+    return;
+  }
 
   const TYPE_DELAY   = 52;   // ms per char (rough)
   const OPT_DELAY    = 30;   // ms per char (optimized — feels faster / AI-generated)

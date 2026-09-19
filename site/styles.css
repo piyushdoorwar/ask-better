@@ -1043,7 +1043,10 @@ footer a:hover,
 }
 
 /* ── Scroll reveal ───────────────────────────────────────────────────────── */
-[data-reveal] {
+/* Scoped to .js-reveal, which app.js sets on <html> as its first statement.
+   Without it the content stays visible, so a JS failure (or a no-JS visitor,
+   or a crawler that does not execute scripts) never hides 40%+ of the page. */
+.js-reveal [data-reveal] {
   opacity: 0;
   transform: translateY(18px);
   transition:
@@ -1051,9 +1054,46 @@ footer a:hover,
     transform 0.5s ease calc(var(--reveal-delay, 0s));
 }
 
-[data-reveal].revealed {
+.js-reveal [data-reveal].revealed {
   opacity: 1;
   transform: none;
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
+/* The marquee scrolls forever and the mockup retypes itself on a loop; both are
+   decorative. Honour the OS setting: content stays, movement stops. */
+@media (prefers-reduced-motion: reduce) {
+  .js-reveal [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .marquee-row {
+    animation: none;
+  }
+
+  .marquee-track {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .bm-cursor {
+    animation: none;
+  }
+
+  .bm-opt-btn.pulsing {
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */

@@ -27,7 +27,7 @@
 
 **AskBetter** is a Chrome extension (Manifest V3) that rewrites prompts in one click using AI providers of your choice (Gemini, OpenAI, or Claude). The extension injects an **Optimize** button directly into ChatGPT, Google Gemini, and Claude.ai interfaces, runs locally in the browser, and requires no backend server. Optimized prompts are shown in a **non-destructive preview** (Accept / Regenerate / Discard) before they replace the input, and a keyboard shortcut (`Ctrl/Cmd+Shift+O`) triggers optimization without reaching for the button.
 
-- **Repo**: `piyushdoorwar/prompt-optimizer-ask-better`
+- **Repo**: `piyushdoorwar/ask-better` (the local clone directory is `prompt-optimizer-ask-better`)
 - **Owner/Author**: Piyush Doorwar
 - **Type**: Chrome Extension (MV3)
 - **Brand**: AskBetter (orange/yellow accent color: `#e8991e`)
@@ -543,10 +543,15 @@ All icons are **SVG files** with `color: currentColor` to inherit yellow accent 
 
 ### Site Scripts (`/site/app.js`)
 
-Currently minimal. Can be extended for:
-- Dynamic Chrome Web Store button
-- Install success redirect
-- Analytics (if needed in future)
+Two IIFEs: the scroll-reveal `IntersectionObserver` and the hero browser-mockup typing loop.
+
+- **The hidden-until-revealed state is opt-in, not default.** `app.js` adds `js-reveal` to `<html>` as its very first statement, and `styles.css` scopes `[data-reveal] { opacity: 0 }` to `.js-reveal [data-reveal]`. Previously the hidden state was unconditional, so a no-JS visitor (or a script load failure, or a non-executing crawler) saw 22 elements — **43% of the page text** — permanently invisible. **Never write an unscoped `[data-reveal]` hidden rule.**
+- The reveal IIFE also reveals everything immediately when `IntersectionObserver` is unavailable.
+- **`prefers-reduced-motion: reduce` is honoured** in both layers: a media block in `styles.css` stops the infinite `marquee` (and wraps the track instead), the `blink` cursor, and `opt-pulse`; `app.js` reads `PREFERS_REDUCED_MOTION` once and skips the observer (revealing all) plus short-circuits the endless typing loop to the finished `OPTIMIZED` string with the cursor hidden. The marquee is an infinite scroller, so this is WCAG 2.2.2 territory, not just polish.
+
+Can still be extended for a dynamic Chrome Web Store button or install-success redirect.
+
+**Version sync:** the JSON-LD `softwareVersion` in `site/index.html` must track `manifest.json` `version` — nothing enforces it, and it silently drifted 0.8.0 → 0.9.0 once already.
 
 ### Privacy Policy Page (`/site/policy/`)
 
