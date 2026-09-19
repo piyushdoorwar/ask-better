@@ -1,0 +1,76 @@
+================================================================================
+CHROME WEB STORE LISTING — AskBetter
+Plain text. Markdown does not render in the store; line breaks do.
+Paste each section into the matching field in the developer dashboard.
+================================================================================
+
+
+--------------------------------------------------------------------------------
+SHORT DESCRIPTION  (field limit: 132 characters)
+--------------------------------------------------------------------------------
+
+Rewrite prompts in one click inside ChatGPT, Claude & Gemini. Bring your own API key. Local-first, no backend.
+
+
+--------------------------------------------------------------------------------
+DETAILED DESCRIPTION  (field limit: 16,000 characters)
+--------------------------------------------------------------------------------
+
+AskBetter helps you write better prompts and cleaner text — directly where you already work, without switching tabs.
+
+Bring your own API key from Google Gemini, OpenAI, or Anthropic. Gemini has a free tier, so you can start without a credit card. There is no subscription and no middleman: requests go straight from your browser to the provider you picked.
+
+
+TWO MODES
+
+Ask Better — adds an Optimize button inside ChatGPT, Claude, and Google Gemini (or press Ctrl/Cmd+Shift+O). It rewrites your current prompt using your selected preset and provider, then shows the result in a non-destructive preview you can edit, compare, refine, and accept. Your original is never overwritten until you say so.
+
+Phrase Better — right-click any selected text on the web to rephrase it. By default it fixes grammar, spelling, and punctuation while keeping your original wording and tone. You can also pick a preset — rephrase, casual reply, or formal message — and stack optional adjustments like keep my voice, humanize, polish wording, or add a little wit.
+
+
+WHAT MAKES IT DIFFERENT
+
+• Non-destructive preview — review every rewrite before it touches your text. Accept, Regenerate, edit inline, or Discard.
+• Diff view — see exactly which words changed between your original and the rewrite.
+• Refine — follow up in plain language ("make it shorter", "more formal") and iterate without starting over.
+• Multiple options — optionally generate 2–3 rewrites in one call and pick the best.
+• Token and cost estimate — each rewrite shows approximate tokens and cost, so there are no billing surprises.
+• Prompt History — a local list of your recent rewrites (original → optimized) you can copy and reuse.
+• Reports — a local 30-day chart of your usage by provider and by mode, with an approximate total cost.
+• Always-current models — model lists load live from each provider, so newly released models appear without an extension update.
+
+
+PRESETS
+
+17 built-in presets: 13 for prompts and 4 for rephrasing.
+
+• Core rewrite — story structured, concise, fix grammar, improve clarity
+• Communication style — persuasive, executive brief, coaching tone, email rephrase/rewrite
+• Critical thinking — devil's advocate, first principles, risk audit
+• Build and delivery — technical spec, implementation plan
+• Phrase Better — fix grammar, rephrase, casual reply, formal message
+
+You can also create your own: name a preset, write its rewrite instruction, and it appears in the picker alongside the built-ins. Reusable Custom Prompt Additions let you layer on tone, thinking style, perspective, and output format, and a Keep my voice option preserves your writing style while improving the prompt.
+
+
+WORKS WITH
+
+• ChatGPT — chatgpt.com and chat.openai.com
+• Claude — claude.ai
+• Google Gemini — gemini.google.com
+• Phrase Better works on editable text anywhere on the web
+• Providers: Google Gemini, OpenAI, and Anthropic Claude
+
+Turn the Optimize button on or off per site, and drag it anywhere that suits your layout.
+
+
+PRIVACY
+
+• Your API key is stored only in chrome.storage.local, on your device.
+• Prompts are sent only to the provider you selected, and only when you ask for a rewrite.
+• No AskBetter server ever receives your data — there is no backend.
+• No analytics, no telemetry. Reports, prompt history, and cost estimates are computed and stored on your device only, and are never sent anywhere.
+• Open source: https://github.com/piyushdoorwar/ask-better
+
+
+AskBetter is for people who want stronger, cleaner prompts without leaving the page they're already on.
