@@ -402,16 +402,15 @@ async function rewriteText({ prompt, preset, site, settings, mode, variantCount 
     }
 
     if (count > 1 && !variants.length && text && text.trim()) {
+      if (looksLikeJsonOutput(stripCodeFences(text.trim()))) {
+        return emptyOutputError(text);
+      }
       variants = [text.trim()];
     }
 
     const primaryText = count > 1 ? String((variants[0] || "")).trim() : String(text || "").trim();
     if (!primaryText) {
-      return {
-        ok: false,
-        code: "EMPTY_MODEL_OUTPUT",
-        message: "Model returned an empty response."
-      };
+      return emptyOutputError(text);
     }
 
     const costUsd = estimateCostUsd(provider, model, usage && usage.inputTokens, usage && usage.outputTokens);
@@ -486,6 +485,20 @@ function buildRefineInstruction() {
 // Each callX returns { text, usage } where usage is { inputTokens, outputTokens }
 // or null when the provider omits token counts. A caller may pass systemOverride
 // to supply the system instruction directly (used by refineText).
+const MAX_OUTPUT_TOKENS = 3000;
+
+// Mirrors the branch in buildSystemInstruction that asks for a JSON object, so
+// the provider call can enforce that shape natively instead of hoping for it.
+function wantsJsonOutput({ settings, mode, systemOverride, variantCount }) {
+  if (systemOverride) {
+    return false;
+  }
+  if (Number(variantCount) > 1) {
+    return true;
+  }
+  return mode === "phrase_better" && (!settings || settings.phraseBetterNewLines !== false);
+}
+
 async function callProvider({ provider, apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride }) {
   if (provider === "openai") {
     return await callOpenAI({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride });
@@ -498,8 +511,30 @@ async function callProvider({ provider, apiKey, model, prompt, preset, settings,
 
 async function callGemini({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride }) {
   const systemText = systemOverride || buildSystemInstruction({ preset, settings, mode, completionPass, variantCount });
+  const wantsJson = wantsJsonOutput({ settings, mode, systemOverride, variantCount });
 
   const normalizedModel = normalizeGeminiModel(model || DEFAULT_SETTINGS.geminiModel);
+  const generationConfig = {
+    temperature: 0.1,
+    maxOutputTokens: MAX_OUTPUT_TOKENS
+  };
+  if (wantsJson) {
+    // Constrained decoding: the model cannot emit malformed JSON at all.
+    generationConfig.responseMimeType = "application/json";
+    generationConfig.responseSchema = {
+      type: "OBJECT",
+      properties: {
+        variants: { type: "ARRAY", items: { type: "STRING" } }
+      },
+      required: ["variants"]
+    };
+  }
+  // Thinking tokens are billed against maxOutputTokens on 2.5 Flash models, so
+  // an unbounded budget can consume the whole ceiling and return empty text.
+  if (/2\.5-flash/.test(normalizedModel)) {
+    generationConfig.thinkingConfig = { thinkingBudget: 0 };
+  }
+
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(normalizedModel)}:generateContent`,
     {
@@ -518,10 +553,7 @@ async function callGemini({ apiKey, model, prompt, preset, settings, mode, compl
             parts: [{ text: prompt }]
           }
         ],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 1200
-        }
+        generationConfig
       })
     }
   );
@@ -546,18 +578,36 @@ async function callGemini({ apiKey, model, prompt, preset, settings, mode, compl
 async function callOpenAI({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride }) {
   const instructions = systemOverride || buildSystemInstruction({ preset, settings, mode, completionPass, variantCount });
   const normalizedModel = normalizeOpenAIModel(model || DEFAULT_SETTINGS.openaiModel);
+  const payload = {
+    model: normalizedModel,
+    input: prompt,
+    instructions,
+    max_output_tokens: MAX_OUTPUT_TOKENS
+  };
+  if (wantsJsonOutput({ settings, mode, systemOverride, variantCount })) {
+    payload.text = {
+      format: {
+        type: "json_schema",
+        name: "phrase_variants",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: {
+            variants: { type: "array", items: { type: "string" } }
+          },
+          required: ["variants"],
+          additionalProperties: false
+        }
+      }
+    };
+  }
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`
     },
-    body: JSON.stringify({
-      model: normalizedModel,
-      input: prompt,
-      instructions,
-      max_output_tokens: 1200
-    })
+    body: JSON.stringify(payload)
   });
 
   if (!response.ok) {
@@ -580,6 +630,13 @@ async function callOpenAI({ apiKey, model, prompt, preset, settings, mode, compl
 async function callAnthropic({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride }) {
   const system = systemOverride || buildSystemInstruction({ preset, settings, mode, completionPass, variantCount });
   const normalizedModel = normalizeAnthropicModel(model || DEFAULT_SETTINGS.anthropicModel);
+  // Anthropic has no JSON mode; prefilling the opening brace is the supported
+  // way to stop the model from wrapping the object in prose or a fence.
+  const prefill = wantsJsonOutput({ settings, mode, systemOverride, variantCount }) ? "{" : "";
+  const messages = [{ role: "user", content: prompt }];
+  if (prefill) {
+    messages.push({ role: "assistant", content: prefill });
+  }
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -591,13 +648,8 @@ async function callAnthropic({ apiKey, model, prompt, preset, settings, mode, co
     body: JSON.stringify({
       model: normalizedModel,
       system,
-      max_tokens: 1200,
-      messages: [
-        {
-          role: "user",
-          content: prompt
-        }
-      ]
+      max_tokens: MAX_OUTPUT_TOKENS,
+      messages
     })
   });
 
@@ -615,7 +667,8 @@ async function callAnthropic({ apiKey, model, prompt, preset, settings, mode, co
   }
 
   const data = await response.json();
-  return { text: extractAnthropicText(data).trim(), usage: extractAnthropicUsage(data) };
+  const body = extractAnthropicText(data).trim();
+  return { text: prefill && body ? prefill + body : body, usage: extractAnthropicUsage(data) };
 }
 
 async function fetchModelsForProvider(payload) {
@@ -868,9 +921,12 @@ function extractGeminiText(data) {
   if (!candidate || !candidate.content || !Array.isArray(candidate.content.parts)) {
     return "";
   }
+  // Parts are contiguous slices of one answer — joining with "\n" injected line
+  // breaks that were never in the output and broke JSON strings.
   return candidate.content.parts
+    .filter((part) => part && part.thought !== true)
     .map((part) => (part && typeof part.text === "string" ? part.text : ""))
-    .join("\n")
+    .join("")
     .trim();
 }
 
@@ -881,10 +937,13 @@ function extractOpenAIText(data) {
   if (!data || !Array.isArray(data.output)) {
     return "";
   }
+  // Skip reasoning items; only message content carries the answer.
   return data.output
-    .flatMap((item) => Array.isArray(item && item.content) ? item.content : [])
+    .filter((item) => item && item.type === "message")
+    .flatMap((item) => Array.isArray(item.content) ? item.content : [])
+    .filter((item) => item && item.type !== "refusal")
     .map((item) => (item && typeof item.text === "string" ? item.text : ""))
-    .join("\n")
+    .join("")
     .trim();
 }
 
@@ -894,7 +953,7 @@ function extractAnthropicText(data) {
   }
   return data.content
     .map((item) => (item && item.type === "text" && typeof item.text === "string" ? item.text : ""))
-    .join("\n")
+    .join("")
     .trim();
 }
 
@@ -943,6 +1002,8 @@ function buildSystemInstruction({ preset, settings, mode, completionPass, varian
     const jsonShape = JSON.stringify({
       variants: Array.from({ length: count }, (_value, index) => `rewrite ${index + 1}`)
     });
+    // Multi-option asks for JSON below even when newlines are off, so the
+    // provider-level JSON mode never contradicts what the instruction requests.
     const newLineClauses = useNewLines
       ? [
         "Preserve all meaningful line and paragraph breaks from the original text.",
@@ -963,7 +1024,7 @@ function buildSystemInstruction({ preset, settings, mode, completionPass, varian
       ];
       if (!useNewLines) {
         parts.push(
-          "Put each variant on its own line, prefixed with its number and a period, like '1. ', '2. '.",
+          `Return valid JSON only in exactly this shape: ${jsonShape}. Do not wrap the JSON in markdown fences.`,
           "Do not add any other commentary, labels, markdown, bullets, headings, or explanations."
         );
       }
@@ -1014,8 +1075,12 @@ function buildSystemInstruction({ preset, settings, mode, completionPass, varian
     parts.push(
       `Make the ${count} rewrites meaningfully distinct in approach or emphasis while all honoring the preset and the original intent.`
     );
+    // JSON rather than "1. / 2." lines: a rewrite that itself contains a
+    // numbered list is indistinguishable from a variant boundary in that format.
     parts.push(
-      "Put each rewrite on its own line, prefixed with its number and a period, like '1. ', '2. '. Do not use line breaks inside a single rewrite, and do not add blank lines, bullets, headings, or any other commentary."
+      `Return valid JSON only in exactly this shape: ${JSON.stringify({
+        variants: Array.from({ length: count }, (_value, index) => `rewrite ${index + 1}`)
+      })}. Encode any line break inside a JSON string as \\n. Do not wrap the JSON in markdown fences.`
     );
   }
 
@@ -1407,7 +1472,7 @@ async function generatePhraseBetterOptions({ prompt, settings, count }) {
       const parsed = parsePhraseVariants(result.text, 1, settings.phraseBetterNewLines !== false);
       const cleaned = parsed[0] || "";
       if (!cleaned) {
-        return { ok: false, code: "EMPTY_MODEL_OUTPUT", message: "Model returned an empty response." };
+        return emptyOutputError(result.text);
       }
       const costUsd = estimateCostUsd(provider, model, result.usage && result.usage.inputTokens, result.usage && result.usage.outputTokens);
       await recordUsage({ provider, model, mode: "phrase_better", usage: result.usage, costUsd });
@@ -1427,7 +1492,7 @@ async function generatePhraseBetterOptions({ prompt, settings, count }) {
     });
     const options = parsePhraseVariants(raw.text, variantCount, settings.phraseBetterNewLines !== false);
     if (!options.length) {
-      return { ok: false, code: "EMPTY_MODEL_OUTPUT", message: "Model returned an empty response." };
+      return emptyOutputError(raw.text);
     }
     const costUsd = estimateCostUsd(provider, model, raw.usage && raw.usage.inputTokens, raw.usage && raw.usage.outputTokens);
     await recordUsage({ provider, model, mode: "phrase_better", usage: raw.usage, costUsd });
@@ -1444,34 +1509,38 @@ function parsePhraseVariants(raw, count, preserveNewLines = false) {
     return [];
   }
 
-  const fenced = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-  if (fenced) {
-    text = fenced[1].trim();
-  }
+  text = stripCodeFences(text);
 
   let candidates = [];
   let parsedJson = false;
-  try {
-    const parsed = JSON.parse(text);
-    if (typeof parsed === "string") {
-      candidates = [parsed];
-    } else if (Array.isArray(parsed)) {
-      candidates = parsed;
-    } else if (parsed && Array.isArray(parsed.variants)) {
-      candidates = parsed.variants;
+  // Models drift off the requested JSON shape in predictable ways: prose around
+  // the object, raw newlines inside strings, trailing commas, or a response cut
+  // off mid-array. Slice out the JSON, repair it, and only then give up.
+  if (looksLikeJsonOutput(text)) {
+    const slice = extractJsonSlice(text);
+    if (slice) {
+      candidates = variantsFromJsonValue(parseJsonLoose(slice));
+      if (!candidates.length) {
+        candidates = salvageJsonStrings(slice);
+      }
+      parsedJson = candidates.length > 0;
+      if (!parsedJson) {
+        // Never hand raw JSON scaffolding back to the user as if it were a
+        // rewrite; an explicit failure is better than pasting `{"variants":...`.
+        return [];
+      }
     }
-    parsedJson = candidates.length > 0;
-  } catch (_error) {
-    // Fall back to the legacy numbered-text format below. This keeps Phrase
-    // Better resilient when a model does not follow the requested JSON schema.
   }
 
   if (!candidates.length) {
-    const matches = Array.from(text.matchAll(/(?:^|\n)\s*\(?\d+[.)]\s+/g));
-    if (matches.length) {
-      candidates = matches.map((match, index) => {
-        const start = match.index + match[0].length;
-        const end = index + 1 < matches.length ? matches[index + 1].index : text.length;
+    // Only split on numbered markers when more than one variant was asked for.
+    // A single rewrite may legitimately BE a numbered list, and splitting it
+    // used to discard everything after item 1.
+    const markers = Number(count) > 1 ? findVariantMarkers(text) : [];
+    if (markers.length) {
+      candidates = markers.map((marker, index) => {
+        const start = marker.index + marker[0].length;
+        const end = index + 1 < markers.length ? markers[index + 1].index : text.length;
         return text.slice(start, end);
       });
     } else if (Number(count) <= 1 || preserveNewLines) {
@@ -1484,7 +1553,8 @@ function parsePhraseVariants(raw, count, preserveNewLines = false) {
   const seen = new Set();
   const result = [];
   for (let candidate of candidates) {
-    if (typeof candidate !== "string") {
+    candidate = coerceVariantText(candidate);
+    if (!candidate) {
       continue;
     }
     candidate = candidate.replace(/\r\n?/g, "\n").trim();
@@ -1498,6 +1568,222 @@ function parsePhraseVariants(raw, count, preserveNewLines = false) {
     }
   }
   return result.slice(0, count);
+}
+
+// Accepts "1." / "2." line prefixes only while they run in order from 1, so a
+// numbered list *inside* one variant does not shatter it into fragments.
+function findVariantMarkers(text) {
+  const markers = [];
+  let expected = 1;
+  for (const match of text.matchAll(/(?:^|\n)[ \t]*\(?(\d+)[.)][ \t]+/g)) {
+    if (Number(match[1]) === expected) {
+      markers.push(match);
+      expected += 1;
+    }
+  }
+  return markers;
+}
+
+// Distinguishes "the model said nothing" from "the model answered but broke the
+// requested format", so the user is told to retry instead of seeing raw JSON.
+function emptyOutputError(rawText) {
+  const value = String(rawText || "").trim();
+  if (value && looksLikeJsonOutput(stripCodeFences(value))) {
+    return {
+      ok: false,
+      code: "UNPARSABLE_MODEL_OUTPUT",
+      message: "Model returned malformed output. Try again."
+    };
+  }
+  return { ok: false, code: "EMPTY_MODEL_OUTPUT", message: "Model returned an empty response." };
+}
+
+// Drops markdown fences, including an unterminated opening fence left behind by
+// a truncated response.
+function stripCodeFences(text) {
+  const closed = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (closed && closed[1].trim()) {
+    return closed[1].trim();
+  }
+  const open = text.match(/^```(?:json)?\s*([\s\S]*)$/i);
+  if (open && open[1].trim()) {
+    return open[1].trim();
+  }
+  return text;
+}
+
+function looksLikeJsonOutput(text) {
+  return /^[{[]/.test(text) || /"variants"\s*:/.test(text);
+}
+
+// Returns the outermost {...} / [...] span, tolerating a missing closing
+// bracket when the model output was cut off mid-structure.
+function extractJsonSlice(text) {
+  const start = text.search(/[{[]/);
+  if (start < 0) {
+    return "";
+  }
+  const openChar = text[start];
+  const closeChar = openChar === "{" ? "}" : "]";
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i += 1) {
+    const ch = text[i];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === "\\") {
+        escaped = true;
+      } else if (ch === "\"") {
+        inString = false;
+      }
+      continue;
+    }
+    if (ch === "\"") {
+      inString = true;
+    } else if (ch === openChar) {
+      depth += 1;
+    } else if (ch === closeChar) {
+      depth -= 1;
+      if (depth === 0) {
+        return text.slice(start, i + 1);
+      }
+    }
+  }
+  return text.slice(start);
+}
+
+function parseJsonLoose(slice) {
+  const attempts = [slice, repairJson(slice)];
+  for (const attempt of attempts) {
+    if (!attempt) {
+      continue;
+    }
+    try {
+      return JSON.parse(attempt);
+    } catch (_error) {
+      // Try the next candidate.
+    }
+  }
+  return null;
+}
+
+// Rewrites the two failures we actually see from models: literal control
+// characters inside strings (a real line break instead of \n), and structures
+// left unterminated because the response hit the token ceiling.
+function repairJson(slice) {
+  let out = "";
+  let inString = false;
+  let escaped = false;
+  const stack = [];
+  for (let i = 0; i < slice.length; i += 1) {
+    const ch = slice[i];
+    if (inString) {
+      if (escaped) {
+        out += ch;
+        escaped = false;
+      } else if (ch === "\\") {
+        out += ch;
+        escaped = true;
+      } else if (ch === "\"") {
+        out += ch;
+        inString = false;
+      } else if (ch === "\n") {
+        out += "\\n";
+      } else if (ch === "\r") {
+        out += "\\r";
+      } else if (ch === "\t") {
+        out += "\\t";
+      } else if (ch >= " ") {
+        out += ch;
+      }
+      continue;
+    }
+    if (ch === "\"") {
+      inString = true;
+      out += ch;
+    } else if (ch === "{" || ch === "[") {
+      stack.push(ch === "{" ? "}" : "]");
+      out += ch;
+    } else if (ch === "}" || ch === "]") {
+      if (stack[stack.length - 1] === ch) {
+        stack.pop();
+      }
+      out += ch;
+    } else {
+      out += ch;
+    }
+  }
+  if (escaped) {
+    out = out.slice(0, -1);
+  }
+  if (inString) {
+    out += "\"";
+  }
+  while (stack.length) {
+    out = out.replace(/,\s*$/, "");
+    out += stack.pop();
+  }
+  return out.replace(/,(\s*[}\]])/g, "$1");
+}
+
+function variantsFromJsonValue(parsed) {
+  if (typeof parsed === "string") {
+    return [parsed];
+  }
+  if (Array.isArray(parsed)) {
+    return parsed;
+  }
+  if (!parsed || typeof parsed !== "object") {
+    return [];
+  }
+  for (const key of ["variants", "options", "rewrites", "results", "text"]) {
+    if (Array.isArray(parsed[key])) {
+      return parsed[key];
+    }
+    if (typeof parsed[key] === "string" && parsed[key].trim()) {
+      return [parsed[key]];
+    }
+  }
+  const values = Object.values(parsed);
+  if (values.length === 1 && typeof values[0] === "string") {
+    return [values[0]];
+  }
+  return [];
+}
+
+// Last resort when even the repaired JSON will not parse: pull the string
+// literals out of the variants array directly.
+function salvageJsonStrings(slice) {
+  const body = slice.replace(/^[\s\S]*?"(?:variants|options|rewrites|results)"\s*:\s*\[/, "");
+  if (body === slice && !/^\[/.test(slice)) {
+    return [];
+  }
+  const tokens = body.match(/"(?:\\.|[^"\\])*"/g) || [];
+  return tokens
+    .map((token) => {
+      try {
+        return JSON.parse(token);
+      } catch (_error) {
+        return "";
+      }
+    })
+    .filter((value) => typeof value === "string" && value.trim());
+}
+
+function coerceVariantText(candidate) {
+  if (typeof candidate === "string") {
+    return candidate;
+  }
+  if (candidate && typeof candidate === "object") {
+    for (const key of ["text", "variant", "value", "rewrite", "content"]) {
+      if (typeof candidate[key] === "string" && candidate[key].trim()) {
+        return candidate[key];
+      }
+    }
+  }
+  return "";
 }
 
 async function showPhraseBetterChooserInTab(tabId, frameId, options, tokenCount) {
