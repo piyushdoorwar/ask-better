@@ -4,6 +4,8 @@ function startAskBetter(site, siteToggleKey, selectors) {
   const SPARKLE_SVG = '<svg viewBox="0 0 36 36" width="14" height="14" aria-hidden="true" focusable="false" style="display:block;fill:currentColor"><path d="M34.347 16.893l-8.899-3.294l-3.323-10.891a1 1 0 0 0-1.912 0l-3.322 10.891l-8.9 3.294a1 1 0 0 0 0 1.876l8.895 3.293l3.324 11.223a1 1 0 0 0 1.918-.001l3.324-11.223l8.896-3.293a.998.998 0 0 0-.001-1.875z"></path><path d="M14.347 27.894l-2.314-.856l-.9-3.3a.998.998 0 0 0-1.929-.001l-.9 3.3l-2.313.856a1 1 0 0 0 0 1.876l2.301.853l.907 3.622a1 1 0 0 0 1.94-.001l.907-3.622l2.301-.853a.997.997 0 0 0 0-1.874z"></path><path d="M10.009 6.231l-2.364-.875l-.876-2.365a.999.999 0 0 0-1.876 0l-.875 2.365l-2.365.875a1 1 0 0 0 0 1.876l2.365.875l.875 2.365a1 1 0 0 0 1.876 0l.875-2.365l2.365-.875a1 1 0 0 0 0-1.876z"></path></svg>';
   const BUTTON_INNER = `<span class="pf-optimize-icon" aria-hidden="true">${SPARKLE_SVG}</span><span class="pf-optimize-label">${OPTIMIZE_TEXT}</span>`;
   const DEFAULT_OFFSET = { x: 0, y: 0 };
+  // Every node this script injects into the page, for mutation self-filtering.
+  const OWN_UI_SELECTOR = ".pf-optimize-btn, .pf-preview-card, .pf-busy-indicator, #pf-toast";
 
   let button = null;
   let activeInput = null;
@@ -20,6 +22,9 @@ function startAskBetter(site, siteToggleKey, selectors) {
   let busyIndicator = null;
   let previewCard = null;
   let previewState = null;
+  // Monotonic token for in-flight background requests. Any response whose token
+  // is stale (superseded by a newer optimize/regenerate/refine) is dropped.
+  let requestSeq = 0;
 
   scheduleSync();
   window.addEventListener("resize", scheduleSync, { passive: true });
@@ -41,12 +46,48 @@ function startAskBetter(site, siteToggleKey, selectors) {
     });
   }
 
-  observer = new MutationObserver(scheduleSync);
+  observer = new MutationObserver(onDocumentMutated);
   observer.observe(document.documentElement || document.body, {
     subtree: true,
     childList: true,
-    attributes: true
+    attributes: true,
+    // Only attributes that can change whether the composer is present, visible,
+    // or sized. Observing every attribute on a page like ChatGPT is very noisy.
+    attributeFilter: ["class", "style", "hidden", "contenteditable", "disabled", "aria-hidden"]
   });
+
+  // Every sync repositions our own injected nodes, which mutates them, which
+  // would schedule another sync — a self-sustaining per-frame loop. Ignore
+  // records that originate entirely from our own UI.
+  function onDocumentMutated(records) {
+    for (const record of records) {
+      if (!isOwnMutation(record)) {
+        scheduleSync();
+        return;
+      }
+    }
+  }
+
+  function isOwnElement(node) {
+    if (!node || node.nodeType !== 1 || typeof node.closest !== "function") {
+      return false;
+    }
+    return !!node.closest(OWN_UI_SELECTOR);
+  }
+
+  function isOwnMutation(record) {
+    const target = record.target;
+    if (isOwnElement(target && target.nodeType === 1 ? target : (target && target.parentElement))) {
+      return true;
+    }
+    if (record.type === "childList") {
+      // Our roots are appended to document.body, so the record target is the
+      // body — decide from the nodes that were actually added or removed.
+      const touched = [...record.addedNodes, ...record.removedNodes];
+      return touched.length > 0 && touched.every((node) => isOwnElement(node) || isOwnElement(node && node.parentElement));
+    }
+    return false;
+  }
 
   function ensureButton() {
     if (button && button.isConnected) {
@@ -158,6 +199,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
   }
 
   async function requestOptimization(targetInput, prompt, preset) {
+    const token = ++requestSeq;
     setBusy(true, targetInput);
     const response = await sendMessage({
       type: "ASKBETTER_OPTIMIZE",
@@ -165,6 +207,10 @@ function startAskBetter(site, siteToggleKey, selectors) {
       preset,
       site
     });
+    // A newer request is already in flight and still owns the busy state.
+    if (token !== requestSeq) {
+      return;
+    }
     setBusy(false, targetInput);
 
     if (!response || !response.ok) {
@@ -432,6 +478,8 @@ function startAskBetter(site, siteToggleKey, selectors) {
     if (!base) {
       return;
     }
+    const state = previewState;
+    const token = ++requestSeq;
     setPreviewBusy(true);
     const response = await sendMessage({
       type: "ASKBETTER_REFINE",
@@ -439,7 +487,10 @@ function startAskBetter(site, siteToggleKey, selectors) {
       instruction,
       site
     });
-    if (!isPreviewOpen()) {
+    // Drop the result if it was superseded, or if this card was discarded —
+    // previewState identity changes when a new preview opens, so a stale
+    // response can never land in a card it was not requested from.
+    if (token !== requestSeq || previewState !== state || !isPreviewOpen()) {
       return;
     }
     setPreviewBusy(false);
@@ -533,6 +584,8 @@ function startAskBetter(site, siteToggleKey, selectors) {
       showToast("Prompt box not found");
       return;
     }
+    const state = previewState;
+    const token = ++requestSeq;
     setPreviewBusy(true);
     const response = await sendMessage({
       type: "ASKBETTER_OPTIMIZE",
@@ -540,7 +593,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
       preset: previewState.preset,
       site
     });
-    if (!isPreviewOpen()) {
+    if (token !== requestSeq || previewState !== state || !isPreviewOpen()) {
       return;
     }
     setPreviewBusy(false);
