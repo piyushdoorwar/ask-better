@@ -226,6 +226,9 @@
     renderLegend(legend);
     destroyChart();
 
+    // Chart.js draws on a canvas, so it can't inherit the page font from CSS.
+    Chart.defaults.font.family = '"DM Sans", system-ui, sans-serif';
+
     chart = new Chart(canvas.getContext("2d"), {
       type: "bar",
       data: { labels: win.labels, datasets },
@@ -255,6 +258,7 @@
             backgroundColor: "#161310",
             borderColor: "rgba(244,240,235,0.14)",
             borderWidth: 1,
+            cornerRadius: 6,
             titleColor: TEXT,
             bodyColor: TEXT,
             padding: 10

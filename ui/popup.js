@@ -44,6 +44,12 @@ const modelHintEl = document.getElementById("modelHint");
 const keepUserVoiceToggle = document.getElementById("keepUserVoiceToggle");
 const openSettingsBtn = document.getElementById("openSettingsBtn");
 
+// The Optimize shortcut is Cmd+Shift+O on macOS (manifest `commands`).
+const shortcutModEl = document.getElementById("shortcutMod");
+if (shortcutModEl && /mac/i.test(navigator.userAgentData?.platform || navigator.platform || "")) {
+  shortcutModEl.textContent = "\u2318";
+}
+
 init().catch(() => {
   statusText.textContent = "Unable to load settings.";
   statusText.className = "status-warn";

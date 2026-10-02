@@ -8,37 +8,14 @@
     <link rel="stylesheet" href="options.css" />
   </head>
   <body>
-    <div class="wrap">
-      <div class="top">
-        <div class="brand">
-          <img class="brand-icon" src="../assets/icons/icon.svg" alt="AskBetter icon" />
-          <div class="title-group">
-            <h1>AskBetter Settings</h1>
-            <span class="title-sub">Local-first · nothing leaves your browser</span>
-          </div>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <img class="brand-icon" src="../assets/icons/icon.svg" alt="" width="28" height="28" />
+          <span class="brand-name">AskBetter</span>
         </div>
-        <div class="top-actions">
-          <div id="statusMsg" class="status-chip" role="status" aria-live="polite" title="Auto-save enabled">
-            <span class="status-chip-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
-                <path d="M8 12.4L10.7 15L16.2 9.4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
-              </svg>
-            </span>
-            <span id="statusMsgText">Auto-save</span>
-          </div>
-          <button id="privacyInfoBtn" class="help-btn" type="button" aria-label="Privacy policy and data processing">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
-              <path d="M12 10.3V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
-              <circle cx="12" cy="7.6" r="1.1" fill="currentColor"></circle>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <div class="layout">
-        <aside class="sidebar card">
+        <p class="sidebar-caption">Settings</p>
+        <nav class="sidebar-nav" aria-label="Settings sections">
           <div class="menu-group" data-group="common">
             <p class="menu-title">Common</p>
             <button class="nav-btn active" data-section="section-models" type="button">
@@ -110,14 +87,42 @@
               <span class="nav-label">Suggestions</span>
             </button>
           </div>
-        </aside>
+        </nav>
+        <p class="sidebar-foot">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          Local-first. Nothing leaves your browser except calls to your AI provider.
+        </p>
+      </aside>
 
-        <main class="content card">
+      <div class="main">
+        <header class="topbar">
+          <div class="title-group">
+            <h1>Settings</h1>
+            <span class="title-sub">Changes save automatically</span>
+          </div>
+          <div class="top-actions">
+            <div id="statusMsg" class="status-chip" role="status" aria-live="polite" title="Auto-save enabled">
+              <span class="status-chip-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+                  <path d="M8 12.4L10.7 15L16.2 9.4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+              </span>
+              <span id="statusMsgText">Auto-save</span>
+            </div>
+            <button id="privacyInfoBtn" class="help-btn" type="button" aria-label="Privacy policy and data processing">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+                <path d="M12 10.3V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                <circle cx="12" cy="7.6" r="1.1" fill="currentColor"></circle>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <main class="content">
           <section id="section-models" class="settings-section active">
             <div class="section-head">
-              <span class="section-badge" aria-hidden="true">
-                <span class="icon-mask icon-models"></span>
-              </span>
               <div>
                 <div class="section-title-row">
                   <h2 class="section-title">Models</h2>
@@ -171,9 +176,6 @@
 
           <section id="section-reports" class="settings-section">
             <div class="section-head">
-              <span class="section-badge" aria-hidden="true">
-                <span class="icon-mask icon-reports"></span>
-              </span>
               <div>
                 <div class="section-title-row">
                   <h2 class="section-title">Reports</h2>
@@ -236,9 +238,6 @@
 
           <section id="section-history" class="settings-section">
             <div class="section-head">
-              <span class="section-badge" aria-hidden="true">
-                <span class="icon-mask icon-history"></span>
-              </span>
               <div>
                 <div class="section-title-row">
                   <h2 class="section-title">History</h2>
@@ -267,9 +266,6 @@
 
           <section id="section-mode" class="settings-section">
             <div class="section-head">
-              <span class="section-badge" aria-hidden="true">
-                <span class="icon-mask icon-mode"></span>
-              </span>
               <div>
                 <div class="section-title-row">
                   <h2 class="section-title">Mode</h2>
@@ -310,9 +306,6 @@
 
           <section id="section-phrasebetter-suggestions" class="settings-section">
             <div class="section-head">
-              <span class="section-badge" aria-hidden="true">
-                <span class="icon-mask icon-mode"></span>
-              </span>
               <div>
                 <div class="section-title-row">
                   <h2 class="section-title">Suggestions</h2>
@@ -349,9 +342,6 @@
 
           <section id="section-phrasebetter-presets" class="settings-section">
             <div class="section-head">
-              <span class="section-badge" aria-hidden="true">
-                <span class="icon-mask icon-presets"></span>
-              </span>
               <div>
                 <div class="section-title-row">
                   <h2 class="section-title">Presets</h2>
@@ -447,9 +437,6 @@
 
           <section id="section-presets" class="settings-section">
             <div class="section-head">
-              <span class="section-badge" aria-hidden="true">
-                <span class="icon-mask icon-presets"></span>
-              </span>
               <div>
                 <div class="section-title-row">
                   <h2 class="section-title">Presets</h2>
@@ -620,9 +607,6 @@
 
           <section id="section-askbetter-suggestions" class="settings-section">
             <div class="section-head">
-              <span class="section-badge" aria-hidden="true">
-                <span class="icon-mask icon-mode"></span>
-              </span>
               <div>
                 <div class="section-title-row">
                   <h2 class="section-title">Suggestions</h2>
@@ -659,9 +643,6 @@
 
           <section id="section-integrations" class="settings-section">
             <div class="section-head">
-              <span class="section-badge" aria-hidden="true">
-                <span class="icon-mask icon-integrations"></span>
-              </span>
               <div>
                 <div class="section-title-row">
                   <h2 class="section-title">Integrations</h2>
@@ -719,9 +700,6 @@
 
           <section id="section-security" class="settings-section">
             <div class="section-head">
-              <span class="section-badge" aria-hidden="true">
-                <span class="icon-mask icon-security"></span>
-              </span>
               <div>
                 <div class="section-title-row">
                   <h2 class="section-title">Security</h2>
@@ -751,11 +729,11 @@
                   <span class="key-locked-status">Verified &amp; locked</span>
                 </div>
                 <div class="security-actions">
-                  <button type="button" id="testKeyBtn">Verify key</button>
-                  <button type="button" id="clearDataBtn">Clear stored key &amp; data</button>
+                  <button type="button" id="testKeyBtn" class="btn btn-primary">Verify key</button>
+                  <button type="button" id="clearDataBtn" class="btn btn-danger">Clear stored key &amp; data</button>
                   <a
                     id="generateKeyLink"
-                    class="gen-key-btn"
+                    class="btn btn-secondary gen-key-btn"
                     href="https://aistudio.google.com/apikey"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -777,7 +755,6 @@
           </section>
         </main>
       </div>
-
     </div>
 
     <div id="sectionInfoModal" class="info-modal" hidden>

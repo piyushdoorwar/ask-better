@@ -1,108 +1,83 @@
-/* Manrope — vendored locally (local-first: no remote font fetch).
-   Single variable font covering weights 400–800. */
-@font-face {
-  font-family: 'Manrope';
-  font-style: normal;
-  font-weight: 400 800;
-  font-display: swap;
-  src: url('fonts/manrope-variable.woff2') format('woff2-variations'),
-       url('fonts/manrope-variable.woff2') format('woff2');
-}
+/* DM Sans ships with the extension (ui/fonts, SIL OFL 1.1 — see fonts/OFL.txt),
+   so nothing is fetched at runtime. Latin subset, one file per weight. */
+@font-face { font-family: "DM Sans"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/dm-sans-400.woff2") format("woff2"); }
+@font-face { font-family: "DM Sans"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/dm-sans-500.woff2") format("woff2"); }
+@font-face { font-family: "DM Sans"; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/dm-sans-600.woff2") format("woff2"); }
+@font-face { font-family: "DM Sans"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/dm-sans-700.woff2") format("woff2"); }
 
 :root {
   color-scheme: dark;
 
-  /* AskBetter font stack */
-  --font-ui: 'Manrope', 'Cantarell', 'Ubuntu', 'Inter', 'Segoe UI', sans-serif;
+  --font-ui: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  /* Brand palette — single source of truth, synced with site/styles.css */
+  /* Brand — single source of truth, synced with site/styles.css */
   --accent: #e8991e;
   --accent-bright: #f5ae3a;
   --accent-dark: #d17a14;
-  --accent-glow: rgba(232, 153, 30, 0.16);
-  --accent-gradient: linear-gradient(135deg, #f5ae3a 0%, #e8991e 100%);
+  --accent-ink: #1a1206;
+  --accent-soft: rgba(232, 153, 30, 0.14);
+  --accent-softer: rgba(232, 153, 30, 0.07);
+  --accent-line: rgba(232, 153, 30, 0.38);
+  --accent-glow: var(--accent-soft);
+  --accent-gradient: var(--accent);
 
-  /* Aliases kept for existing references (all map to amber) */
-  --orange: #e8991e;
-  --orange-light: #f5ae3a;
-  --orange-dark: #d17a14;
-  --yellow: #e8991e;
-  --yellow-dark: #d17a14;
-  --yellow-light: #f5ae3a;
+  /* Surfaces: page → card → control → raised */
+  --bg: #0f0d0b;
+  --surface: #161310;
+  --surface-2: #1b1713;
+  --surface-3: #231e19;
+  --bg-secondary: var(--surface);
+  --bg-panel: var(--surface);
+  --bg-elevated: var(--surface-2);
+  --bg-elevated-2: var(--surface-3);
+  --panel: var(--surface);
 
-  /* Site-named warm tokens (kept in sync with site) */
-  --panel: #161310;
-  --line: #2e2720;
+  /* Text: heading ink → body → secondary → muted */
+  --ink: #f4f0eb;
+  --text: #f4f0eb;
+  --body: #d0c4b8;
+  --text-secondary: #c2b6a9;
+  --text-muted: #9a8f83;
   --muted: #9a8f83;
   --soft: #d0c4b8;
-  --button: #332c25;
-  --button-border: #5a4f42;
 
-  /* Semantic colors */
-  --green: #26A269;
-  --amber: #E5A50A;
-  --red: #C01C28;
-  --blue: #5DADE2;
+  /* Lines: card/control borders and the softer in-card dividers */
+  --line: #2e2720;
+  --line-soft: #231e19;
+  --border: var(--line);
+  --border-light: #3a3128;
+  --border-strong: #4a3f33;
 
-  /* Backgrounds — warm dark ramp (bg/panel/panel-2/line match site) */
-  --bg: #0f0d0b;
-  --bg-secondary: #161310;
-  --bg-panel: #1e1a15;
-  --bg-elevated: #252118;
-  --bg-elevated-2: #2e2720;
+  /* Status (badge tint + dot) */
+  --green: #3fbd82;
+  --green-soft: rgba(63, 189, 130, 0.12);
+  --green-line: rgba(63, 189, 130, 0.34);
+  --amber: #e5a50a;
+  --amber-soft: rgba(229, 165, 10, 0.12);
+  --red: #e5534b;
+  --red-soft: rgba(229, 83, 75, 0.12);
+  --red-line: rgba(229, 83, 75, 0.4);
 
-  /* Text — warm light */
-  --text: #f4f0eb;
-  --text-secondary: rgba(244, 240, 235, 0.72);
-  --text-muted: rgba(244, 240, 235, 0.48);
-
-  /* Borders */
-  --border: rgba(255, 255, 255, 0.09);
-  --border-light: rgba(255, 255, 255, 0.16);
-
-  /* Shadows */
-  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.5);
-  --shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.55);
-
-  /* Interactions */
-  --focus: rgba(232, 153, 30, 0.38);
-  --surface-gloss: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-
-  /* Radii */
+  /* Radii — 6px controls, 8px cards, 10px dialogs */
   --radius-sm: 6px;
-  --radius: 11px;
-  --radius-card: 13px;
-  --radius-lg: 16px;
-  --radius-xl: 18px;
+  --radius: 8px;
+  --radius-lg: 10px;
   --radius-pill: 999px;
 
-  /* Redesign surfaces — gradient panels, glossy cards, deep shadows */
-  --panel-gradient: linear-gradient(180deg, #1b1712 0%, #141110 100%);
-  --panel-gradient-2: linear-gradient(180deg, #141110 0%, #100d0b 100%);
-  --card-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  --card-shadow-lg: 0 34px 90px -30px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  /* Elevation — flat by default, soft shadow only for floating layers */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px -14px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.3), 0 24px 48px -20px rgba(0, 0, 0, 0.75);
 
-  /* Accent button — warm gradient + glow (redesign primary) */
-  --accent-btn: linear-gradient(135deg, #f7b84a 0%, #e8991e 100%);
-  --accent-btn-glow: 0 8px 20px -6px rgba(232, 153, 30, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  --accent-btn-glow-sm: 0 6px 16px -6px rgba(232, 153, 30, 0.55);
-
-  /* Icon tile (section headers / brand mark) */
-  --tile-bg: linear-gradient(145deg, rgba(232, 153, 30, 0.30), rgba(15, 13, 11, 0.96));
-  --tile-border: rgba(232, 153, 30, 0.40);
-}
-
-/* Pulsing "connected" dot used on the popup + options status */
-@keyframes ab-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(38, 162, 105, 0.45); }
-  50% { box-shadow: 0 0 0 4px rgba(38, 162, 105, 0); }
+  --focus: rgba(232, 153, 30, 0.38);
+  --focus-ring: 0 0 0 3px var(--focus);
 }
 
 * {
   box-sizing: border-box;
   scrollbar-width: thin;
-  scrollbar-color: rgba(232, 153, 30, 0.55) transparent;
+  scrollbar-color: var(--border-strong) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -111,17 +86,16 @@
 }
 
 *::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 4px;
+  background: transparent;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(232, 153, 30, 0.5);
+  background: var(--border-strong);
   border-radius: 4px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: var(--accent);
+  background: rgba(232, 153, 30, 0.6);
 }
 
 html,
@@ -131,16 +105,15 @@ body {
 
 body {
   font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.45;
   color: var(--text);
-  background:
-    radial-gradient(1100px 640px at 12% -6%, rgba(232, 153, 30, 0.10), transparent 60%),
-    radial-gradient(900px 560px at 108% 112%, rgba(232, 153, 30, 0.06), transparent 60%),
-    #0a0908;
+  background: var(--bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Form controls don't inherit font-family by default — force Manrope everywhere. */
+/* Form controls don't inherit font-family by default. */
 button,
 input,
 select,
@@ -149,132 +122,124 @@ optgroup {
   font-family: var(--font-ui);
 }
 
-.select-shell {
-  position: relative;
-  display: block;
-  width: 100%;
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius);
-  background: var(--bg-elevated);
-  box-shadow: var(--shadow-sm);
-  transition:
-    border-color 140ms ease,
-    box-shadow 140ms ease;
-}
-
-.select-shell::before {
-  content: "";
-  position: absolute;
-  top: 8px;
-  bottom: 8px;
-  right: 40px;
-  width: 1px;
-  background: rgba(255, 255, 255, 0.07);
-  pointer-events: none;
-}
-
-.select-shell::after {
-  content: "";
-  position: absolute;
-  right: 13px;
-  top: 50%;
-  width: 18px;
-  height: 18px;
-  transform: translateY(-50%);
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M6 8L10 12L14 8' stroke='%23eeeeec' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
-      center / 14px 14px no-repeat;
-  opacity: 0.7;
-  pointer-events: none;
-  transition: transform 140ms ease, opacity 140ms ease;
-}
-
-.select-shell:hover {
-  border-color: rgba(232, 153, 30, 0.5);
-}
-
-.select-shell:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--focus);
-}
-
-.select-shell:focus-within::after {
-  transform: translateY(-50%) rotate(180deg);
-  opacity: 1;
-}
-
-.select-shell select {
-  width: 100%;
-  border: 0;
-  border-radius: inherit;
-  background: transparent;
-  color: var(--text);
-  font-family: inherit;
-  font-size: 14px;
-  line-height: 1.3;
-  padding: 11px 44px 11px 12px;
-  outline: none;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
+button {
   cursor: pointer;
-  box-shadow: none;
 }
 
-.select-shell select option {
-  background: var(--bg-panel);
-  color: var(--text);
-  padding: 8px 12px;
-  font-size: 14px;
-  font-family: inherit;
-}
-
-.select-shell select option:checked,
-.select-shell select option:hover {
-  background: rgba(232, 153, 30, 0.65);
-  color: #ffffff;
-}
-
-.select-shell select optgroup {
-  background: #1e1e1e;
-  color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.select-shell select:hover {
-  background: transparent;
-}
-
-.select-shell select:focus {
-  background: transparent;
-  box-shadow: none;
-}
-
-.select-shell select:disabled,
-.select-shell.is-disabled {
-  opacity: 0.5;
+button:disabled {
   cursor: not-allowed;
 }
 
-.select-shell select::-ms-expand {
-  display: none;
+code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--accent-softer);
+  color: var(--accent-bright);
 }
 
-.select-shell select option,
-.select-shell select optgroup {
-  background: var(--bg-panel);
+/* ── Buttons ─────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font: 500 13px/1 var(--font-ui);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-bright);
+}
+
+.btn-secondary {
+  background: var(--surface-2);
+  border-color: var(--border-light);
+  color: var(--text-secondary);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--border-strong);
   color: var(--text);
 }
 
-.select-shell select option:checked {
-  background: var(--accent);
-  color: #1a1100;
+.btn-danger {
+  background: transparent;
+  border-color: var(--red-line);
+  color: var(--red);
 }
 
-/* ── Custom Select Component ── */
+.btn-danger:hover:not(:disabled) {
+  background: var(--red-soft);
+}
+
+/* ── Status badge (tinted pill + dot) ────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.badge--accent {
+  background: var(--accent-soft);
+  color: var(--accent-bright);
+}
+
+.badge--success {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.badge--warning {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+/* ── Custom select ───────────────────────────────────────── */
 .csel {
   position: relative;
   margin-bottom: 8px;
@@ -288,43 +253,28 @@ optgroup {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
-  padding: 9px 11px 9px 12px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius);
-  box-shadow: var(--surface-gloss);
-  color: var(--text);
-  font-family: inherit;
-  font-size: 13px;
-  cursor: pointer;
-  text-align: left;
-  transition: border-color 120ms, box-shadow 120ms;
   gap: 8px;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px 0 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font: 400 13px/1.3 var(--font-ui);
+  text-align: left;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
 .csel-trigger:hover {
-  border-color: rgba(232, 153, 30, 0.5);
+  border-color: var(--border-strong);
 }
 
+.csel-trigger:focus-visible,
 .csel.is-open .csel-trigger {
+  outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--focus);
-  border-radius: var(--radius) var(--radius) 0 0;
-}
-
-/* Drop-up: open the panel above the trigger when there's no room below
-   (avoids growing the popup and triggering a scrollbar). */
-.csel--up .csel-panel {
-  top: auto;
-  bottom: 100%;
-  border-top: 1px solid var(--orange);
-  border-bottom: none;
-  border-radius: var(--radius) var(--radius) 0 0;
-}
-
-.csel--up.is-open .csel-trigger {
-  border-radius: 0 0 var(--radius) var(--radius);
+  box-shadow: var(--focus-ring);
 }
 
 .csel--disabled {
@@ -351,54 +301,55 @@ optgroup {
 
 .csel-val {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .csel-chevron {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
-  opacity: 0.6;
-  transition: transform 130ms ease, opacity 130ms;
+  color: var(--text-muted);
+  transition: transform 130ms ease;
 }
 
 .csel-chevron-sep {
-  width: 1px;
-  align-self: stretch;
-  min-height: 16px;
-  background: rgba(255, 255, 255, 0.22);
-  flex-shrink: 0;
+  display: none;
 }
 
 .csel.is-open .csel-chevron {
   transform: rotate(180deg);
-  opacity: 1;
+  color: var(--text);
 }
 
+/* The panel floats just below the trigger (or above it, via .csel--up, when
+   there's no room below — that avoids growing the popup into a scrollbar). */
 .csel-panel {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px);
   left: 0;
   right: 0;
   z-index: 200;
-  background: var(--bg-panel);
-  border: 1px solid var(--orange);
-  border-top: none;
-  border-radius: 0 0 var(--radius) var(--radius);
-  box-shadow: var(--shadow-lg);
-  max-height: 200px;
+  max-height: 220px;
   overflow-y: auto;
   padding: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+}
+
+.csel--up .csel-panel {
+  top: auto;
+  bottom: calc(100% + 4px);
 }
 
 .csel-group {
-  padding: 7px 10px 3px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  padding: 8px 10px 4px;
+  font-size: 11px;
+  font-weight: 500;
   color: var(--text-muted);
   pointer-events: none;
 }
@@ -407,25 +358,23 @@ optgroup {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 10px;
+  padding: 8px 10px;
   border-radius: var(--radius-sm);
   font-size: 13px;
-  color: var(--text);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: background 70ms;
+  transition: background-color 70ms ease, color 70ms ease;
 }
 
 .csel-item:hover {
-  background: var(--bg-elevated-2);
+  background: var(--surface-3);
+  color: var(--text);
 }
 
 .csel-item.is-selected {
-  background: var(--accent);
-  color: #ffffff;
-}
-
-.csel-item.is-selected:hover {
-  background: var(--accent-bright);
+  background: var(--accent-soft);
+  color: var(--accent-bright);
+  font-weight: 500;
 }
 
 .csel-icon {
@@ -437,13 +386,69 @@ optgroup {
 }
 
 .csel-sep {
-  width: 1px;
-  align-self: stretch;
-  min-height: 16px;
-  background: rgba(255, 255, 255, 0.22);
-  flex-shrink: 0;
+  display: none;
 }
 
 .csel + label {
   margin-top: 8px;
+}
+
+/* ── Toggle switch ───────────────────────────────────────── */
+.switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.slider {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  transition: background-color 140ms ease, border-color 140ms ease;
+  pointer-events: none;
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  left: 2px;
+  top: 2px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform 140ms ease, background-color 140ms ease;
+}
+
+.switch input:checked + .slider {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(16px);
+  background: var(--accent-ink);
+}
+
+.switch input:focus-visible + .slider {
+  box-shadow: var(--focus-ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

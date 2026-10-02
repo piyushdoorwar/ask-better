@@ -9,102 +9,110 @@
   </head>
   <body>
     <div class="panel">
-      <div class="header">
+      <header class="header">
         <div class="brand">
-          <span class="brand-mark">
-            <img class="brand-icon" src="../assets/icons/icon.svg" alt="AskBetter icon" />
-          </span>
+          <img class="brand-icon" src="../assets/icons/icon.svg" alt="" width="26" height="26" />
           <div class="brand-text">
             <h1>AskBetter</h1>
             <span class="brand-sub">Prompt optimizer</span>
           </div>
         </div>
-        <span class="badge">LOCAL</span>
-      </div>
+        <span class="badge badge--accent" title="Settings and keys stay in this browser">Local</span>
+      </header>
 
       <div class="status" id="statusBox">
-        <span class="status-dot" aria-hidden="true"></span>
-        <div class="status-body">
-          <span class="eyebrow">Connection</span>
-          <div id="statusText"></div>
-        </div>
+        <span class="status-label">Connection</span>
+        <span class="status-value">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="statusText"></span>
+        </span>
       </div>
 
-      <div class="field-grid">
+      <section class="card">
+        <div class="field-grid">
+          <div class="field">
+            <label for="providerSelect">Provider</label>
+            <div class="csel">
+              <select id="providerSelect" hidden>
+                <option value="gemini" data-icon="../assets/icons/ui/gemini-color.svg">Google Gemini</option>
+                <option value="openai" data-icon="../assets/icons/ui/openai.svg">OpenAI</option>
+                <option value="anthropic" data-icon="../assets/icons/ui/claude-color.svg">Anthropic Claude</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label id="modelLabel" for="modelSelect">Gemini model</label>
+            <div class="csel">
+              <!-- Options are populated at runtime from the provider's live model
+                   list (see ui/models.js / popup.js renderModelOptions). -->
+              <select id="modelSelect" hidden></select>
+            </div>
+            <p class="model-hint" id="modelHint" hidden>Add your API key in settings to load models.</p>
+          </div>
+        </div>
+
         <div class="field">
-          <label for="providerSelect">Provider</label>
+          <label for="defaultPreset">Ask Better preset</label>
           <div class="csel">
-            <select id="providerSelect" hidden>
-              <option value="gemini" data-icon="../assets/icons/ui/gemini-color.svg">Google Gemini</option>
-              <option value="openai" data-icon="../assets/icons/ui/openai.svg">OpenAI</option>
-              <option value="anthropic" data-icon="../assets/icons/ui/claude-color.svg">Anthropic Claude</option>
+            <select id="defaultPreset" hidden>
+              <optgroup label="Core">
+                <option value="structured">Story structured</option>
+                <option value="concise">Concise</option>
+                <option value="grammar">Fix grammar</option>
+                <option value="clarity">Improve clarity</option>
+              </optgroup>
+              <optgroup label="Style">
+                <option value="persuasive">Persuasive</option>
+                <option value="executive">Executive brief</option>
+                <option value="coaching">Coaching tone</option>
+                <option value="email_rewrite">Email rephrase/rewrite</option>
+              </optgroup>
+              <optgroup label="Critical">
+                <option value="devils_advocate">Devil's advocate</option>
+                <option value="first_principles">First principles</option>
+                <option value="risk_audit">Risk audit</option>
+              </optgroup>
+              <optgroup label="Delivery">
+                <option value="technical_spec">Technical spec</option>
+                <option value="implementation_plan">Implementation plan</option>
+              </optgroup>
             </select>
           </div>
         </div>
+
         <div class="field">
-          <label id="modelLabel" for="modelSelect">Gemini model</label>
+          <label for="phraseBetterPreset">Phrase Better preset</label>
           <div class="csel">
-            <!-- Options are populated at runtime from the provider's live model
-                 list (see ui/models.js / popup.js renderModelOptions). -->
-            <select id="modelSelect" hidden></select>
+            <select id="phraseBetterPreset" hidden>
+              <option value="fix_grammar">Fix grammar (default)</option>
+              <option value="rephrase">Rephrase</option>
+              <option value="casual">Casual reply</option>
+              <option value="formal">Formal message</option>
+            </select>
           </div>
-          <p class="model-hint" id="modelHint" hidden>Add your API key in settings to load models.</p>
         </div>
-      </div>
 
-      <div class="field">
-        <label for="defaultPreset">ASK BETTER PRESET</label>
-        <div class="csel">
-          <select id="defaultPreset" hidden>
-            <optgroup label="Core">
-              <option value="structured">Story structured</option>
-              <option value="concise">Concise</option>
-              <option value="grammar">Fix grammar</option>
-              <option value="clarity">Improve clarity</option>
-            </optgroup>
-            <optgroup label="Style">
-              <option value="persuasive">Persuasive</option>
-              <option value="executive">Executive brief</option>
-              <option value="coaching">Coaching tone</option>
-              <option value="email_rewrite">Email rephrase/rewrite</option>
-            </optgroup>
-            <optgroup label="Critical">
-              <option value="devils_advocate">Devil's advocate</option>
-              <option value="first_principles">First principles</option>
-              <option value="risk_audit">Risk audit</option>
-            </optgroup>
-            <optgroup label="Delivery">
-              <option value="technical_spec">Technical spec</option>
-              <option value="implementation_plan">Implementation plan</option>
-            </optgroup>
-          </select>
+        <div class="toggle-row">
+          <div class="toggle-copy">
+            <label class="toggle-name" for="keepUserVoiceToggle">Keep my voice</label>
+            <span class="toggle-desc">Preserve your tone and style in rewrites</span>
+          </div>
+          <span class="switch">
+            <input type="checkbox" id="keepUserVoiceToggle" />
+            <span class="slider" aria-hidden="true"></span>
+          </span>
         </div>
-      </div>
+      </section>
 
-      <div class="field">
-        <label for="phraseBetterPreset">Phrase Better preset</label>
-        <div class="csel">
-          <select id="phraseBetterPreset" hidden>
-            <option value="fix_grammar">Fix grammar (default)</option>
-            <option value="rephrase">Rephrase</option>
-            <option value="casual">Casual reply</option>
-            <option value="formal">Formal message</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="toggle-row">
-        <div class="toggle-copy">
-          <span class="toggle-name">Keep my voice</span>
-          <span class="toggle-desc">Preserve tone &amp; style</span>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="keepUserVoiceToggle" />
-          <span class="slider" aria-hidden="true"></span>
-        </label>
-      </div>
-
-      <button class="open-settings" id="openSettingsBtn">Open settings</button>
+      <footer class="footer">
+        <span class="shortcut" title="Optimize the prompt in the active tab">
+          <kbd id="shortcutMod">Ctrl</kbd><kbd>Shift</kbd><kbd>O</kbd>
+        </span>
+        <button class="btn btn-primary open-settings" id="openSettingsBtn" type="button">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Open settings
+        </button>
+      </footer>
     </div>
 
     <script src="models.js"></script>

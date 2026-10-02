@@ -88,426 +88,414 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <!-- Icon sprite, inline so <use> works on file:// as well as when hosted. -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="sprite" aria-hidden="true">
+      <symbol id="i-github" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></symbol>
+      <symbol id="i-chrome" viewBox="0 0 32 32"><path fill="currentColor" stroke="none" d="M20.206 16.286c0 2.323-1.883 4.206-4.206 4.206s-4.206-1.883-4.206-4.206c0-2.323 1.883-4.206 4.206-4.206s4.206 1.883 4.206 4.206zM15.975 11.274v-0h10.164c-1.848-3.731-5.694-6.296-10.139-6.296-3.599 0-6.804 1.681-8.876 4.301l3.878 6.631c0.192-2.584 2.343-4.622 4.973-4.635zM16 21.297c-2.169 0-4.016-1.378-4.714-3.306l-4.68-8.004c-1.209 1.8-1.915 3.966-1.915 6.297 0 5.692 4.206 10.401 9.679 11.191l3.901-6.723c-0.682 0.348-1.454 0.544-2.272 0.544zM26.5 12.080h-7.773c1.376 0.893 2.285 2.443 2.285 4.206 0 0.867-0.22 1.682-0.607 2.393l0.003 0.002-5.158 8.888c0.248 0.016 0.498 0.025 0.751 0.025 6.245 0 11.308-5.063 11.308-11.308 0-1.486-0.287-2.906-0.809-4.206z"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+      <symbol id="i-sparkle" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 2.2l1.9 5.4 5.4 1.9-5.4 1.9L12 16.8l-1.9-5.4L4.7 9.5l5.4-1.9z"/><path fill="currentColor" stroke="none" d="M18.7 13.6l.85 2.35 2.35.85-2.35.85-.85 2.35-.85-2.35-2.35-.85 2.35-.85z"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-cursor" viewBox="0 0 24 24"><path d="M5 3l6.5 17 2.3-6.7L20.5 11z"/><path d="m14 14 5 5"/></symbol>
+      <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 21h18M7 21v-7M12 21V6M17 21v-4"/></symbol>
+      <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><polyline points="12 7 12 12 15 14"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/></symbol>
+      <symbol id="i-move" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M12 2l-3 3M12 2l3 3M12 22l-3-3M12 22l3-3M2 12l3-3M2 12l3 3M22 12l-3-3M22 12l-3 3"/></symbol>
+      <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></symbol>
+      <symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+      <symbol id="i-brain" viewBox="0 0 24 24"><path d="M9.5 2A2.5 2.5 0 0 0 7 4.5v.1A3 3 0 0 0 4.5 9a3 3 0 0 0 .5 5.5A3 3 0 0 0 9 19.5a2.5 2.5 0 0 0 3 2.4V4.5A2.5 2.5 0 0 0 9.5 2z"/><path d="M14.5 2A2.5 2.5 0 0 1 17 4.5v.1A3 3 0 0 1 19.5 9a3 3 0 0 1-.5 5.5 3 3 0 0 1-4 5 2.5 2.5 0 0 1-3 2.4"/></symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></symbol>
+      <symbol id="i-server-off" viewBox="0 0 24 24"><path d="M2 2l20 20"/><path d="M7 2h13a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-4M10 10H4a2 2 0 0 1-2-2V4a2 2 0 0 1 1.3-1.9M4 14h10M20 14a2 2 0 0 1 2 2v4M18 22H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2"/></symbol>
+      <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></symbol>
+      <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"/></symbol>
+      <symbol id="i-signal-off" viewBox="0 0 24 24"><path d="M2 2l20 20"/><path d="M8.5 16.5a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 5.2-2.8M19 12.9a10 10 0 0 0-2.2-1.6M2 8.8a15 15 0 0 1 4.2-2.6M22 8.8A15 15 0 0 0 11.8 5M12 20h.01"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+      <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 4 5.5V11c0 5.25 3.6 9.74 8 11.5 4.4-1.76 8-6.25 8-11.5V5.5L12 2z"/></symbol>
+      <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></symbol>
+    </svg>
+
+    <a class="skip-link" href="#main">Skip to content</a>
+
     <header class="topbar">
-      <a class="brand" href="#top" aria-label="AskBetter home">
-        <img src="assets/icons/icon.svg" alt="" />
-        <span>AskBetter</span>
-      </a>
-      <nav aria-label="Primary navigation">
-        <a href="#features">Features</a>
-        <a href="#presets">Presets</a>
-        <a href="#privacy">Privacy</a>
-        <a href="https://github.com/piyushdoorwar/ask-better" rel="noreferrer">GitHub</a>
-      </nav>
+      <div class="wrap">
+        <a class="brand" href="./" aria-label="AskBetter home">
+          <img src="assets/icons/icon.svg" alt="" width="28" height="28" />
+          <span>AskBetter</span>
+        </a>
+        <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+          <svg class="ic i-menu" aria-hidden="true"><use href="#i-menu" /></svg>
+          <svg class="ic i-close" aria-hidden="true"><use href="#i-close" /></svg>
+        </button>
+        <nav class="nav" id="site-nav" aria-label="Primary">
+          <a href="#get-started">Get started</a>
+          <a href="#features">Features</a>
+          <a href="#presets">Presets</a>
+          <a href="#privacy">Privacy</a>
+          <a class="nav-gh" href="https://github.com/piyushdoorwar/ask-better" rel="noreferrer">
+            <svg class="ic" aria-hidden="true"><use href="#i-github" /></svg>
+            <span>GitHub</span>
+          </a>
+        </nav>
+      </div>
     </header>
 
-    <main id="top">
-
-      <!-- ── Hero ──────────────────────────────────────────────────────── -->
+    <main id="main">
+      <!-- Hero -->
       <section class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">Chrome Extension · MV3</p>
-          <h1>Ask<br>Better</h1>
-          <p class="lede">
-            One extension, two ways to write better: optimize your prompts inside
-            ChatGPT, Gemini, and Claude, or right-click to rephrase any text on the
-            web. Runs entirely in your browser — no backend, no tracking.
-          </p>
-          <div class="hero-modes" aria-label="Two modes">
-            <div class="hero-mode">
-              <span class="hero-mode-icon" aria-hidden="true"><img src="assets/icons/sparkle.svg" alt="" /></span>
-              <div class="hero-mode-text">
-                <strong>Ask Better</strong>
-                <span>Optimize prompts in ChatGPT, Gemini &amp; Claude</span>
-              </div>
+        <div class="wrap hero-grid">
+          <div class="hero-copy">
+            <span class="pill"><b>Free</b> Chrome extension for ChatGPT, Gemini and Claude</span>
+            <h1>Better prompts, <em>right where you type</em>.</h1>
+            <p class="lede">
+              AskBetter adds an Optimize button to the ChatGPT, Gemini and Claude prompt box. One click
+              rewrites your prompt, you review it in a preview, and accept it when it reads right.
+              Right-click any text on the web to rephrase it, too.
+            </p>
+            <div class="actions">
+              <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/askbetter/eelecokniegejkbbklgdpnhmhgfkfpif" rel="noreferrer">
+                <svg class="ic" aria-hidden="true"><use href="#i-chrome" /></svg>
+                <span>Add to Chrome</span>
+              </a>
+              <a class="btn btn-secondary" href="https://github.com/piyushdoorwar/ask-better" rel="noreferrer">
+                <svg class="ic" aria-hidden="true"><use href="#i-github" /></svg>
+                <span>View source</span>
+              </a>
             </div>
-            <div class="hero-mode">
-              <span class="hero-mode-icon" aria-hidden="true"><img src="assets/icons/cursor.svg" alt="" /></span>
-              <div class="hero-mode-text">
-                <strong>Phrase Better</strong>
-                <span>Right-click to rephrase any text on the web</span>
-              </div>
-            </div>
-          </div>
-          <div class="actions">
-            <a class="button primary" id="installLink" href="#install">Add to Chrome</a>
-            <a
-              class="button secondary"
-              href="https://github.com/piyushdoorwar/ask-better"
-              rel="noreferrer"
-            >View source</a>
-          </div>
-        </div>
-
-        <!-- ── Browser mockup ───────────────────────────────────────────── -->
-        <div class="browser-mockup" aria-label="AskBetter in action — browser mockup">
-          <!-- Browser chrome -->
-          <div class="bm-chrome">
-            <div class="bm-dots" aria-hidden="true"><i></i><i></i><i></i></div>
-            <div class="bm-addressbar">
-              <span class="bm-lock" aria-hidden="true">
-                <svg width="10" height="12" viewBox="0 0 10 12" fill="none"><rect x="2" y="5" width="6" height="6" rx="1" fill="currentColor" opacity=".55"/><path d="M3 5V3.5a2 2 0 1 1 4 0V5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".55"/></svg>
-              </span>
-              <span>chatgpt.com</span>
-            </div>
-            <div class="bm-extbadge" aria-hidden="true" title="AskBetter extension">
-              <img src="assets/icons/icon.svg" alt="" />
-            </div>
+            <ul class="checks">
+              <li><svg class="ic" aria-hidden="true"><use href="#i-check" /></svg>No backend</li>
+              <li><svg class="ic" aria-hidden="true"><use href="#i-check" /></svg>No telemetry</li>
+              <li><svg class="ic" aria-hidden="true"><use href="#i-check" /></svg>Your own API key</li>
+              <li><svg class="ic" aria-hidden="true"><use href="#i-check" /></svg>Preview before it replaces</li>
+            </ul>
           </div>
 
-          <!-- Page body -->
-          <div class="bm-page">
-            <!-- Sidebar -->
-            <div class="bm-sidebar" aria-hidden="true">
-              <div class="bm-new-chat">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-                New chat
+          <!-- Stylized product mock (HTML/CSS, not a screenshot) -->
+          <div class="mock" id="mock" role="img" aria-label="ChatGPT with the AskBetter Optimize button in the prompt box and a preview of the optimized prompt with Accept, Regenerate and Discard">
+            <div class="mock-chrome" aria-hidden="true">
+              <div class="mock-dots"><i></i><i></i><i></i></div>
+              <div class="mock-address">
+                <svg class="ic"><use href="#i-lock" /></svg>
+                chatgpt.com
               </div>
-              <div class="bm-chatlist">
-                <div class="bm-chatitem bm-chatitem--active">Project status email</div>
-                <div class="bm-chatitem">Code review notes</div>
-                <div class="bm-chatitem">Research summary</div>
-                <div class="bm-chatitem">Refactor plan</div>
-              </div>
+              <span class="mock-ext"><img src="assets/icons/icon.svg" alt="" /></span>
             </div>
-
-            <!-- Chat main -->
-            <div class="bm-main">
-              <div class="bm-messages" aria-hidden="true">
-                <div class="bm-msg bm-msg--user">write me an email for the <span class="bm-sel">q2 project status update for stakeholders</span></div>
-                <div class="bm-msg bm-msg--assistant">
-                  <div class="bm-assistant-label">ChatGPT</div>
-                  <div class="bm-assistant-lines">
-                    <span class="bm-line bm-line--long"></span>
-                    <span class="bm-line bm-line--med"></span>
-                    <span class="bm-line bm-line--short"></span>
+            <div class="mock-body" aria-hidden="true">
+              <aside class="mock-side">
+                <span class="new"><svg class="ic"><use href="#i-plus" /></svg>New chat</span>
+                <span class="on">Project status email</span>
+                <span>Code review notes</span>
+                <span>Research summary</span>
+                <span>Refactor plan</span>
+              </aside>
+              <section class="mock-chat">
+                <div class="msg-user">Can you help me write some stakeholder updates?</div>
+                <div class="msg-ai">
+                  <b>ChatGPT</b>
+                  <i></i><i></i><i></i>
+                </div>
+                <div class="composer">
+                  <div class="composer-text" id="mockPrompt">write me an email about the q2 project status update for stakeholders</div>
+                  <div class="composer-foot">
+                    <span class="opt-btn" id="mockOpt"><svg class="ic"><use href="#i-sparkle" /></svg>Optimize</span>
+                    <span>Ctrl/⌘ + Shift + O</span>
+                    <span class="send"><svg class="ic"><use href="#i-up" /></svg></span>
                   </div>
                 </div>
-              </div>
-
-              <!-- Phrase Better chooser — right-click rephrase of the selected text -->
-              <div class="bm-phrase" aria-hidden="true">
-                <div class="bm-phrase-head">
-                  <img src="assets/icons/phrase.svg" alt="" /> Re-phrase
-                </div>
-                <button class="bm-phrase-opt bm-phrase-opt--active" type="button">Q2 project status update for stakeholders</button>
-                <button class="bm-phrase-opt" type="button">stakeholder-ready Q2 status summary</button>
-              </div>
-
-              <!-- Input area — the star of the mockup -->
-              <div class="bm-input-area">
-                <div class="bm-input-box">
-                  <span class="bm-typed" id="bmTyped"></span><span class="bm-cursor" id="bmCursor" aria-hidden="true"></span>
-                  <button class="bm-opt-btn" id="bmOptBtn" aria-label="Optimize prompt with AskBetter">
-                    <img src="assets/icons/sparkle.svg" alt="" class="inline-icon" /> Optimize
-                  </button>
-                </div>
-                <div class="bm-input-foot" aria-hidden="true">
-                  <span>ChatGPT can make mistakes.</span>
-                  <div class="bm-send-btn">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 11V3M3.5 6.5 7 3l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <div class="preview">
+                  <div class="preview-head">
+                    <svg class="ic"><use href="#i-sparkle" /></svg>Optimize preview
+                    <small>≈ 180 tokens · ≈ $0.0001</small>
+                  </div>
+                  <div class="preview-text">Draft a concise Q2 project status email for stakeholders. Cover the key milestones reached, current blockers, and next steps. Keep the tone clear and professional.</div>
+                  <div class="preview-actions">
+                    <span>Diff</span><span>Regenerate</span><span class="gap"></span><span>Discard</span><span class="accept">Accept</span>
                   </div>
                 </div>
-              </div>
+              </section>
             </div>
-          </div>
-        </div>
-
-        <!-- ── Preset marquee ─────────────────────────────────────────── -->
-        <div class="marquee-wrap" aria-hidden="true">
-          <div class="marquee-track">
-            <ul class="marquee-row">
-              <li><img src="assets/icons/structured.svg" alt="" class="inline-icon" /> Structured</li>
-              <li><img src="assets/icons/concise.svg" alt="" class="inline-icon" /> Concise</li>
-              <li><img src="assets/icons/grammar.svg" alt="" class="inline-icon" /> Fix Grammar</li>
-              <li><img src="assets/icons/clarity.svg" alt="" class="inline-icon" /> Improve Clarity</li>
-              <li><img src="assets/icons/persuasive.svg" alt="" class="inline-icon" /> Persuasive</li>
-              <li><img src="assets/icons/executive.svg" alt="" class="inline-icon" /> Executive Brief</li>
-              <li><img src="assets/icons/coaching.svg" alt="" class="inline-icon" /> Coaching Tone</li>
-              <li><img src="assets/icons/email.svg" alt="" class="inline-icon" /> Email Rephrase</li>
-              <li><img src="assets/icons/advocate.svg" alt="" class="inline-icon" /> Devil's Advocate</li>
-              <li><img src="assets/icons/principles.svg" alt="" class="inline-icon" /> First Principles</li>
-              <li><img src="assets/icons/risk.svg" alt="" class="inline-icon" /> Risk Audit</li>
-              <li><img src="assets/icons/spec.svg" alt="" class="inline-icon" /> Technical Spec</li>
-              <li><img src="assets/icons/plan.svg" alt="" class="inline-icon" /> Implementation Plan</li>
-              <li><img src="assets/icons/phrase.svg" alt="" class="inline-icon" /> Phrase Better</li>
-              <li><img src="assets/icons/reports.svg" alt="" class="inline-icon" /> Usage Reports</li>
-              <li><img src="assets/icons/refresh.svg" alt="" class="inline-icon" /> Always-current models</li>
-              <li><img src="assets/icons/integration.svg" alt="" class="inline-icon" /> ChatGPT · Gemini · Claude</li>
-              <li><img src="assets/icons/local.svg" alt="" class="inline-icon" /> Local-first</li>
-            </ul>
-            <ul class="marquee-row" aria-hidden="true">
-              <li><img src="assets/icons/structured.svg" alt="" class="inline-icon" /> Structured</li>
-              <li><img src="assets/icons/concise.svg" alt="" class="inline-icon" /> Concise</li>
-              <li><img src="assets/icons/grammar.svg" alt="" class="inline-icon" /> Fix Grammar</li>
-              <li><img src="assets/icons/clarity.svg" alt="" class="inline-icon" /> Improve Clarity</li>
-              <li><img src="assets/icons/persuasive.svg" alt="" class="inline-icon" /> Persuasive</li>
-              <li><img src="assets/icons/executive.svg" alt="" class="inline-icon" /> Executive Brief</li>
-              <li><img src="assets/icons/coaching.svg" alt="" class="inline-icon" /> Coaching Tone</li>
-              <li><img src="assets/icons/email.svg" alt="" class="inline-icon" /> Email Rephrase</li>
-              <li><img src="assets/icons/advocate.svg" alt="" class="inline-icon" /> Devil's Advocate</li>
-              <li><img src="assets/icons/principles.svg" alt="" class="inline-icon" /> First Principles</li>
-              <li><img src="assets/icons/risk.svg" alt="" class="inline-icon" /> Risk Audit</li>
-              <li><img src="assets/icons/spec.svg" alt="" class="inline-icon" /> Technical Spec</li>
-              <li><img src="assets/icons/plan.svg" alt="" class="inline-icon" /> Implementation Plan</li>
-              <li><img src="assets/icons/phrase.svg" alt="" class="inline-icon" /> Phrase Better</li>
-              <li><img src="assets/icons/reports.svg" alt="" class="inline-icon" /> Usage Reports</li>
-              <li><img src="assets/icons/refresh.svg" alt="" class="inline-icon" /> Always-current models</li>
-              <li><img src="assets/icons/integration.svg" alt="" class="inline-icon" /> ChatGPT · Gemini · Claude</li>
-              <li><img src="assets/icons/local.svg" alt="" class="inline-icon" /> Local-first</li>
-            </ul>
           </div>
         </div>
       </section>
 
-      <!-- ── Features ──────────────────────────────────────────────────── -->
-      <section class="band" id="features">
-        <div class="section-heading" data-reveal>
-          <p class="eyebrow">What it does</p>
-          <h2>Better prompts without the back-and-forth.</h2>
-        </div>
-        <div class="feature-grid">
-          <article data-reveal>
-            <div class="feat-icon" aria-hidden="true"><img src="assets/icons/sparkle.svg" alt="" /></div>
-            <h3>One-click optimize</h3>
-            <p>An Optimize button appears right in the ChatGPT, Gemini, and Claude prompt box — or press <code>Ctrl/Cmd+Shift+O</code>. Review the rewrite in a preview, then accept it.</p>
-          </article>
-          <article data-reveal style="--reveal-delay: 0.08s">
-            <div class="feat-icon" aria-hidden="true"><img src="assets/icons/sliders.svg" alt="" /></div>
-            <h3>15+ presets</h3>
-            <p>From quick grammar fixes to full structural rewrites, persuasive copy, engineering specs, and first-principles breakdowns — pick the right preset for the job.</p>
-          </article>
-          <article data-reveal style="--reveal-delay: 0.16s">
-            <div class="feat-icon" aria-hidden="true"><img src="assets/icons/robot.svg" alt="" /></div>
-            <h3>Three AI providers</h3>
-            <p>Use Google Gemini, OpenAI, or Anthropic Claude — your call. Set your API key once. No subscription, no middleman.</p>
-          </article>
-          <article data-reveal style="--reveal-delay: 0.24s">
-            <div class="feat-icon" aria-hidden="true"><img src="assets/icons/cursor.svg" alt="" /></div>
-            <h3>Phrase Better</h3>
-            <p>Right-click any selected text on the web to rephrase it. Pick a preset — fix grammar, rephrase, casual reply, or formal message — and preserve structure with natural line breaks or stack adjustments like keep my voice, polish wording, or add a little wit.</p>
-          </article>
-          <article data-reveal style="--reveal-delay: 0.32s">
-            <div class="feat-icon" aria-hidden="true"><img src="assets/icons/reports.svg" alt="" /></div>
-            <h3>Usage reports</h3>
-            <p>A built-in 30-day dashboard charts your requests by provider and by app. Computed and stored entirely on your device — nothing is sent anywhere, and it clears itself after 30 days.</p>
-          </article>
-          <article data-reveal style="--reveal-delay: 0.4s">
-            <div class="feat-icon" aria-hidden="true"><img src="assets/icons/refresh.svg" alt="" /></div>
-            <h3>Always-current models</h3>
-            <p>The model list loads live from each provider, so new flagship models show up automatically — no extension update needed. Just verify your key and pick from the latest.</p>
-          </article>
-          <article data-reveal style="--reveal-delay: 0.48s">
-            <div class="feat-icon" aria-hidden="true"><img src="assets/icons/globe.svg" alt="" /></div>
-            <h3>Works where you work</h3>
-            <p>Injected directly into ChatGPT, Google Gemini, and Claude. No copy-pasting to a separate tool. The Optimize button moves with your workflow.</p>
-          </article>
-          <article data-reveal style="--reveal-delay: 0.56s">
-            <div class="feat-icon" aria-hidden="true"><img src="assets/icons/lock.svg" alt="" /></div>
-            <h3>Draggable &amp; unobtrusive</h3>
-            <p>The Optimize button is draggable — park it anywhere that suits your layout. It disappears when you don't need it.</p>
-          </article>
+      <!-- Get started -->
+      <section class="section tint" id="get-started">
+        <div class="wrap">
+          <div class="section-head" data-reveal>
+            <span class="eyebrow">Get started</span>
+            <h2>Install, add a key, optimize.</h2>
+            <p>
+              Nothing to sign up for. Bring an API key from the provider you already use and the
+              Optimize button is ready the next time you open a chat.
+            </p>
+          </div>
+          <div class="steps">
+            <div class="step" data-reveal>
+              <h3>Add AskBetter to Chrome</h3>
+              <p>Install it from the Chrome Web Store and pin it to the toolbar so the popup is one click away.</p>
+            </div>
+            <div class="step" data-reveal style="--d: 0.06s">
+              <h3>Pick a provider and verify your key</h3>
+              <p>Open Settings, choose Google Gemini, OpenAI or Anthropic Claude, and press <b>Verify key</b>. The live model list loads straight from the provider.</p>
+              <div class="providers" aria-hidden="true">
+                <span><img src="assets/icons/gemini-color.svg" alt="" /></span>
+                <span><img src="assets/icons/openai.svg" alt="" /></span>
+                <span><img src="assets/icons/claude-color.svg" alt="" /></span>
+              </div>
+            </div>
+            <div class="step" data-reveal style="--d: 0.12s">
+              <h3>Write, optimize, accept</h3>
+              <p>Type a rough prompt in ChatGPT, Gemini or Claude, then press <b>Optimize</b>. Edit the preview if you like, then accept it into the prompt box.</p>
+              <div class="kbd-row"><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>O</kbd> <span>works without reaching for the button.</span></div>
+            </div>
+          </div>
+          <div class="notes">
+            <div class="note" data-reveal>
+              <h3><svg class="ic" aria-hidden="true"><use href="#i-cursor" /></svg>Phrase Better works everywhere</h3>
+              <p>Select text on any page, right-click and choose <b>Re-phrase with AskBetter</b>. Pick from one to three suggestions; nothing is replaced until you click one.</p>
+            </div>
+            <div class="note" data-reveal style="--d: 0.06s">
+              <h3><svg class="ic" aria-hidden="true"><use href="#i-layers" /></svg>Choose how many options</h3>
+              <p>Optimize can return up to three rewrites in a single request. Switch between them in the preview before accepting. The default is one, the cheapest.</p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <!-- ── Presets ────────────────────────────────────────────────────── -->
-      <section class="band band--alt" id="presets">
-        <div class="section-heading" data-reveal>
-          <p class="eyebrow">Presets</p>
-          <h2>A preset for every kind of prompt.</h2>
-          <p class="section-sub">Four categories for the Optimize button — switch in one click from the popup — plus dedicated presets for the right-click Phrase Better.</p>
-        </div>
-        <div class="preset-grid">
-          <div class="preset-card" data-reveal>
-            <div class="preset-card-header">
-              <span class="preset-cat-icon" aria-hidden="true"><img src="assets/icons/pen.svg" alt="" /></span>
-              <h3>Core Rewrite</h3>
-            </div>
-            <p class="preset-card-desc">Structural rewrites for clarity, brevity, grammar, and phrasing.</p>
-            <ul class="preset-list">
-              <li><span class="preset-tag">Structured</span> — clear, flowing, high-context (scaled to your input)</li>
-              <li><span class="preset-tag">Concise</span> — shorter while preserving requirements</li>
-              <li><span class="preset-tag">Fix Grammar</span> — spelling &amp; grammar with minimal rewrite</li>
-              <li><span class="preset-tag">Improve Clarity</span> — clearer phrasing, same meaning</li>
-            </ul>
+      <!-- Features -->
+      <section class="section" id="features">
+        <div class="wrap">
+          <div class="section-head" data-reveal>
+            <span class="eyebrow">Features</span>
+            <h2>Better prompts without the back-and-forth.</h2>
+            <p>Everything happens in the page you're already using. Nothing to copy into a separate tool.</p>
           </div>
-          <div class="preset-card" data-reveal style="--reveal-delay: 0.1s">
-            <div class="preset-card-header">
-              <span class="preset-cat-icon" aria-hidden="true"><img src="assets/icons/chat.svg" alt="" /></span>
-              <h3>Communication Style</h3>
-            </div>
-            <p class="preset-card-desc">Tailor the tone for your specific audience and context.</p>
-            <ul class="preset-list">
-              <li><span class="preset-tag">Persuasive</span> — compelling and outcome-oriented</li>
-              <li><span class="preset-tag">Executive Brief</span> — concise, strategic, stakeholder-ready</li>
-              <li><span class="preset-tag">Coaching Tone</span> — supportive, accountable, action-driven</li>
-              <li><span class="preset-tag">Email Rephrase</span> — polished, clear email-ready rewrite</li>
-            </ul>
-          </div>
-          <div class="preset-card" data-reveal style="--reveal-delay: 0.2s">
-            <div class="preset-card-header">
-              <span class="preset-cat-icon" aria-hidden="true"><img src="assets/icons/brain.svg" alt="" /></span>
-              <h3>Critical Thinking</h3>
-            </div>
-            <p class="preset-card-desc">Pressure-test ideas before you act on them.</p>
-            <ul class="preset-list">
-              <li><span class="preset-tag">Devil's Advocate</span> — challenge assumptions and blind spots</li>
-              <li><span class="preset-tag">First Principles</span> — decompose to fundamentals</li>
-              <li><span class="preset-tag">Risk Audit</span> — risks, failure modes, and mitigations</li>
-            </ul>
-          </div>
-          <div class="preset-card" data-reveal style="--reveal-delay: 0.3s">
-            <div class="preset-card-header">
-              <span class="preset-cat-icon" aria-hidden="true"><img src="assets/icons/gear.svg" alt="" /></span>
-              <h3>Build &amp; Delivery</h3>
-            </div>
-            <p class="preset-card-desc">Engineering and planning precision for technical work.</p>
-            <ul class="preset-list">
-              <li><span class="preset-tag">Technical Spec</span> — precise requirements and acceptance criteria</li>
-              <li><span class="preset-tag">Implementation Plan</span> — ordered tasks, dependencies, deliverables</li>
-            </ul>
-          </div>
-          <div class="preset-card preset-card--full" data-reveal style="--reveal-delay: 0.4s">
-            <div class="preset-card-header">
-              <span class="preset-cat-icon" aria-hidden="true"><img src="assets/icons/phrase.svg" alt="" /></span>
+          <div class="features">
+            <article class="card" data-reveal>
+              <div class="icon"><svg class="ic" aria-hidden="true"><use href="#i-sparkle" /></svg></div>
+              <h3>One-click optimize</h3>
+              <p>The Optimize button sits in the ChatGPT, Gemini and Claude prompt box, or press <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>O</kbd>.</p>
+            </article>
+            <article class="card" data-reveal style="--d: 0.04s">
+              <div class="icon"><svg class="ic" aria-hidden="true"><use href="#i-eye" /></svg></div>
+              <h3>Preview, diff and refine</h3>
+              <p>The rewrite opens in an editable preview. See a word-level diff, ask for a follow-up change, or regenerate before you accept.</p>
+            </article>
+            <article class="card" data-reveal style="--d: 0.08s">
+              <div class="providers" aria-hidden="true">
+                <span><img src="assets/icons/gemini-color.svg" alt="" /></span>
+                <span><img src="assets/icons/openai.svg" alt="" /></span>
+                <span><img src="assets/icons/claude-color.svg" alt="" /></span>
+              </div>
+              <h3>Bring your provider</h3>
+              <p>Google Gemini, OpenAI or Anthropic Claude with your own key. No subscription and no middleman.</p>
+            </article>
+            <article class="card" data-reveal>
+              <div class="icon"><svg class="ic" aria-hidden="true"><use href="#i-sliders" /></svg></div>
+              <h3>15+ presets, plus your own</h3>
+              <p>From grammar fixes to technical specs. Save custom presets and reusable prompt additions for the way you work.</p>
+            </article>
+            <article class="card" data-reveal style="--d: 0.04s">
+              <div class="icon"><svg class="ic" aria-hidden="true"><use href="#i-cursor" /></svg></div>
               <h3>Phrase Better</h3>
-            </div>
-            <p class="preset-card-desc">For the right-click rephrase on any page. Pick a preset, then stack optional adjustments.</p>
-            <ul class="preset-list">
-              <li><span class="preset-tag">Fix Grammar</span> — default; smallest edits, keeps your wording</li>
-              <li><span class="preset-tag">Rephrase</span> — reword for clarity and flow</li>
-              <li><span class="preset-tag">Casual Reply</span> — relaxed, friendly tone</li>
-              <li><span class="preset-tag">Formal Message</span> — polished and professional</li>
-              <li><span class="preset-tag">Natural Line Breaks</span> — default on; preserves structure and separates concepts</li>
-              <li><span class="preset-tag">Adjustments</span> — keep my voice · polish wording · add a little wit</li>
-            </ul>
+              <p>Right-click selected text on any site to fix grammar, rephrase, or shift the tone to casual or formal.</p>
+            </article>
+            <article class="card" data-reveal style="--d: 0.08s">
+              <div class="icon"><svg class="ic" aria-hidden="true"><use href="#i-refresh" /></svg></div>
+              <h3>Always-current models</h3>
+              <p>The model list loads live from each provider, so new flagship models show up without an extension update.</p>
+            </article>
+            <article class="card" data-reveal>
+              <div class="icon"><svg class="ic" aria-hidden="true"><use href="#i-chart" /></svg></div>
+              <h3>Usage and cost reports</h3>
+              <p>A 30-day dashboard charts requests by provider and app, with approximate token and cost totals. Computed on your device.</p>
+            </article>
+            <article class="card" data-reveal style="--d: 0.04s">
+              <div class="icon"><svg class="ic" aria-hidden="true"><use href="#i-history" /></svg></div>
+              <h3>Rewrite history</h3>
+              <p>Your last 100 rewrites are kept locally, original next to optimized, ready to copy and reuse.</p>
+            </article>
+            <article class="card" data-reveal style="--d: 0.08s">
+              <div class="icon"><svg class="ic" aria-hidden="true"><use href="#i-move" /></svg></div>
+              <h3>Draggable and unobtrusive</h3>
+              <p>Park the Optimize button anywhere that suits your layout. It stays out of the way until you need it.</p>
+            </article>
           </div>
         </div>
       </section>
 
-      <!-- ── Privacy ────────────────────────────────────────────────────── -->
-      <section class="privacy-band" id="privacy">
-        <div class="privacy-inner">
-          <div class="section-heading" data-reveal>
-            <p class="eyebrow">Privacy first</p>
+      <!-- Phrase Better -->
+      <section class="section tint" id="phrase-better">
+        <div class="wrap split">
+          <div class="section-head" data-reveal>
+            <span class="eyebrow">Phrase Better</span>
+            <h2>Rephrase anything you've selected.</h2>
+            <p>
+              Emails, tickets, comments, docs: select the text, right-click, and pick the phrasing you
+              like. AskBetter remembers where the text came from, so it lands in the right place.
+            </p>
+            <ul class="bullets">
+              <li><svg class="ic" aria-hidden="true"><use href="#i-check" /></svg><span>Four presets: fix grammar (the default), rephrase, casual reply and formal message.</span></li>
+              <li><svg class="ic" aria-hidden="true"><use href="#i-check" /></svg><span>Stack adjustments on top: keep my voice, polish wording, a little wit, or humanize.</span></li>
+              <li><svg class="ic" aria-hidden="true"><use href="#i-check" /></svg><span>Natural line breaks keep greetings, sign-offs and paragraphs where they belong.</span></li>
+              <li><svg class="ic" aria-hidden="true"><use href="#i-check" /></svg><span>Nothing is replaced until you click a suggestion. <kbd>Esc</kbd> dismisses it.</span></li>
+            </ul>
+          </div>
+          <div class="chooser-scene" data-reveal style="--d: 0.08s" role="img" aria-label="Phrase Better offering two rephrased versions of a selected sentence">
+            <div class="page-snippet" aria-hidden="true">
+              <small>mail.example.com</small>
+              Hi team, <mark>just wanted to let u know the release is gonna slip a bit because qa found some issues</mark>. More soon.
+            </div>
+            <div class="chooser" aria-hidden="true">
+              <div class="chooser-head">
+                <svg class="ic"><use href="#i-sparkle" /></svg>Re-phrase
+                <small>Fix grammar · 2 options</small>
+              </div>
+              <div class="chooser-opt on"><b>1</b>Just a heads-up: the release will slip slightly because QA found some issues.</div>
+              <div class="chooser-opt"><b>2</b>I wanted to let you know the release is going to slip a little, since QA found a few issues.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Presets -->
+      <section class="section" id="presets">
+        <div class="wrap">
+          <div class="section-head" data-reveal>
+            <span class="eyebrow">Presets</span>
+            <h2>A preset for every kind of prompt.</h2>
+            <p>Four categories for the Optimize button, switchable from the popup in one click, plus dedicated presets for Phrase Better.</p>
+          </div>
+          <div class="preset-grid">
+            <article class="card preset-card" data-reveal>
+              <h3><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-pen" /></svg></span>Core rewrite</h3>
+              <p>Structural rewrites for clarity, brevity, grammar and phrasing. Scaled to your input, never padded.</p>
+              <ul class="tags"><li class="on">Structured</li><li>Concise</li><li>Fix grammar</li><li>Improve clarity</li></ul>
+            </article>
+            <article class="card preset-card" data-reveal style="--d: 0.04s">
+              <h3><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-chat" /></svg></span>Communication style</h3>
+              <p>Tailor the tone for your audience and the moment.</p>
+              <ul class="tags"><li>Persuasive</li><li>Executive brief</li><li>Coaching tone</li><li>Email rephrase</li></ul>
+            </article>
+            <article class="card preset-card" data-reveal>
+              <h3><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-brain" /></svg></span>Critical thinking</h3>
+              <p>Pressure-test an idea before you act on it.</p>
+              <ul class="tags"><li>Devil's advocate</li><li>First principles</li><li>Risk audit</li></ul>
+            </article>
+            <article class="card preset-card" data-reveal style="--d: 0.04s">
+              <h3><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-layers" /></svg></span>Build and delivery</h3>
+              <p>Engineering and planning precision for technical work.</p>
+              <ul class="tags"><li>Technical spec</li><li>Implementation plan</li></ul>
+            </article>
+            <article class="card preset-card wide" data-reveal>
+              <h3><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-cursor" /></svg></span>Phrase Better</h3>
+              <p>For the right-click rephrase on any page. Pick a preset, then stack optional adjustments.</p>
+              <ul class="tags"><li class="on">Fix grammar</li><li>Rephrase</li><li>Casual reply</li><li>Formal message</li><li>Natural line breaks</li><li>Keep my voice</li><li>Polish wording</li><li>A little wit</li><li>Humanize</li></ul>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Privacy -->
+      <section class="section tint" id="privacy">
+        <div class="wrap">
+          <div class="section-head" data-reveal>
+            <span class="eyebrow">Privacy</span>
             <h2>Your prompts stay yours.</h2>
-            <p class="section-sub">AskBetter has no backend. Everything runs in your browser. Your API key never touches a server we own.</p>
+            <p>AskBetter has no backend. Everything runs in your browser, and your API key never touches a server we own.</p>
           </div>
           <div class="privacy-grid">
-            <div class="privacy-card" data-reveal>
-              <div class="privacy-icon" aria-hidden="true"><img src="assets/icons/house.svg" alt="" /></div>
-              <h4>No backend server</h4>
-              <p>API calls go directly from your browser to your chosen AI provider. There is no intermediate server.</p>
-            </div>
-            <div class="privacy-card" data-reveal style="--reveal-delay: 0.1s">
-              <div class="privacy-icon" aria-hidden="true"><img src="assets/icons/storage.svg" alt="" /></div>
-              <h4>Local storage only</h4>
-              <p>Settings, API keys, and your 30-day usage history live in <code>chrome.storage.local</code> on your device. Never synced to the cloud.</p>
-            </div>
-            <div class="privacy-card" data-reveal style="--reveal-delay: 0.2s">
-              <div class="privacy-icon" aria-hidden="true"><img src="assets/icons/key.svg" alt="" /></div>
-              <h4>Key isolation</h4>
-              <p>Your API key is only readable by the background service worker. Content scripts — and the pages you visit — never see it.</p>
-            </div>
-            <div class="privacy-card" data-reveal style="--reveal-delay: 0.3s">
-              <div class="privacy-icon" aria-hidden="true"><img src="assets/icons/signal.svg" alt="" /></div>
-              <h4>Zero telemetry</h4>
-              <p>No analytics or crash reporting ever leaves your device. The usage Reports are computed and stored only on your machine — we never see them.</p>
-            </div>
+            <article class="card" data-reveal>
+              <div class="icon"><svg class="ic" aria-hidden="true"><use href="#i-server-off" /></svg></div>
+              <h3>No backend server</h3>
+              <p>Requests go straight from your browser to the provider you chose. There is no server in between.</p>
+            </article>
+            <article class="card" data-reveal style="--d: 0.04s">
+              <div class="icon"><svg class="ic" aria-hidden="true"><use href="#i-database" /></svg></div>
+              <h3>Local storage only</h3>
+              <p>Settings, keys, usage reports and history live in <code>chrome.storage.local</code> on your device. Never synced to the cloud.</p>
+            </article>
+            <article class="card" data-reveal>
+              <div class="icon"><svg class="ic" aria-hidden="true"><use href="#i-key" /></svg></div>
+              <h3>Key isolation</h3>
+              <p>Only the background service worker reads your API key. Content scripts, and the pages you visit, never see it.</p>
+            </article>
+            <article class="card" data-reveal style="--d: 0.04s">
+              <div class="icon"><svg class="ic" aria-hidden="true"><use href="#i-signal-off" /></svg></div>
+              <h3>Zero telemetry</h3>
+              <p>No analytics or crash reporting leaves your device. Reports are computed and stored on your machine; we never see them.</p>
+            </article>
           </div>
         </div>
       </section>
 
-      <!-- ── Install ────────────────────────────────────────────────────── -->
-      <section class="install-section" id="install">
-        <div data-reveal>
-          <p class="eyebrow">Install</p>
-          <h2>Get AskBetter for Chrome</h2>
-          <p>
-            AskBetter is a Manifest V3 Chrome extension. Install from the Chrome Web Store or load it
-            unpacked for development.
-          </p>
-        </div>
-        <div class="install-actions" data-reveal style="--reveal-delay: 0.15s">
-          <a
-            class="button primary large"
-            href="https://chromewebstore.google.com/detail/askbetter/eelecokniegejkbbklgdpnhmhgfkfpif"
-            rel="noreferrer"
-            id="cwsLink"
-          >
-            <svg width="20" height="20" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-              <path fill="currentColor" d="M20.206 16.286c0 2.323-1.883 4.206-4.206 4.206s-4.206-1.883-4.206-4.206c0-2.323 1.883-4.206 4.206-4.206s4.206 1.883 4.206 4.206zM15.975 11.274v-0h10.164c-1.848-3.731-5.694-6.296-10.139-6.296-3.599 0-6.804 1.681-8.876 4.301l3.878 6.631c0.192-2.584 2.343-4.622 4.973-4.635zM16 21.297c-2.169 0-4.016-1.378-4.714-3.306l-4.68-8.004c-1.209 1.8-1.915 3.966-1.915 6.297 0 5.692 4.206 10.401 9.679 11.191l3.901-6.723c-0.682 0.348-1.454 0.544-2.272 0.544zM26.5 12.080h-7.773c1.376 0.893 2.285 2.443 2.285 4.206 0 0.867-0.22 1.682-0.607 2.393l0.003 0.002-5.158 8.888c0.248 0.016 0.498 0.025 0.751 0.025 6.245 0 11.308-5.063 11.308-11.308 0-1.486-0.287-2.906-0.809-4.206z"/>
-            </svg>
-            <span class="store-button-label">
-              Chrome Web Store
-              <small><span id="storeUsers">12</span> users</small>
-            </span>
-          </a>
-          <a
-            class="button secondary large"
-            href="https://github.com/piyushdoorwar/ask-better"
-            rel="noreferrer"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-              <path fill-rule="evenodd" clip-rule="evenodd" d="M10 1.5a8.5 8.5 0 0 0-2.687 16.57c.425.078.58-.184.58-.41v-1.44c-2.364.513-2.862-1.14-2.862-1.14-.387-.983-.945-1.245-.945-1.245-.772-.528.059-.517.059-.517.853.06 1.302.876 1.302.876.758 1.3 1.989.924 2.473.707.077-.55.297-.924.54-1.136-1.888-.214-3.873-.944-3.873-4.202 0-.929.332-1.687.876-2.284-.088-.215-.38-1.08.083-2.25 0 0 .714-.229 2.34.872a8.16 8.16 0 0 1 2.13-.287 8.16 8.16 0 0 1 2.13.287c1.625-1.1 2.338-.872 2.338-.872.464 1.17.172 2.035.085 2.25.546.597.875 1.355.875 2.284 0 3.267-1.988 3.986-3.882 4.196.305.264.577.783.577 1.578v2.34c0 .228.154.492.584.41A8.502 8.502 0 0 0 10 1.5Z" fill="currentColor"/>
-            </svg>
-            <span>View on GitHub</span>
-          </a>
+      <!-- CTA -->
+      <section class="section section-cta" id="install">
+        <div class="wrap">
+          <div class="cta" data-reveal>
+            <div>
+              <h2>Write better prompts in your next chat.</h2>
+              <p>AskBetter is a free Manifest V3 extension. Install it from the Chrome Web Store, or load it unpacked from the repository for development.</p>
+            </div>
+            <div class="actions">
+              <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/askbetter/eelecokniegejkbbklgdpnhmhgfkfpif" rel="noreferrer" id="cwsLink">
+                <svg class="ic" aria-hidden="true"><use href="#i-chrome" /></svg>
+                <span class="btn-stack">Chrome Web Store<small><span id="storeUsers">12</span> users</small></span>
+              </a>
+              <a class="btn btn-secondary" href="https://github.com/piyushdoorwar/ask-better" rel="noreferrer">
+                <svg class="ic" aria-hidden="true"><use href="#i-github" /></svg>
+                <span>View on GitHub</span>
+              </a>
+            </div>
+          </div>
         </div>
       </section>
     </main>
 
-    <footer>
-      <span>AskBetter</span>
-      <p class="analytics-disclosure">
-        This site uses Cloudflare Web Analytics to understand site usage.
-      </p>
-      <div class="footer-links">
-        <a href="https://github.com/piyushdoorwar/ask-better" rel="noreferrer">GitHub</a>
-        <a href="policy/" rel="noreferrer">Privacy policy</a>
-        <button class="footer-support-link" id="footerSupportBtn">Support</button>
+    <footer class="footer">
+      <div class="wrap">
+        <div>
+          <a class="brand" href="./">
+            <img src="assets/icons/icon.svg" alt="" width="24" height="24" />
+            <span>AskBetter</span>
+          </a>
+          <p>One-click prompt optimizer for ChatGPT, Google Gemini and Claude. This site uses Cloudflare Web Analytics to understand site usage.</p>
+        </div>
+        <nav class="footer-links" aria-label="Footer">
+          <a href="https://github.com/piyushdoorwar/ask-better" rel="noreferrer"><svg class="ic" aria-hidden="true"><use href="#i-github" /></svg>GitHub</a>
+          <a href="policy/"><svg class="ic" aria-hidden="true"><use href="#i-shield" /></svg>Privacy policy</a>
+          <button type="button" id="footerSupportBtn"><svg class="ic" aria-hidden="true"><use href="#i-help" /></svg>Support</button>
+        </nav>
       </div>
     </footer>
 
-    <!-- ── Support modal ──────────────────────────────────────────────── -->
-    <div
-      class="modal-backdrop hidden"
-      id="supportModal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="supportModalTitle"
-    >
+    <!-- Support modal -->
+    <div class="modal" id="supportModal" role="dialog" aria-modal="true" aria-labelledby="supportModalTitle" hidden>
       <div class="modal-box">
-        <div class="modal-header">
-          <p class="eyebrow" style="margin:0">Support &amp; feedback</p>
-          <button class="modal-close" aria-label="Close" id="closeSupportModal">✕</button>
+        <div class="modal-head">
+          <span class="eyebrow">Support and feedback</span>
+          <button class="modal-close" type="button" id="closeSupportModal" aria-label="Close">
+            <svg class="ic" aria-hidden="true"><use href="#i-close" /></svg>
+          </button>
         </div>
-        <h2 id="supportModalTitle" class="modal-title">Need help with AskBetter?</h2>
-        <p class="modal-body">
-          Found a bug, have a preset suggestion, or want to share feedback? Send an email with a short
-          note about what happened, your browser version, and the extension version.
+        <h2 id="supportModalTitle">Need help with AskBetter?</h2>
+        <p>
+          Found a bug, have a preset idea, or want to share feedback? Send an email with a short note
+          about what happened, your browser version and the extension version.
         </p>
-        <a
-          class="button secondary large email-link"
-          href="mailto:piyushdoorwar+askbetter@gmail.com"
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="m2 6 8 5 8-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <a class="btn btn-secondary" href="mailto:piyushdoorwar+askbetter@gmail.com">
+          <svg class="ic" aria-hidden="true"><use href="#i-mail" /></svg>
           <span>piyushdoorwar+askbetter@gmail.com</span>
         </a>
       </div>
     </div>
 
     <script src="app.js"></script>
-    <script>
-      // Support modal
-      const supportBtn   = document.getElementById("footerSupportBtn");
-      const supportModal = document.getElementById("supportModal");
-      const closeModal   = document.getElementById("closeSupportModal");
-      supportBtn.addEventListener("click",  () => { supportModal.classList.remove("hidden"); document.body.style.overflow = "hidden"; });
-      closeModal.addEventListener("click",  () => { supportModal.classList.add("hidden");    document.body.style.overflow = ""; });
-      supportModal.addEventListener("click", e => { if (e.target === supportModal) { supportModal.classList.add("hidden"); document.body.style.overflow = ""; } });
-      document.addEventListener("keydown",  e => { if (e.key === "Escape" && !supportModal.classList.contains("hidden")) { supportModal.classList.add("hidden"); document.body.style.overflow = ""; } });
-    </script>
     <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "e9cd556fb46f4880a8842d37e2dfe3fb"}'></script><!-- End Cloudflare Web Analytics -->
   </body>
 </html>

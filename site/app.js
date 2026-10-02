@@ -5,6 +5,28 @@ document.documentElement.classList.add("js-reveal");
 const PREFERS_REDUCED_MOTION =
   window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+// ── Mobile nav ────────────────────────────────────────────────────────────
+(function () {
+  const topbar = document.querySelector(".topbar");
+  const toggle = topbar && topbar.querySelector(".nav-toggle");
+  if (!toggle) return;
+
+  const setOpen = (open) => {
+    topbar.classList.toggle("open", open);
+    toggle.setAttribute("aria-expanded", String(open));
+    toggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+  };
+
+  toggle.addEventListener("click", () => setOpen(!topbar.classList.contains("open")));
+  topbar.querySelectorAll(".nav a").forEach((link) => link.addEventListener("click", () => setOpen(false)));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && topbar.classList.contains("open")) {
+      setOpen(false);
+      toggle.focus();
+    }
+  });
+})();
+
 // ── Scroll reveal ─────────────────────────────────────────────────────────
 (function () {
   const targets = document.querySelectorAll("[data-reveal]");
@@ -29,112 +51,101 @@ const PREFERS_REDUCED_MOTION =
   targets.forEach((el) => obs.observe(el));
 })();
 
-// ── Browser mockup: typing animation ─────────────────────────────────────
+// ── Hero mock: type a rough prompt, optimize, preview, accept ─────────────
 (function () {
-  const typedEl  = document.getElementById("bmTyped");
-  const cursorEl = document.getElementById("bmCursor");
-  const optBtn   = document.getElementById("bmOptBtn");
-  if (!typedEl || !optBtn) return;
+  const mock = document.getElementById("mock");
+  const prompt = document.getElementById("mockPrompt");
+  const optBtn = document.getElementById("mockOpt");
+  if (!mock || !prompt || !optBtn) return;
 
-  const ROUGH     = "write me an email about the q2 project status update for stakeholders";
-  const OPTIMIZED = "Draft a concise Q2 project status email for stakeholders. Cover key milestones reached, current blockers, and next steps. Keep the tone clear and professional.";
+  const ROUGH = "write me an email about the q2 project status update for stakeholders";
+  const OPTIMIZED =
+    "Draft a concise Q2 project status email for stakeholders. Cover the key milestones reached, current blockers, and next steps. Keep the tone clear and professional.";
 
-  // The loop never ends, so under reduced motion show the finished state
-  // instead — the mockup still makes its point, it just holds still.
+  // The loop never ends, so under reduced motion hold the preview open
+  // instead: the mock still makes its point, it just stays still.
   if (PREFERS_REDUCED_MOTION) {
-    typedEl.textContent = OPTIMIZED;
-    if (cursorEl) {
-      cursorEl.hidden = true;
-    }
+    prompt.textContent = ROUGH;
+    mock.classList.add("previewing");
     return;
   }
 
-  const TYPE_DELAY   = 52;   // ms per char (rough)
-  const OPT_DELAY    = 30;   // ms per char (optimized — feels faster / AI-generated)
-  const JITTER       = 28;   // ± random jitter
-  const DEL_DELAY    = 18;   // ms per char when clearing
-  const PAUSE_ROUGH  = 900;  // ms pause before optimize
-  const PAUSE_OPT    = 2800; // ms pause after optimized text fully appears
-  const LOOP_PAUSE   = 1400; // ms gap before next loop
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  let phase = "typing-rough";
-  let pos   = 0;
-  let timer = null;
-
-  function sched(fn, delay) {
-    timer = setTimeout(fn, delay);
+  async function type(text, delay) {
+    prompt.classList.add("typing");
+    for (let i = 1; i <= text.length; i++) {
+      prompt.textContent = text.slice(0, i);
+      await wait(delay + Math.random() * 24 - 12);
+    }
+    prompt.classList.remove("typing");
   }
 
-  function setText(str) {
-    typedEl.textContent = str;
-  }
+  async function loop() {
+    for (;;) {
+      prompt.textContent = "";
+      await wait(700);
+      await type(ROUGH, 46);
+      await wait(700);
 
-  function tick() {
-    switch (phase) {
+      optBtn.classList.add("press");
+      await wait(220);
+      optBtn.classList.remove("press");
+      await wait(500);
 
-      case "typing-rough":
-        if (pos < ROUGH.length) {
-          setText(ROUGH.slice(0, ++pos));
-          sched(tick, TYPE_DELAY + (Math.random() * JITTER - JITTER / 2));
-        } else {
-          phase = "pause-rough";
-          sched(tick, PAUSE_ROUGH);
-        }
-        break;
+      mock.classList.add("previewing");
+      await wait(3200);
 
-      case "pause-rough":
-        // Signal the Optimize button
-        optBtn.classList.add("pulsing");
-        phase = "pre-click";
-        sched(tick, 700);
-        break;
-
-      case "pre-click":
-        optBtn.classList.remove("pulsing");
-        optBtn.classList.add("clicked");
-        phase = "clearing";
-        sched(tick, 320);
-        break;
-
-      case "clearing": {
-        const current = typedEl.textContent;
-        if (current.length > 0) {
-          // Delete 2-3 chars at a time for a "fast erase" feel
-          setText(current.slice(0, Math.max(0, current.length - 3)));
-          sched(tick, DEL_DELAY);
-        } else {
-          optBtn.classList.remove("clicked");
-          phase = "typing-optimized";
-          pos = 0;
-          sched(tick, 200);
-        }
-        break;
-      }
-
-      case "typing-optimized":
-        if (pos < OPTIMIZED.length) {
-          setText(OPTIMIZED.slice(0, ++pos));
-          sched(tick, OPT_DELAY + (Math.random() * JITTER - JITTER / 2));
-        } else {
-          phase = "pause-optimized";
-          sched(tick, PAUSE_OPT);
-        }
-        break;
-
-      case "pause-optimized":
-        setText("");
-        pos = 0;
-        phase = "loop-gap";
-        sched(tick, LOOP_PAUSE);
-        break;
-
-      case "loop-gap":
-        phase = "typing-rough";
-        sched(tick, 0);
-        break;
+      // Accept: the preview closes and the rewrite lands in the prompt box.
+      mock.classList.remove("previewing");
+      prompt.textContent = OPTIMIZED;
+      await wait(2800);
     }
   }
 
-  // Start after a short initial delay so the page settles first
-  sched(tick, 800);
+  // Only animate while the hero is on screen.
+  let started = false;
+  const start = () => {
+    if (started) return;
+    started = true;
+    loop();
+  };
+  if ("IntersectionObserver" in window) {
+    const obs = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) {
+        obs.disconnect();
+        start();
+      }
+    });
+    obs.observe(mock);
+  } else {
+    start();
+  }
+})();
+
+// ── Support modal ─────────────────────────────────────────────────────────
+(function () {
+  const openBtn = document.getElementById("footerSupportBtn");
+  const modal = document.getElementById("supportModal");
+  const closeBtn = document.getElementById("closeSupportModal");
+  if (!openBtn || !modal) return;
+
+  const close = () => {
+    modal.hidden = true;
+    document.body.style.overflow = "";
+    openBtn.focus();
+  };
+
+  openBtn.addEventListener("click", () => {
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+    if (closeBtn) closeBtn.focus();
+  });
+  if (closeBtn) closeBtn.addEventListener("click", close);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) close();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !modal.hidden) close();
+  });
 })();

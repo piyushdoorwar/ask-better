@@ -1,35 +1,40 @@
-/* Manrope — vendored locally, loaded into the page via web_accessible_resources.
-   Relative url() resolves against this file's extension location. */
-@font-face {
-  font-family: "Manrope";
-  font-style: normal;
-  font-weight: 400 800;
-  font-display: swap;
-  src: url("../ui/fonts/manrope-variable.woff2") format("woff2-variations"),
-       url("../ui/fonts/manrope-variable.woff2") format("woff2");
+/* DM Sans, bundled with the extension and exposed via web_accessible_resources.
+   Relative url() resolves against this file's extension location. Content
+   scripts can't read ui/theme.css, so the palette below is literal amber. */
+@font-face { font-family: "DM Sans"; font-style: normal; font-weight: 400; font-display: swap; src: url("../ui/fonts/dm-sans-400.woff2") format("woff2"); }
+@font-face { font-family: "DM Sans"; font-style: normal; font-weight: 500; font-display: swap; src: url("../ui/fonts/dm-sans-500.woff2") format("woff2"); }
+@font-face { font-family: "DM Sans"; font-style: normal; font-weight: 600; font-display: swap; src: url("../ui/fonts/dm-sans-600.woff2") format("woff2"); }
+@font-face { font-family: "DM Sans"; font-style: normal; font-weight: 700; font-display: swap; src: url("../ui/fonts/dm-sans-700.woff2") format("woff2"); }
+
+/* Every injected root declares the font stack; they're appended to the host
+   page's <body>, so nothing above them defines it. */
+.pf-optimize-btn,
+.pf-toast,
+.pf-busy-indicator,
+.pf-preview-card {
+  --pf-font-ui: "DM Sans", "Google Sans Text", "Google Sans", "Roboto", "Noto Sans", "Segoe UI", Arial, sans-serif;
 }
 
 .pf-optimize-btn {
-  --pf-font-ui: "Manrope", "Google Sans Text", "Google Sans", "Roboto", "Noto Sans", "Segoe UI", Arial, sans-serif;
   position: fixed;
   z-index: 2147483000;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  border: 1px solid rgba(245, 174, 58, 0.9);
-  border-radius: 999px;
-  padding: 7px 14px;
-  background: linear-gradient(135deg, #f7b84a 0%, #e8991e 100%);
-  color: #1a1100;
-  font: 800 12px/1.2 var(--pf-font-ui);
-  letter-spacing: 0.01em;
+  border: 1px solid #e8991e;
+  border-radius: 8px;
+  padding: 7px 12px;
+  background: #e8991e;
+  color: #1a1206;
+  font: 600 12.5px/1.2 var(--pf-font-ui);
+  letter-spacing: -0.01em;
   cursor: grab;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
-  box-shadow: 0 6px 16px -6px rgba(232, 153, 30, 0.55);
-  transition: transform 120ms ease, opacity 120ms ease, border-color 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 6px 16px -8px rgba(232, 153, 30, 0.7);
+  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
 }
 
 .pf-optimize-icon,
@@ -43,17 +48,18 @@
 }
 
 .pf-optimize-btn:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.03);
-  border-color: #ffffff;
-  box-shadow: 0 6px 18px rgba(232, 153, 30, 0.4);
+  background: #f5ae3a;
+  border-color: #f5ae3a;
+}
+
+.pf-optimize-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(232, 153, 30, 0.4);
 }
 
 .pf-optimize-btn.pf-is-dragging {
   cursor: grabbing;
-  transform: none;
-  border-color: #ffffff;
-  box-shadow: 0 6px 18px rgba(232, 153, 30, 0.44);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 12px 24px -10px rgba(0, 0, 0, 0.6);
 }
 
 .pf-optimize-btn:disabled,
@@ -62,32 +68,31 @@
   cursor: wait;
 }
 
+/* ── Toast ───────────────────────────────────────────────── */
 .pf-toast {
   position: fixed;
   left: 50%;
   bottom: 24px;
-  transform: translateX(-50%) translateY(8px) scale(0.98);
+  transform: translateX(-50%) translateY(8px);
   z-index: 2147483001;
   opacity: 0;
   pointer-events: none;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  border-radius: 999px;
-  background: rgba(22, 19, 16, 0.92);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  gap: 8px;
+  border-radius: 8px;
+  background: #161310;
   color: #f4f0eb;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 7px 14px;
-  font: 600 12px/1.2 var(--pf-font-ui);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  border: 1px solid #3a3128;
+  padding: 9px 14px;
+  font: 500 13px/1.2 var(--pf-font-ui);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 16px 32px -14px rgba(0, 0, 0, 0.7);
   transition: opacity 160ms ease, transform 160ms ease;
 }
 
 .pf-toast.pf-toast-visible {
   opacity: 1;
-  transform: translateX(-50%) translateY(0) scale(1);
+  transform: translateX(-50%) translateY(0);
 }
 
 .pf-toast-icon {
@@ -102,7 +107,7 @@
 }
 
 .pf-toast-success {
-  border-color: rgba(245, 174, 58, 0.5);
+  border-left: 3px solid #e8991e;
 }
 
 .pf-toast-success .pf-toast-icon {
@@ -110,20 +115,21 @@
   color: #f5ae3a;
 }
 
+/* ── Busy indicator ──────────────────────────────────────── */
 .pf-busy-indicator {
   position: fixed;
   z-index: 2147483002;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 26px;
+  gap: 7px;
+  min-height: 28px;
   padding: 5px 11px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(20, 20, 20, 0.96);
-  color: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #3a3128;
+  background: #161310;
+  color: #f4f0eb;
   font: 500 12.5px/1.2 var(--pf-font-ui);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 24px -12px rgba(0, 0, 0, 0.6);
   pointer-events: none;
 }
 
@@ -179,8 +185,8 @@
   }
 }
 
+/* ── Preview card ────────────────────────────────────────── */
 .pf-preview-card {
-  --pf-font-ui: "Manrope", "Google Sans Text", "Google Sans", "Roboto", "Noto Sans", "Segoe UI", Arial, sans-serif;
   position: fixed;
   z-index: 2147483003;
   display: flex;
@@ -189,12 +195,18 @@
   width: min(440px, calc(100vw - 24px));
   max-height: min(60vh, 460px);
   padding: 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(232, 153, 30, 0.5);
-  background: rgba(22, 19, 16, 0.98);
+  border-radius: 10px;
+  border: 1px solid #3a3128;
+  background: #161310;
   color: #f4f0eb;
-  font: 500 13px/1.4 var(--pf-font-ui);
-  box-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  font: 400 13px/1.45 var(--pf-font-ui);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 24px 48px -20px rgba(0, 0, 0, 0.75);
+}
+
+/* Class rules below set `display`, which would otherwise beat the `hidden`
+   attribute core.js toggles on the variants row, diff box, textarea and cost. */
+.pf-preview-card [hidden] {
+  display: none !important;
 }
 
 .pf-preview-head {
@@ -207,27 +219,27 @@
 .pf-preview-title {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-weight: 700;
-  font-size: 12px;
-  letter-spacing: 0.01em;
-  color: #f5ae3a;
+  gap: 7px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #f4f0eb;
 }
 
 .pf-preview-icon {
   display: inline-flex;
   align-items: center;
+  color: #e8991e;
 }
 
 .pf-preview-close {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
   color: #9a8f83;
   cursor: pointer;
@@ -239,28 +251,53 @@
 }
 
 .pf-preview-close:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: #231e19;
   color: #f4f0eb;
 }
 
-.pf-preview-text {
+.pf-preview-text,
+.pf-preview-diff {
   flex: 1;
   min-height: 120px;
   max-height: 320px;
-  resize: vertical;
   width: 100%;
   box-sizing: border-box;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(10, 9, 12, 0.9);
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #3a3128;
+  background: #1b1713;
   color: #f4f0eb;
-  font: 500 13px/1.5 var(--pf-font-ui);
+  font: 400 13px/1.55 var(--pf-font-ui);
+}
+
+.pf-preview-text {
+  resize: vertical;
   outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
 .pf-preview-text:focus {
-  border-color: rgba(232, 153, 30, 0.75);
+  border-color: #e8991e;
+  box-shadow: 0 0 0 3px rgba(232, 153, 30, 0.3);
+}
+
+.pf-preview-diff {
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.pf-diff-add {
+  background: rgba(63, 189, 130, 0.18);
+  color: #9fe3c0;
+  border-radius: 3px;
+}
+
+.pf-diff-del {
+  background: rgba(229, 83, 75, 0.16);
+  color: #f2a7a2;
+  text-decoration: line-through;
+  border-radius: 3px;
 }
 
 .pf-preview-actions {
@@ -274,32 +311,39 @@
 }
 
 .pf-preview-btn {
-  border-radius: 9px;
-  padding: 8px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: transparent;
-  color: rgba(244, 240, 235, 0.82);
-  font: 600 12px/1.2 var(--pf-font-ui);
+  min-height: 32px;
+  border-radius: 6px;
+  padding: 0 12px;
+  border: 1px solid #3a3128;
+  background: #1b1713;
+  color: #c2b6a9;
+  font: 500 12.5px/1 var(--pf-font-ui);
   cursor: pointer;
-  transition: background 120ms ease, border-color 120ms ease, opacity 120ms ease;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, opacity 120ms ease;
 }
 
 .pf-preview-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  border-color: #4a3f33;
+  color: #f4f0eb;
+}
+
+.pf-preview-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(232, 153, 30, 0.38);
 }
 
 .pf-preview-accept {
-  padding: 8px 16px;
-  border-color: #f5ae3a;
-  background: linear-gradient(135deg, #f7b84a 0%, #e8991e 100%);
-  color: #1a1100;
-  font-weight: 800;
-  box-shadow: 0 6px 16px -6px rgba(232, 153, 30, 0.55);
+  padding: 0 16px;
+  border-color: #e8991e;
+  background: #e8991e;
+  color: #1a1206;
+  font-weight: 600;
 }
 
 .pf-preview-accept:hover {
-  background: linear-gradient(135deg, #f9c05a 0%, #f0a527 100%);
-  border-color: #ffffff;
+  background: #f5ae3a;
+  border-color: #f5ae3a;
+  color: #1a1206;
 }
 
 .pf-preview-btn:disabled {
@@ -311,62 +355,38 @@
   opacity: 0.7;
 }
 
+/* Segmented variant switcher */
 .pf-preview-variants {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: 6px;
+  align-self: flex-start;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid #2e2720;
+  border-radius: 8px;
+  background: #161310;
 }
 
 .pf-preview-variant {
-  border-radius: 8px;
-  padding: 6px 13px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 5px 12px;
+  border: 0;
   background: transparent;
-  color: rgba(244, 240, 235, 0.6);
-  font: 700 12px/1.2 var(--pf-font-ui);
+  color: #c2b6a9;
+  font: 500 12px/1.2 var(--pf-font-ui);
   cursor: pointer;
-  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+  transition: background-color 120ms ease, color 120ms ease;
 }
 
 .pf-preview-variant:hover {
-  background: rgba(232, 153, 30, 0.12);
-  border-color: rgba(232, 153, 30, 0.5);
+  background: #231e19;
+  color: #f4f0eb;
 }
 
 .pf-preview-variant.pf-is-active {
-  border-color: rgba(232, 153, 30, 0.6);
-  background: rgba(232, 153, 30, 0.18);
-  color: #f5ae3a;
-}
-
-.pf-preview-diff {
-  flex: 1;
-  min-height: 120px;
-  max-height: 320px;
-  overflow-y: auto;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(10, 9, 12, 0.9);
-  color: #f4f0eb;
-  font: 500 13px/1.5 var(--pf-font-ui);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.pf-diff-add {
-  background: rgba(126, 224, 161, 0.22);
-  color: #b8f0cd;
-  border-radius: 3px;
-}
-
-.pf-diff-del {
-  background: rgba(255, 122, 122, 0.18);
-  color: #ffb3b3;
-  text-decoration: line-through;
-  border-radius: 3px;
+  background: #e8991e;
+  color: #1a1206;
+  font-weight: 600;
 }
 
 .pf-preview-refine {
@@ -378,40 +398,39 @@
 .pf-preview-refine-input {
   flex: 1;
   min-width: 0;
+  min-height: 32px;
   box-sizing: border-box;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(10, 9, 12, 0.9);
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid #3a3128;
+  background: #1b1713;
   color: #f4f0eb;
-  font: 500 12px/1.4 var(--pf-font-ui);
+  font: 400 12.5px/1.4 var(--pf-font-ui);
   outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.pf-preview-refine-input::placeholder {
+  color: #9a8f83;
 }
 
 .pf-preview-refine-input:focus {
-  border-color: rgba(232, 153, 30, 0.75);
+  border-color: #e8991e;
+  box-shadow: 0 0 0 3px rgba(232, 153, 30, 0.3);
 }
 
 .pf-preview-refine-btn {
   flex: 0 0 auto;
-  border-color: rgba(232, 153, 30, 0.45);
-  background: rgba(232, 153, 30, 0.14);
-  color: #f4f0eb;
-  font-weight: 700;
-}
-
-.pf-preview-refine-btn:hover {
-  background: rgba(232, 153, 30, 0.22);
-  border-color: rgba(232, 153, 30, 0.7);
 }
 
 .pf-preview-cost {
   color: #9a8f83;
-  font: 500 11px/1.3 var(--pf-font-ui);
+  font: 400 11.5px/1.3 var(--pf-font-ui);
+  font-variant-numeric: tabular-nums;
 }
 
 .pf-preview-diff-toggle.pf-is-active {
-  border-color: rgba(245, 174, 58, 0.9);
-  background: rgba(232, 153, 30, 0.22);
+  border-color: rgba(232, 153, 30, 0.38);
+  background: rgba(232, 153, 30, 0.14);
   color: #f5ae3a;
 }

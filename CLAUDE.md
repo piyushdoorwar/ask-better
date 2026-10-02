@@ -87,16 +87,16 @@ prompt-optimizer-ask-better/
 │   ├── models.js             # Model dropdown source: live /v1/models fetch + 24h cache + self-healing selection, no hardcoded lists (loaded before popup.js/options.js)
 │   ├── reports.js            # Reports section (Chart.js usage dashboard, reads usageLog)
 │   ├── history.js            # History section (reads promptHistory, copy/clear)
-│   ├── theme.css             # Global theme (variables, dark mode, redesign tokens, Manrope @font-face)
-│   ├── fonts/                # Vendored Manrope variable woff2 (manrope-variable.woff2) — local-first, no remote fetch
+│   ├── theme.css             # Global theme (tokens, DM Sans @font-face, .btn/.badge/.csel/.switch primitives)
+│   ├── fonts/                # Bundled DM Sans woff2 (400–700) + OFL.txt — local-first, no remote fetch
 │
 ├── site/                      # Landing page & documentation (GitHub Pages)
-│   ├── fonts/                # Vendored Manrope (same file as ui/fonts)
+│   ├── fonts/                # Bundled DM Sans (same files as ui/fonts)
 │   ├── index.html            # Homepage
 │   ├── styles.css            # Site styling
 │   ├── app.js                # Site scripts
 │   ├── icon.svg              # Brand icon
-│   ├── assets/icons/         # Icon SVGs for features, presets, privacy
+│   ├── assets/icons/         # Brand icon + provider logos (UI icons are an inline sprite)
 │   ├── policy/
 │   │   └── index.html        # Privacy policy page
 │
@@ -441,6 +441,8 @@ The popup is shown when the user clicks the extension icon in the Chrome toolbar
 
 Full settings page accessible from the popup or extension management UI.
 
+**Page shell:** `.app` grid = a full-height sticky `.sidebar` (brand, "Settings" caption, `.sidebar-nav`, a local-first `.sidebar-foot` note) + `.main` (sticky `.topbar` with the title, `#statusMsg` auto-save chip and privacy button, then `.content`). Each section opens with a `.section-head` (20px title + info button + subtitle; the old icon tiles are gone). The active nav item is a solid amber pill. Toggles inside a `.toggle-grid` render as rows of **one bordered list** divided by `--line-soft` (not separate cards); History items likewise share one bordered `.history-list`. Report stats are a 5-up grid with the label above the value.
+
 **Sidebar menu is grouped by app**, each group wrapped in a `<div class="menu-group" data-group="...">` (tab-style: one `.settings-section` shown at a time, switched by `activateSection` via each nav button's `data-section`). Group headers use `.menu-title` / `.menu-title--group`:
 
 - **Common** — `section-models` (provider, model, and the global **Enable AI** toggle), `section-mode` (**both** Ask Better + Phrase Better on/off), `section-reports` (local usage dashboard), `section-history` (local rewrite history), `section-security` (API key verify + clear data)
@@ -489,11 +491,12 @@ Full settings page accessible from the popup or extension management UI.
   - Text (light): `#f4f0eb`
   - Muted: `#9a8f83`
 
-- **Typography**: Manrope everywhere, falling back to Cantarell, Ubuntu, Inter, Segoe UI, sans-serif. Manrope is **vendored locally** as a single variable woff2 (`ui/fonts/manrope-variable.woff2`, weights 400–800) and declared via `@font-face` in `ui/theme.css` — no remote Google-Fonts fetch, preserving the local-first promise. The landing site vendors the same file at `site/fonts/manrope-variable.woff2`.
-  - **Extension pages** (popup/options): `ui/theme.css` sets `--font-ui` (Manrope-first) on `body` **and** a global `button, input, select, textarea, optgroup { font-family: var(--font-ui) }` reset — form controls don't inherit `font-family` by default, so without this reset buttons/inputs silently fell back to the system font.
-  - **Injected content-script UI** (`injected/styles.css`: Optimize button, preview card): declares its own `@font-face` for Manrope (`src: url("../ui/fonts/manrope-variable.woff2")`) and `--pf-font-ui` is now Manrope-first. Every interactive element sets `font: … var(--pf-font-ui)` explicitly.
-  - **Inline-styled overlays injected on any page** (`showPhraseBetterChooserOnPage` / `showPageToastOnPage` / `showPageBusyIndicatorOnPage` in `background.js`): each injects a shared `<style id="askbetter-manrope-font">` `@font-face` (once) via `chrome.runtime.getURL("ui/fonts/manrope-variable.woff2")` and uses a Manrope-first `FONT` string; chooser `<button>`s set `fontFamily = "inherit"` since they don't inherit the card font.
-  - The font is exposed to page origins via `manifest.json` `web_accessible_resources` (`ui/fonts/manrope-variable.woff2`, `matches: ["<all_urls>"]`) so both the injected CSS and the runtime-URL overlays can load it on any site.
+- **Typography**: DM Sans everywhere (system-ui fallback). It is **bundled** as four latin woff2 files, one per weight (`ui/fonts/dm-sans-{400,500,600,700}.woff2`, SIL OFL 1.1 — `ui/fonts/OFL.txt`), declared via `@font-face` in `ui/theme.css`; no remote font fetch, preserving the local-first promise. The site serves the same files from `site/fonts/`.
+  - **Extension pages** (popup/options): `ui/theme.css` sets `--font-ui` on `body` **and** a global `button, input, select, textarea, optgroup { font-family: var(--font-ui) }` reset — form controls don't inherit `font-family` by default.
+  - **Injected content-script UI** (`injected/styles.css`): declares its own `@font-face` rules (`url("../ui/fonts/dm-sans-*.woff2")`). `--pf-font-ui` is declared on **every injected root** (`.pf-optimize-btn, .pf-toast, .pf-busy-indicator, .pf-preview-card`) — they are appended to the host `<body>`, so nothing above them defines it (the toast/busy indicator used to fall back to the page font).
+  - **Inline-styled overlays injected on any page** (`showPhraseBetterChooserOnPage` / `showPageToastOnPage` / `showPageBusyIndicatorOnPage` in `background.js`): each injects a shared `<style id="askbetter-dm-sans-font">` with the four `@font-face` rules (once) via `chrome.runtime.getURL("ui/fonts/dm-sans-<weight>.woff2")`. These functions are serialized by `executeScript`, so the snippet is repeated inline in each rather than shared.
+  - The four files are exposed via `manifest.json` `web_accessible_resources` (`matches: ["<all_urls>"]`).
+  - Chart.js draws on a canvas and can't inherit CSS fonts, so `reports.js` sets `Chart.defaults.font.family` before each draw.
 
 - **Components**: Buttons (primary/secondary), inputs, dropdowns, checkboxes
 
@@ -509,55 +512,33 @@ Full settings page accessible from the popup or extension management UI.
 
 ### Landing Page (`/site/index.html`)
 
-- **Hero section**: "Ask Better" tagline, one-line value prop ("One-click prompt optimizer for ChatGPT, Google Gemini, and Claude")
-- **Feature highlights**: 6 key features (One-click optimize, 15+ presets, Three AI providers, Phrase Better, Works where you work, Draggable & unobtrusive) with SVG icons
-- **Preset showcase**: 4 preset categories (Core Rewrite, Communication Style, Critical Thinking, Build & Delivery) with descriptions
-- **Privacy section**: 4 privacy features (No backend server, Local storage only, Key isolation, Zero telemetry)
-- **Install section**: "Add to Chrome" button + GitHub link
+Sections in order: sticky **topbar** (Get started / Features / Presets / Privacy / GitHub, collapsing to a `.nav-toggle` menu under 760px) → **hero** (pill, headline, Add to Chrome + View source, check list, and an HTML/CSS product mock of ChatGPT with the Optimize button and the preview card) → **Get started** (3 numbered `.step`s + 2 `.note`s) → **Features** (9 `.card`s) → **Phrase Better** split (bullets + a chooser mock) → **Presets** (4 category cards + a wide Phrase Better card, preset names as `.tags`) → **Privacy** (4 cards) → **CTA** (Chrome Web Store button carrying `<span id="storeUsers">`, which `scripts/fetch-store-stats.mjs` rewrites by regex — keep that exact markup) → **footer** + support modal (`#supportModal`, `hidden` attribute).
 
-### Icon System (`/site/assets/icons/`)
+The site is not described as "open source" anywhere: the license (see the policy) is source-available, non-commercial.
 
-All icons are **SVG files** with `color: currentColor` to inherit yellow accent color:
+### Icons
 
-- `sparkle.svg` — Optimize feature
-- `sliders.svg` — Presets
-- `robot.svg` — AI providers
-- `cursor.svg` — Phrase Better
-- `globe.svg` — Works where you work
-- `lock.svg` — Unobtrusive
-- `pen.svg` — Core Rewrite preset
-- `chat.svg` — Communication Style preset
-- `brain.svg` — Critical Thinking preset
-- `gear.svg` — Build & Delivery preset
-- `house.svg` — No backend server
-- `storage.svg` — Local storage only
-- `key.svg` — Key isolation
-- `signal.svg` — Zero telemetry
+Site icons are an **inline SVG sprite** at the top of `index.html` (`<symbol id="i-*">`, used as `<svg class="ic"><use href="#i-…"/></svg>`): 24px grid, 2px stroke, round caps/joins, `currentColor`; solid fills only for small glyph marks (`i-sparkle`, `i-chrome`). `site/assets/icons/` now holds only the brand icon, the apple-touch icon, and the three provider logos (`gemini-color.svg`, `openai.svg`, `claude-color.svg`, copied from `assets/icons/ui/`). The policy page carries its own small sprite.
 
 ### Site Styling (`/site/styles.css`)
 
-- Dark theme matching extension (Lumyn palette)
-- Responsive grid layouts for features, presets, privacy cards
-- Smooth animations & transitions
-- Mobile-first design
+- Same warm dark palette and DM Sans as the extension; flat 8px cards with crisp `--border` lines, 12px radius for the mocks/CTA.
+- One stylesheet for both pages; the policy page uses `.page-hero`, `.meta`, `.prose-card` (numbered `h2 .num`, `.callout` / `.callout.danger`) and `.back-link`.
 
 ### Site Scripts (`/site/app.js`)
 
-Two IIFEs: the scroll-reveal `IntersectionObserver` and the hero browser-mockup typing loop.
+Four IIFEs: mobile nav toggle, scroll reveal, the hero mock loop (type rough prompt → press Optimize → show preview → accept into the composer; starts only once the mock is on screen), and the support modal (Esc / backdrop close, focus returns to the trigger).
 
-- **The hidden-until-revealed state is opt-in, not default.** `app.js` adds `js-reveal` to `<html>` as its very first statement, and `styles.css` scopes `[data-reveal] { opacity: 0 }` to `.js-reveal [data-reveal]`. Previously the hidden state was unconditional, so a no-JS visitor (or a script load failure, or a non-executing crawler) saw 22 elements — **43% of the page text** — permanently invisible. **Never write an unscoped `[data-reveal]` hidden rule.**
-- The reveal IIFE also reveals everything immediately when `IntersectionObserver` is unavailable.
-- **`prefers-reduced-motion: reduce` is honoured** in both layers: a media block in `styles.css` stops the infinite `marquee` (and wraps the track instead), the `blink` cursor, and `opt-pulse`; `app.js` reads `PREFERS_REDUCED_MOTION` once and skips the observer (revealing all) plus short-circuits the endless typing loop to the finished `OPTIMIZED` string with the cursor hidden. The marquee is an infinite scroller, so this is WCAG 2.2.2 territory, not just polish.
-
-Can still be extended for a dynamic Chrome Web Store button or install-success redirect.
+- **The hidden-until-revealed state is opt-in, not default.** `app.js` adds `js-reveal` to `<html>` as its very first statement, and `styles.css` scopes the hidden state to `.js-reveal [data-reveal]` (revealed via `.revealed`). A no-JS visitor, a script failure, or a non-executing crawler would otherwise see much of the page permanently invisible. **Never write an unscoped `[data-reveal]` hidden rule.**
+- The reveal IIFE reveals everything immediately when `IntersectionObserver` is unavailable.
+- **`prefers-reduced-motion: reduce` is honoured**: the CSS media block disables transitions/animations and the reveal offset; `app.js` reveals everything and holds the hero mock in its preview state instead of looping.
 
 **Version sync:** the JSON-LD `softwareVersion` in `site/index.html` must track `manifest.json` `version` — nothing enforces it, and it silently drifted 0.8.0 → 0.9.0 once already.
 
 ### Privacy Policy Page (`/site/policy/`)
 
-- Standard privacy policy document
-- Explains no telemetry, local-only storage, no backend
-- Links to open-source code on GitHub
+- 18 numbered `.prose-card` sections styled by the shared `../styles.css` (no inline `<style>` block any more)
+- Explains no telemetry, local-only storage, no backend, and the source-available license
 
 ---
 
@@ -650,7 +631,7 @@ All color values are stored in `ui/theme.css` as CSS variables for easy theming.
 
 **Single source of truth**: the palette is one warm amber theme kept in sync with `site/styles.css` — there is no purple. The popup/options reference `ui/theme.css` variables. The **injected** UI can't read those variables (content scripts load standalone), so `injected/styles.css` and the inline-styled overlays (`showPhraseBetterChooserOnPage` in `background.js`) use the same amber **literals** (`#e8991e` / `#f5ae3a`). When changing brand color, update `site/styles.css`, `ui/theme.css`, and those injected literals together.
 
-**Redesign tokens** (in `ui/theme.css`): the visual language uses Manrope, larger radii (`--radius: 11px`, `--radius-card: 13px`, `--radius-lg: 16px`, `--radius-xl: 18px`, `--radius-pill`), gradient panel surfaces (`--panel-gradient`, `--panel-gradient-2`), glossy deep shadows (`--card-shadow`, `--card-shadow-lg`), a warm accent-gradient button (`--accent-btn` + `--accent-btn-glow`), and an icon-tile treatment (`--tile-bg` / `--tile-border`). A shared `@keyframes ab-pulse` drives the "connected" status dot. Popup + options consume these; the injected overlays mirror the equivalent literals (16px card radius, `linear-gradient(135deg,#f7b84a,#e8991e)` accept/optimize buttons, `0 24px 60px -18px rgba(0,0,0,.75)` card shadow).
+**Design language** (in `ui/theme.css`): flat, crisp and dense, modelled on a classic admin-console look. Surfaces ramp `--bg` → `--surface` (cards, sidebar, top bar) → `--surface-2` (inputs, hover) → `--surface-3` (raised/neutral badge); `--line` borders cards and controls, `--line-soft` divides rows inside a card. Radii are small: `--radius-sm: 6px` (buttons, inputs, badges), `--radius: 8px` (cards, nav pill), `--radius-lg: 10px` (dialogs). No gradients or glossy shadows on surfaces — elevation (`--shadow-lg`) is reserved for floating layers (select panel, modals, preview card). Shared primitives live in theme.css: `.btn` + `.btn-primary` (solid amber, `--accent-ink` text) / `.btn-secondary` (outlined) / `.btn-danger` (red outline); `.badge` (tinted pill with a `currentColor` dot) + `--accent`/`--success`/`--warning` variants; the custom select (`.csel-*`, panel floats 4px below/above the trigger); and the `.switch`/`.slider` toggle. Focus is a `--focus-ring` (3px amber halo). Labels are sentence-case 13px medium — no uppercase tracked micro-labels. The injected overlays mirror the same literals (10px card radius, `#3a3128` border, solid `#e8991e` accept/optimize buttons, segmented variant switcher).
 
 **Popup "Keep my voice" toggle**: the popup exposes the existing `keepUserVoice` setting via a toggle (`#keepUserVoiceToggle`, `ui/popup.js`), the same setting the options **Presets** section shows ("Keep user voice") and that `buildSystemInstruction` in `background.js` applies to Ask Better rewrites. The popup also renders a static, platform-aware `Ctrl/⌘ ⇧ O` shortcut hint (`#shortcutMod` set in `popup.js`).
 

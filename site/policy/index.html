@@ -49,318 +49,54 @@
       "inLanguage": "en"
     }
   </script>
-  <style>
-    :root {
-      color-scheme: dark;
-      --bg: #0f0d0b;
-      --panel: #161310;
-      --panel-2: #1e1a15;
-      --line: #2e2720;
-      --muted: #9a8f83;
-      --text: #f4f0eb;
-      --soft: #d0c4b8;
-      --accent: #e8991e;
-      --accent-bright: #f5ae3a;
-      --accent-glow: rgba(232, 153, 30, 0.14);
-      --button: #332c25;
-      --button-border: #5a4f42;
-    }
-
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-
-    body {
-      margin: 0;
-      min-width: 320px;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Cantarell, Ubuntu, Inter, "Segoe UI", sans-serif;
-      line-height: 1.6;
-    }
-
-    a { color: var(--accent-bright); text-decoration: none; }
-    a:hover { color: var(--text); }
-
-    h1, h2, h3, p { margin-top: 0; }
-
-    /* ── Topbar ── */
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 24px;
-      min-height: 64px;
-      padding: 0 clamp(18px, 5vw, 64px);
-      background: rgba(15, 13, 11, 0.9);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      backdrop-filter: blur(18px);
-    }
-
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 800;
-      font-size: 17px;
-      color: var(--text);
-      text-decoration: none;
-    }
-
-    .brand img {
-      width: 30px;
-      height: 30px;
-      border-radius: 7px;
-    }
-
-    .topbar-link {
-      font-size: 14px;
-      color: var(--soft);
-    }
-
-    .topbar-link:hover { color: var(--text); }
-
-    /* ── Page layout ── */
-    .page-inner {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: clamp(40px, 7vw, 80px) clamp(18px, 5vw, 48px) 80px;
-    }
-
-    /* ── Hero ── */
-    .page-hero {
-      padding-bottom: clamp(24px, 4vw, 40px);
-      border-bottom: 1px solid var(--line);
-      margin-bottom: clamp(32px, 5vw, 56px);
-    }
-
-    .eyebrow {
-      margin: 0 0 10px;
-      color: var(--accent-bright);
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    .page-title {
-      font-size: clamp(30px, 5vw, 54px);
-      line-height: 1.05;
-      letter-spacing: -0.02em;
-      margin-bottom: 16px;
-      white-space: nowrap;
-    }
-
-    .page-lede {
-      color: var(--soft);
-      font-size: clamp(15px, 2vw, 18px);
-      max-width: 580px;
-      margin-bottom: 20px;
-    }
-
-    .meta-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .meta-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 12px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: var(--panel-2);
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .meta-pill .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #3cba5c;
-      flex: 0 0 auto;
-    }
-
-    .meta-pill .dot.warn {
-      background: var(--accent-bright);
-    }
-
-    /* ── Sections ── */
-    .policy-section {
-      display: grid;
-      grid-template-columns: 52px 1fr;
-      gap: clamp(14px, 3vw, 24px);
-      padding: clamp(18px, 3vw, 28px) 0;
-      border-top: 1px solid var(--line);
-    }
-
-    .section-num {
-      font-size: 13px;
-      font-weight: 800;
-      color: var(--accent-bright);
-      opacity: 0.7;
-      padding-top: 3px;
-    }
-
-    .section-body h2 {
-      font-size: clamp(15px, 2vw, 18px);
-      font-weight: 800;
-      margin-bottom: 8px;
-      letter-spacing: -0.01em;
-    }
-
-    .section-body p {
-      color: var(--soft);
-      font-size: 14.5px;
-      margin-bottom: 10px;
-    }
-
-    .section-body p:last-child,
-    .section-body ul:last-child { margin-bottom: 0; }
-
-    .section-body ul {
-      margin: 8px 0 12px;
-      padding: 0;
-      list-style: none;
-      display: grid;
-      gap: 8px;
-    }
-
-    .section-body li {
-      position: relative;
-      padding-left: 16px;
-      color: var(--soft);
-      font-size: 14.5px;
-    }
-
-    .section-body li::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 0.68em;
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--accent);
-      transform: translateY(-50%);
-    }
-
-    .section-body strong { color: var(--text); }
-
-    code {
-      font-family: "Ubuntu Mono", "Cascadia Code", monospace;
-      font-size: 0.9em;
-      color: var(--soft);
-    }
-
-    .callout {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 13px;
-      border-radius: 6px;
-      border: 1px solid rgba(60, 186, 92, 0.25);
-      background: rgba(60, 186, 92, 0.08);
-      color: #a8f0bc;
-      font-size: 13px;
-      font-weight: 700;
-      margin-top: 6px;
-    }
-
-    .callout.warn {
-      border-color: rgba(232, 153, 30, 0.28);
-      background: var(--accent-glow);
-      color: var(--accent-bright);
-    }
-
-    .callout.restrict {
-      border-color: rgba(220, 80, 80, 0.28);
-      background: rgba(220, 80, 80, 0.08);
-      color: #f4a0a0;
-    }
-
-    /* ── Footer ── */
-    footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
-      padding: 24px clamp(18px, 5vw, 64px);
-      color: var(--muted);
-      border-top: 1px solid var(--line);
-      font-size: 14px;
-    }
-
-    .footer-links {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-
-    footer a, .footer-links a { color: var(--soft); }
-    footer a:hover, .footer-links a:hover { color: var(--text); }
-
-    @media (max-width: 600px) {
-      .policy-section { grid-template-columns: 1fr; gap: 6px; }
-      .section-num { font-size: 11px; padding-top: 0; }
-    }
-  </style>
+  <link rel="stylesheet" href="../styles.css" />
 </head>
 <body>
+  <svg xmlns="http://www.w3.org/2000/svg" class="sprite" aria-hidden="true">
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></symbol>
+    <symbol id="i-github" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+    <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></symbol>
+  </svg>
+  <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="topbar">
-    <a class="brand" href="../">
-      <img src="../assets/icons/icon.svg" alt="" />
-      <span>AskBetter</span>
-    </a>
-    <a class="topbar-link" href="../">← Back to site</a>
+    <div class="wrap">
+      <a class="brand" href="../" aria-label="AskBetter home">
+        <img src="../assets/icons/icon.svg" alt="" width="28" height="28" />
+        <span>AskBetter</span>
+      </a>
+      <a class="back-link" href="../"><svg class="ic" aria-hidden="true"><use href="#i-arrow-left" /></svg>Back to site</a>
+    </div>
   </header>
 
-  <main>
-    <div class="page-inner">
-
-      <div class="page-hero">
-        <p class="eyebrow">AskBetter Chrome Extension</p>
-        <h1 class="page-title">Privacy Policy</h1>
-        <p class="page-lede">
-          AskBetter is local-first. Your prompts, settings, and API keys stay in your browser. No backend server. No developer analytics. No telemetry.
-        </p>
-        <div class="meta-row">
-          <span class="meta-pill"><span class="dot"></span>Last updated: June 2026</span>
-          <span class="meta-pill"><span class="dot"></span>Developer collection: None</span>
-          <span class="meta-pill"><span class="dot warn"></span>Third-party AI: Optional, user-controlled</span>
+  <main id="main">
+    <section class="page-hero">
+      <div class="wrap narrow">
+        <span class="eyebrow">AskBetter Chrome extension</span>
+        <h1>Privacy Policy</h1>
+        <p>AskBetter is local-first. Your prompts, settings, and API keys stay in your browser. No backend server. No developer analytics. No telemetry.</p>
+        <div class="meta">
+          <span>Last updated: June 2026</span>
+          <span>Developer collection: none</span>
+          <span class="warn">Third-party AI: optional, user-controlled</span>
         </div>
       </div>
+    </section>
 
-      <div>
-
-        <div class="policy-section">
-          <p class="section-num">01</p>
-          <div class="section-body">
-            <h2>Scope</h2>
+    <div class="page-body">
+      <div class="wrap narrow">
+          <section class="prose-card">
+            <h2><span class="num">01</span>Scope</h2>
             <p>This Privacy Policy applies to the AskBetter browser extension (the "Extension"). By installing or using AskBetter, you agree to this policy.</p>
-          </div>
-        </div>
-
-        <div class="policy-section">
-          <p class="section-num">02</p>
-          <div class="section-body">
-            <h2>Data Collection</h2>
+          </section>
+          <section class="prose-card">
+            <h2><span class="num">02</span>Data Collection</h2>
             <p>AskBetter does <strong>not</strong> collect, store, sell, or transmit personal data to the developer. The Extension does not require accounts, logins, or identity information.</p>
-            <span class="callout">No developer analytics. No hidden telemetry.</span>
-          </div>
-        </div>
-
-        <div class="policy-section">
-          <p class="section-num">03</p>
-          <div class="section-body">
-            <h2>Local Data Storage</h2>
+            <p class="callout">No developer analytics. No hidden telemetry.</p>
+          </section>
+          <section class="prose-card">
+            <h2><span class="num">03</span>Local Data Storage</h2>
             <p>AskBetter stores limited data locally in your browser using <code>chrome.storage.local</code>:</p>
             <ul>
               <li>User preferences and settings (provider, model, presets, toggles)</li>
@@ -371,40 +107,24 @@
               <li>Draggable button position offsets</li>
             </ul>
             <p>This data stays on your device. Remove it by uninstalling the Extension or clearing extension storage in your browser settings.</p>
-          </div>
-        </div>
-
-        <div class="policy-section">
-          <p class="section-num">04</p>
-          <div class="section-body">
-            <h2>Prompts, Page Content, and Processing</h2>
+          </section>
+          <section class="prose-card">
+            <h2><span class="num">04</span>Prompts, Page Content, and Processing</h2>
             <p>AskBetter reads prompt text from ChatGPT, Claude, and Google Gemini input boxes only when you trigger an Optimize action, and reads text you select on a web page only when you choose "Re-phrase with AskBetter" from the right-click menu. Text is sent directly from your browser to your chosen AI provider. AskBetter does not route content through any developer-controlled server.</p>
             <p>The developer does not access, store, or monitor your prompts, page selections, or AI outputs.</p>
-          </div>
-        </div>
-
-        <div class="policy-section">
-          <p class="section-num">05</p>
-          <div class="section-body">
-            <h2>API Keys and Credentials</h2>
+          </section>
+          <section class="prose-card">
+            <h2><span class="num">05</span>API Keys and Credentials</h2>
             <p>API keys you enter are stored only in <code>chrome.storage.local</code> on your device. They are accessible only to the extension's background service worker — content scripts and web pages never read them. The developer never receives your keys.</p>
             <p>You are responsible for managing and rotating your keys safely with the relevant provider.</p>
-          </div>
-        </div>
-
-        <div class="policy-section">
-          <p class="section-num">06</p>
-          <div class="section-body">
-            <h2>Third-Party Services</h2>
+          </section>
+          <section class="prose-card">
+            <h2><span class="num">06</span>Third-Party Services</h2>
             <p>Third-party AI providers (Google Gemini, OpenAI, Anthropic) are optional and user-configured. Their handling of data is governed by their own privacy policies and terms. The developer is not responsible for third-party data practices.</p>
-            <span class="callout warn">Connecting an external provider means your prompt is sent to that provider's servers.</span>
-          </div>
-        </div>
-
-        <div class="policy-section">
-          <p class="section-num">07</p>
-          <div class="section-body">
-            <h2>Permissions</h2>
+            <p class="callout">Connecting an external provider means your prompt is sent to that provider's servers.</p>
+          </section>
+          <section class="prose-card">
+            <h2><span class="num">07</span>Permissions</h2>
             <p>AskBetter requests these browser permissions strictly to enable core features:</p>
             <ul>
               <li><strong>storage</strong> — saves your settings and API keys locally.</li>
@@ -413,118 +133,80 @@
               <li><strong>host_permissions</strong> — makes direct API calls to Gemini, OpenAI, and Anthropic endpoints from the background worker.</li>
             </ul>
             <p>No permissions are used for tracking or advertising.</p>
-          </div>
-        </div>
-
-        <div class="policy-section">
-          <p class="section-num">08</p>
-          <div class="section-body">
-            <h2>Analytics and Tracking</h2>
+          </section>
+          <section class="prose-card">
+            <h2><span class="num">08</span>Analytics and Tracking</h2>
             <p>AskBetter does not use analytics or tracking tools and does not profile users. No usage events, crash reports, or interaction data are sent anywhere. The extension keeps a local 30-day usage summary (shown in its Reports view) that is computed and stored only on your device and is never transmitted.</p>
-          </div>
-        </div>
-
-        <div class="policy-section">
-          <p class="section-num">09</p>
-          <div class="section-body">
-            <h2>Data Security</h2>
+          </section>
+          <section class="prose-card">
+            <h2><span class="num">09</span>Data Security</h2>
             <p>All data handled by AskBetter remains within the browser environment. Reasonable safeguards are used, but no system can guarantee absolute security.</p>
-          </div>
-        </div>
-
-        <div class="policy-section">
-          <p class="section-num">10</p>
-          <div class="section-body">
-            <h2>Children's Privacy</h2>
+          </section>
+          <section class="prose-card">
+            <h2><span class="num">10</span>Children's Privacy</h2>
             <p>AskBetter does not knowingly collect personal data from anyone, including children.</p>
-          </div>
-        </div>
-
-        <div class="policy-section">
-          <p class="section-num">11</p>
-          <div class="section-body">
-            <h2>License and Usage Terms</h2>
+          </section>
+          <section class="prose-card">
+            <h2><span class="num">11</span>License and Usage Terms</h2>
             <p>AskBetter source code is publicly viewable but is <strong>not open source</strong> under any OSI-approved license. The following apply:</p>
             <ul>
               <li><strong>Permitted:</strong> view source, install and use the official release for personal non-commercial purposes, contribute via pull requests to the official repository.</li>
               <li><strong>Prohibited:</strong> copying or redistributing source code, creating and distributing derivative works, repackaging or republishing to any store or marketplace, sublicensing, selling, renting, or commercially exploiting the software or any derivative of it.</li>
             </ul>
-            <span class="callout restrict">Commercial use, redistribution, and modification for distribution are not permitted without explicit written permission from the copyright holder.</span>
-            <p style="margin-top:10px">Full license: <a href="https://github.com/piyushdoorwar/ask-better/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">github.com/piyushdoorwar/ask-better</a></p>
-          </div>
-        </div>
-
-        <div class="policy-section">
-          <p class="section-num">12</p>
-          <div class="section-body">
-            <h2>AI Output Disclaimer</h2>
+            <p class="callout danger">Commercial use, redistribution, and modification for distribution are not permitted without explicit written permission from the copyright holder.</p>
+            <p>Full license: <a href="https://github.com/piyushdoorwar/ask-better/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">github.com/piyushdoorwar/ask-better</a></p>
+          </section>
+          <section class="prose-card">
+            <h2><span class="num">12</span>AI Output Disclaimer</h2>
             <p>Outputs generated via AskBetter may be inaccurate, incomplete, or misleading. Do not rely on outputs for legal, medical, financial, or other professional advice. You are responsible for verifying outputs before use.</p>
-          </div>
-        </div>
-
-        <div class="policy-section">
-          <p class="section-num">13</p>
-          <div class="section-body">
-            <h2>No Warranty</h2>
+          </section>
+          <section class="prose-card">
+            <h2><span class="num">13</span>No Warranty</h2>
             <p>AskBetter is provided on an <strong>"as is"</strong> and <strong>"as available"</strong> basis, without warranties of any kind, whether express or implied, including but not limited to fitness for a particular purpose, reliability, accuracy, or availability.</p>
-          </div>
-        </div>
-
-        <div class="policy-section">
-          <p class="section-num">14</p>
-          <div class="section-body">
-            <h2>Limitation of Liability</h2>
+          </section>
+          <section class="prose-card">
+            <h2><span class="num">14</span>Limitation of Liability</h2>
             <p>To the maximum extent permitted by applicable law, the developer shall not be liable for any direct, indirect, incidental, consequential, special, or punitive damages, including loss of data, loss of profits, business interruption, or reputational harm, arising out of or related to the use of or inability to use AskBetter.</p>
-          </div>
-        </div>
-
-        <div class="policy-section">
-          <p class="section-num">15</p>
-          <div class="section-body">
-            <h2>User Responsibility</h2>
+          </section>
+          <section class="prose-card">
+            <h2><span class="num">15</span>User Responsibility</h2>
             <p>You are solely responsible for how you use AskBetter, including any prompts, outputs, decisions made based on outputs, and any third-party services you connect or interact with.</p>
-          </div>
-        </div>
-
-        <div class="policy-section">
-          <p class="section-num">16</p>
-          <div class="section-body">
-            <h2>Indemnification</h2>
+          </section>
+          <section class="prose-card">
+            <h2><span class="num">16</span>Indemnification</h2>
             <p>You agree to indemnify, defend, and hold harmless the developer from any claims, damages, liabilities, losses, and expenses (including legal fees) arising out of or related to:</p>
             <ul>
               <li>Your use or misuse of the Extension</li>
               <li>Your violation of any laws or third-party rights</li>
               <li>Your use of third-party AI providers or services</li>
             </ul>
-          </div>
-        </div>
-
-        <div class="policy-section">
-          <p class="section-num">17</p>
-          <div class="section-body">
-            <h2>Changes to This Policy</h2>
+          </section>
+          <section class="prose-card">
+            <h2><span class="num">17</span>Changes to This Policy</h2>
             <p>This Privacy Policy may be updated from time to time. Continued use of AskBetter after updates indicates acceptance of the revised policy.</p>
-          </div>
-        </div>
-
-        <div class="policy-section">
-          <p class="section-num">18</p>
-          <div class="section-body">
-            <h2>Contact</h2>
+          </section>
+          <section class="prose-card">
+            <h2><span class="num">18</span>Contact</h2>
             <p>Questions about this policy? Email <a href="mailto:piyushdoorwar+askbetter@gmail.com">piyushdoorwar+askbetter@gmail.com</a>.</p>
-          </div>
-        </div>
-
+          </section>
       </div>
     </div>
   </main>
 
-  <footer>
-    <span>&copy; <span id="yr"></span> Piyush Doorwar. AskBetter.</span>
-    <div class="footer-links">
-      <a href="../">Home</a>
-      <a href="https://github.com/piyushdoorwar/ask-better" rel="noreferrer">GitHub</a>
-      <a href="mailto:piyushdoorwar+askbetter@gmail.com">Contact</a>
+  <footer class="footer">
+    <div class="wrap">
+      <div>
+        <a class="brand" href="../">
+          <img src="../assets/icons/icon.svg" alt="" width="24" height="24" />
+          <span>AskBetter</span>
+        </a>
+        <p>&copy; <span id="yr"></span> Piyush Doorwar.</p>
+      </div>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="../"><svg class="ic" aria-hidden="true"><use href="#i-house" /></svg>Home</a>
+        <a href="https://github.com/piyushdoorwar/ask-better" rel="noreferrer"><svg class="ic" aria-hidden="true"><use href="#i-github" /></svg>GitHub</a>
+        <a href="mailto:piyushdoorwar+askbetter@gmail.com"><svg class="ic" aria-hidden="true"><use href="#i-mail" /></svg>Contact</a>
+      </nav>
     </div>
   </footer>
 
