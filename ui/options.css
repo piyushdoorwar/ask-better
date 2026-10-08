@@ -1719,6 +1719,12 @@ textarea:focus {
   margin-top: 10px;
 }
 
+/* Wide enough that the full summary fits on a typical laptop screen without
+   an inner scrollbar; it still caps at the viewport on smaller windows. */
+.privacy-modal-card {
+  width: min(880px, 100%);
+}
+
 .privacy-modal-body h4 {
   margin: 18px 0 6px;
   font-size: 13px;
