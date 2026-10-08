@@ -15,8 +15,9 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  z-index: 60;
   background: var(--surface);
-  border-right: 1px solid var(--line);
+  box-shadow: var(--shadow-panel);
 }
 
 .sidebar-brand {
@@ -38,13 +39,6 @@
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--ink);
-}
-
-.sidebar-caption {
-  margin: 4px 0 0;
-  padding: 0 20px 0 58px;
-  font-size: 12px;
-  color: var(--text-muted);
 }
 
 .sidebar-nav {
@@ -123,8 +117,8 @@
   gap: 8px;
   margin: 0 12px 16px;
   padding: 12px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
+  background: var(--surface-2);
   font-size: 12px;
   line-height: 1.45;
   color: var(--text-muted);
@@ -177,8 +171,17 @@
   gap: 16px;
   min-height: 64px;
   padding: 0 40px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
+  /* Sits on the page colour with no rule underneath; a shadow appears only once
+     content scrolls beneath it (.is-scrolled, toggled in options.js). */
+  background: rgba(15, 13, 11, 0.82);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  transition: box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.topbar.is-scrolled {
+  background: rgba(22, 19, 16, 0.9);
+  box-shadow: var(--shadow-bar);
 }
 
 .title-group {
@@ -439,7 +442,8 @@ textarea:focus {
 .toggle-grid {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-edge);
+  box-shadow: var(--shadow-card);
   border-radius: var(--radius);
   background: var(--surface);
   overflow: hidden;
@@ -514,7 +518,8 @@ textarea:focus {
 /* A lone toggle (outside a list) gets its own bordered row. */
 .preset-toggle-row {
   margin-top: 16px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-edge);
+  box-shadow: var(--shadow-card);
   border-radius: var(--radius);
 }
 
@@ -532,7 +537,8 @@ textarea:focus {
 }
 
 .pi-panel {
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-edge);
+  box-shadow: var(--shadow-card);
   border-radius: var(--radius);
   background: var(--surface);
   overflow: hidden;
@@ -632,7 +638,8 @@ textarea:focus {
   flex-direction: column;
   gap: 4px;
   padding: 16px 18px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-edge);
+  box-shadow: var(--shadow-card);
   border-radius: var(--radius);
   background: var(--surface);
   text-align: left;
@@ -712,7 +719,8 @@ textarea:focus {
   align-items: center;
   gap: 12px;
   padding: 16px 18px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-edge);
+  box-shadow: var(--shadow-card);
   border-radius: var(--radius);
   background: var(--surface);
   transition: border-color 120ms ease;
@@ -834,7 +842,8 @@ textarea:focus {
 
 .quick-additions {
   margin-bottom: 16px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-edge);
+  box-shadow: var(--shadow-card);
   border-radius: var(--radius);
   background: var(--surface);
   overflow: hidden;
@@ -974,7 +983,8 @@ textarea:focus {
   justify-content: space-between;
   gap: 10px;
   padding: 10px 12px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-edge);
+  box-shadow: var(--shadow-card);
   border-left: 3px solid var(--accent);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
@@ -1057,6 +1067,121 @@ textarea:focus {
   display: none !important;
 }
 
+/* ── Provider row + API key dialog ───────────────────────── */
+.provider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.provider-row .csel {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+/* .csel carries the field's bottom spacing on its own; move it to the row. */
+.provider-row {
+  margin-bottom: 8px;
+}
+
+.key-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  /* Matches the custom-select trigger beside it. */
+  height: 38px;
+  min-height: 0;
+  padding: 0 14px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease;
+}
+
+.key-btn:hover {
+  border-color: var(--accent-line);
+  color: var(--accent-bright);
+}
+
+.key-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.key-btn-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.key-btn-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+/* No key yet: the button is the call to action. */
+.key-btn[data-state="missing"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.key-btn[data-state="missing"]:hover {
+  background: var(--accent-bright);
+  color: var(--accent-ink);
+}
+
+.key-btn[data-state="missing"] .key-btn-dot {
+  display: none;
+}
+
+.key-btn[data-state="verified"] .key-btn-dot {
+  background: var(--green);
+  box-shadow: 0 0 0 3px var(--green-soft);
+}
+
+.key-btn[data-state="unverified"] .key-btn-dot {
+  background: var(--amber);
+  box-shadow: 0 0 0 3px var(--amber-soft);
+}
+
+.link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-bright);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+.key-modal-card {
+  width: min(560px, 100%);
+}
+
+.key-modal-body .security-actions {
+  margin-top: 14px;
+}
+
+.info-modal-body p.note {
+  margin-top: 18px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
 .key-locked-banner,
 .key-locked-card {
   display: flex;
@@ -1123,7 +1248,8 @@ textarea:focus {
   gap: 8px;
   min-width: 0;
   padding: 16px 18px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-edge);
+  box-shadow: var(--shadow-card);
   border-radius: var(--radius);
   background: var(--surface);
 }
@@ -1191,7 +1317,8 @@ textarea:focus {
 }
 
 .report-chart-card {
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-edge);
+  box-shadow: var(--shadow-card);
   border-radius: var(--radius);
   background: var(--surface);
   overflow: hidden;
@@ -1310,7 +1437,8 @@ textarea:focus {
 .history-list {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-edge);
+  box-shadow: var(--shadow-card);
   border-radius: var(--radius);
   background: var(--surface);
   overflow: hidden;
@@ -1503,7 +1631,8 @@ textarea:focus {
   width: min(520px, 100%);
   max-height: calc(100vh - 32px);
   overflow-y: auto;
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-edge);
+  box-shadow: var(--shadow-card);
   border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow-lg);
@@ -1629,11 +1758,18 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 
+  .provider-row {
+    flex-wrap: wrap;
+  }
+
+  .key-btn {
+    height: 40px;
+  }
+
   .sidebar {
     position: static;
     height: auto;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
+    box-shadow: var(--shadow-bar);
   }
 
   .sidebar-nav {

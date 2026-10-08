@@ -100,7 +100,8 @@ async function refreshProviderModels(provider) {
     return getProviderModels(p);
   }
 
-  // Fetch unavailable (no/invalid key or offline) — keep the last known list.
-  MODELS_LIVE[p] = cached || [];
+  // Fetch unavailable (no/invalid key or offline) — keep the last known list,
+  // but never one built under an older filter (it may hold non-chat models).
+  MODELS_LIVE[p] = entry && entry.v === MODEL_FILTER_VERSION && cached ? cached : [];
   return getProviderModels(p);
 }

@@ -214,6 +214,13 @@ const generateKeyLinkEl = document.getElementById("generateKeyLink");
 const keyLockedBannerEl = document.getElementById("keyLockedBanner");
 const maskedApiKeyEl = document.getElementById("maskedApiKey");
 const apiKeyEditorEl = document.getElementById("apiKeyEditor");
+const apiKeyBtnEl = document.getElementById("apiKeyBtn");
+const apiKeyBtnLabelEl = document.getElementById("apiKeyBtnLabel");
+const apiKeyModalEl = document.getElementById("apiKeyModal");
+const apiKeyModalTitleEl = document.getElementById("apiKeyModalTitle");
+const apiKeyModalCloseEl = document.getElementById("apiKeyModalClose");
+const modelHintKeyBtnEl = document.getElementById("modelHintKeyBtn");
+let lastKeyTriggerEl = null;
 const navButtons = Array.from(document.querySelectorAll(".nav-btn"));
 const sections = Array.from(document.querySelectorAll(".settings-section"));
 const sectionInfoButtons = Array.from(document.querySelectorAll(".section-info-btn"));
@@ -287,6 +294,8 @@ async function init() {
   fillForm(currentSettings);
   bindAutoSave();
   bindSecurityActions();
+  bindApiKeyModal();
+  bindTopbarShadow();
   bindHashRouting();
   applyHashRoute();
   setStatus("Auto-save enabled");
@@ -340,6 +349,10 @@ function bindSectionInfo() {
   });
 
   document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && apiKeyModalEl && !apiKeyModalEl.hidden) {
+      closeApiKeyModal();
+      return;
+    }
     if (event.key === "Escape" && privacyInfoModalEl && !privacyInfoModalEl.hidden) {
       closePrivacyInfoModal();
       return;
@@ -366,6 +379,74 @@ function bindPrivacyInfo() {
       closePrivacyInfoModal();
     }
   });
+}
+
+// The API key lives in a dialog so the Models panel stays just provider + model;
+// the button beside the provider shows whether the key is missing / unverified /
+// verified, and the model hint opens the same dialog.
+function bindApiKeyModal() {
+  if (!apiKeyModalEl || !apiKeyBtnEl || !apiKeyModalCloseEl) {
+    return;
+  }
+  for (const trigger of [apiKeyBtnEl, modelHintKeyBtnEl]) {
+    if (!trigger) continue;
+    trigger.addEventListener("click", () => {
+      lastKeyTriggerEl = trigger;
+      openApiKeyModal();
+    });
+  }
+  apiKeyModalCloseEl.addEventListener("click", closeApiKeyModal);
+  apiKeyModalEl.addEventListener("click", (event) => {
+    if (event.target === apiKeyModalEl) {
+      closeApiKeyModal();
+    }
+  });
+}
+
+function openApiKeyModal() {
+  if (!apiKeyModalEl) {
+    return;
+  }
+  apiKeyModalEl.hidden = false;
+  const target = keyLocked ? testKeyBtn : apiKeyEl;
+  target.focus({ preventScroll: true });
+}
+
+function closeApiKeyModal() {
+  if (!apiKeyModalEl || apiKeyModalEl.hidden) {
+    return;
+  }
+  apiKeyModalEl.hidden = true;
+  if (lastKeyTriggerEl && typeof lastKeyTriggerEl.focus === "function") {
+    lastKeyTriggerEl.focus({ preventScroll: true });
+  }
+}
+
+function updateApiKeyButton() {
+  if (!apiKeyBtnEl) {
+    return;
+  }
+  const meta = getProviderMeta((currentSettings && currentSettings.provider) || providerSelectEl.value);
+  const storedKey = String((currentSettings && currentSettings[meta.keyField]) || "").trim();
+  const state = keyLocked ? "verified" : storedKey ? "unverified" : "missing";
+  apiKeyBtnEl.dataset.state = state;
+  apiKeyBtnLabelEl.textContent = state === "verified" ? "API key" : state === "unverified" ? "Verify API key" : "Add API key";
+  apiKeyBtnEl.setAttribute("aria-label", `${meta.providerName} API key: ${state === "verified" ? "verified" : state === "unverified" ? "saved, not verified" : "not set"}`);
+  if (apiKeyModalTitleEl) {
+    apiKeyModalTitleEl.textContent = `${meta.providerName} API key`;
+  }
+}
+
+// The top bar has no divider at rest; it gains a shadow only once content
+// scrolls under it.
+function bindTopbarShadow() {
+  const topbar = document.querySelector(".topbar");
+  if (!topbar) {
+    return;
+  }
+  const sync = () => topbar.classList.toggle("is-scrolled", window.scrollY > 4);
+  window.addEventListener("scroll", sync, { passive: true });
+  sync();
 }
 
 function openPrivacyInfoModal() {
@@ -980,6 +1061,12 @@ function renderCustomAdditions() {
 }
 
 function bindSecurityActions() {
+  apiKeyEl.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !keyLocked) {
+      event.preventDefault();
+      testKeyBtn.click();
+    }
+  });
   apiKeyEl.addEventListener("input", () => {
     if (keyLocked) {
       return;
@@ -1033,6 +1120,8 @@ function bindSecurityActions() {
       testKeyStatus.textContent = "Valid key.";
       testKeyStatus.className = "ok";
       setStatus(`${meta.providerName} key verified and saved.`, "ok");
+      // Let the success register, then return to the now-unlocked model list.
+      setTimeout(closeApiKeyModal, 700);
       return;
     }
 
@@ -1189,6 +1278,7 @@ function applyKeyLockState() {
   keyLockedBannerEl.hidden = !keyLocked;
   apiKeyEditorEl.hidden = keyLocked;
   updateMaskedApiKey();
+  updateApiKeyButton();
 }
 
 function updateMaskedApiKey() {
