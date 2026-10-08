@@ -38,25 +38,14 @@ const ANTHROPIC_KEY_URL = "https://console.anthropic.com/settings/keys";
 const SECTION_INFO_CONTENT = {
   models: {
     title: "Models",
-    description: "This section controls which provider and model AskBetter calls when you press Optimize. It also holds the global AI on/off switch.",
+    description: "This section controls which provider and model AskBetter calls for both Ask Better and Phrase Better.",
     points: [
-      "Enable AI (global) turns optimization on/off everywhere, for both Ask Better and Phrase Better.",
-      "AskBetter supports Google Gemini, OpenAI, and Anthropic Claude.",
+            "AskBetter supports Google Gemini, OpenAI, and Anthropic Claude.",
       "Faster/lighter models usually respond quicker and cost less; larger models can improve rewrite quality.",
       "Your API keys are stored in this browser only and sent only to the provider they belong to.",
       "Use the API key button beside the provider to add a key. Verify key checks it with the provider, then locks it; the model list loads once the key is verified. Replace key swaps a verified key without clearing anything else.",
       "The model list shows only chat/text models (no image, audio, embedding, or robotics models) and refreshes once a day.",
       "Clear stored key & data (in the API key dialog) removes all keys, settings, custom presets, history, and usage reports."
-    ]
-  },
-  modes: {
-    title: "Mode",
-    description: "Turn each AskBetter experience on or off. Both default on and can be toggled independently.",
-    points: [
-      "Ask Better powers the Optimize button on ChatGPT, Gemini, and Claude.",
-      "Phrase Better adds a right-click action for selected text on any page.",
-      "When an experience is off, its sections are hidden from the left menu; turn it back on here to bring them back.",
-      "Use AskBetter → Integrations to choose which surfaces the Optimize button appears on."
     ]
   },
   askbetter_suggestions: {
@@ -112,7 +101,7 @@ const SECTION_INFO_CONTENT = {
     description: "Integrations decide where the Ask Better Optimize button appears.",
     points: [
       "Enable on ChatGPT, Gemini, and Claude control where the Optimize button appears.",
-      "The global AI on/off switch lives in the Models section.",
+      "The switch on the Ask Better heading in the sidebar turns the Optimize button off everywhere; these toggles pick individual sites.",
       "If AI is off or the key is missing, clicking Optimize shows a friendly message and does nothing."
     ]
   },
@@ -147,7 +136,8 @@ const providerSelectEl = document.getElementById("providerSelect");
 const apiKeyEl = document.getElementById("apiKey");
 const defaultPresetEl = document.getElementById("defaultPreset");
 const keepUserVoiceEl = document.getElementById("keepUserVoice");
-const enableAIEl = document.getElementById("enableAI");
+const pausedNoticeEl = document.getElementById("pausedNotice");
+const resumeBtnEl = document.getElementById("resumeBtn");
 const enableChatGPTEl = document.getElementById("enableChatGPT");
 const enableGeminiEl = document.getElementById("enableGemini");
 const enableClaudeEl = document.getElementById("enableClaude");
@@ -543,7 +533,6 @@ function closeSectionInfoModal() {
 // re-opens that section; history pages use the special #history-page-N form.
 const SECTION_SLUGS = {
   "models": "section-models",
-  "mode": "section-mode",
   "reports": "section-reports",
   "history": "section-history",
   "integrations": "section-integrations",
@@ -555,9 +544,11 @@ const SECTION_SLUGS = {
 const SECTION_TO_SLUG = Object.fromEntries(
   Object.entries(SECTION_SLUGS).map(([slug, id]) => [id, slug])
 );
-// Old bookmarks: the Security panel was folded into Models. Kept out of
-// SECTION_SLUGS so the reverse map still writes #models for that section.
+// Old bookmarks: the Security panel was folded into Models, and the Mode
+// panel's two switches moved onto the sidebar group headings. Added after the
+// reverse map is built so Models still writes #models.
 SECTION_SLUGS.security = "section-models";
+SECTION_SLUGS.mode = "section-models";
 
 function hashForSection(targetId) {
   if (targetId === "section-history") {
@@ -579,8 +570,8 @@ function writeSectionHash(slug) {
 function isSectionAvailable(targetId) {
   const btn = document.querySelector(`.nav-btn[data-section="${targetId}"]`);
   if (!btn) return false;
-  const group = btn.closest(".menu-group");
-  return !(group && group.hidden);
+  const items = btn.closest(".menu-group-items");
+  return !(items && items.hidden);
 }
 
 function activateSection(targetId, writeUrl = true) {
@@ -625,8 +616,9 @@ function applyHashRoute() {
   }
 }
 
-// Hide an app's whole menu group when its mode is off. If the section currently
-// shown lives in a group that just got hidden, fall back to Models.
+// Each app's on/off switch sits on its sidebar heading. When an app is off its
+// menu items fold away (the heading and switch stay, so it can be turned back
+// on in place). If the section on screen just folded away, fall back to Models.
 function applyGroupVisibility() {
   if (!currentSettings) {
     return;
@@ -637,15 +629,23 @@ function applyGroupVisibility() {
   };
   for (const [name, enabled] of Object.entries(enabledByGroup)) {
     const groupEl = document.querySelector(`.menu-group[data-group="${name}"]`);
+    const itemsEl = groupEl && groupEl.querySelector(".menu-group-items");
     if (groupEl) {
-      groupEl.hidden = !enabled;
+      groupEl.classList.toggle("is-off", !enabled);
+    }
+    if (itemsEl) {
+      itemsEl.hidden = !enabled;
     }
   }
   const active = document.querySelector(".settings-section.active");
-  const activeBtn = active && document.querySelector(`.nav-btn[data-section="${active.id}"]`);
-  const activeGroup = activeBtn && activeBtn.closest(".menu-group");
-  if (activeGroup && activeGroup.hidden) {
+  if (active && !isSectionAvailable(active.id)) {
     activateSection("section-models");
+  }
+}
+
+function applyPausedNotice() {
+  if (pausedNoticeEl) {
+    pausedNoticeEl.hidden = !(currentSettings && currentSettings.enableAI === false);
   }
 }
 
@@ -677,8 +677,11 @@ function bindAutoSave() {
     await savePartial({ keepUserVoice: !!keepUserVoiceEl.checked });
   });
 
-  enableAIEl.addEventListener("change", async () => {
-    await savePartial({ enableAI: !!enableAIEl.checked });
+  // The global pause lives in the toolbar popup; here it only surfaces as a
+  // notice on Models with a way back.
+  resumeBtnEl.addEventListener("click", async () => {
+    await savePartial({ enableAI: true });
+    applyPausedNotice();
   });
 
   enableAskBetterModeEl.addEventListener("change", async () => {
@@ -1260,7 +1263,7 @@ function fillForm(settings) {
   renderPresetChips();
   setCountCards(askBetterOptionCountEl, normalized.askBetterOptionCount);
   keepUserVoiceEl.checked = !!normalized.keepUserVoice;
-  enableAIEl.checked = !!normalized.enableAI;
+  applyPausedNotice();
   enableAskBetterModeEl.checked = normalized.enableAskBetterMode !== false;
   enablePhraseBetterModeEl.checked = normalized.enablePhraseBetterMode !== false;
   setCountCards(phraseBetterOptionCountEl, normalized.phraseBetterOptionCount);

@@ -231,3 +231,17 @@ kbd {
   flex: 1;
   max-width: 190px;
 }
+
+/* Global on/off for the whole extension (settings.enableAI). */
+.power {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.power-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}

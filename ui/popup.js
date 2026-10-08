@@ -42,6 +42,8 @@ const modelLabelEl = document.getElementById("modelLabel");
 const modelSelectEl = document.getElementById("modelSelect");
 const modelHintEl = document.getElementById("modelHint");
 const keepUserVoiceToggle = document.getElementById("keepUserVoiceToggle");
+const enableAIToggle = document.getElementById("enableAIToggle");
+const enableAILabel = document.getElementById("enableAILabel");
 const openSettingsBtn = document.getElementById("openSettingsBtn");
 
 // The Optimize shortcut is Cmd+Shift+O on macOS (manifest `commands`).
@@ -65,6 +67,7 @@ async function init() {
   if (keepUserVoiceToggle) {
     keepUserVoiceToggle.checked = !!settings.keepUserVoice;
   }
+  renderPower(settings);
   providerSelectEl.value = normalizeProvider(settings.provider);
   const model = getProviderModel(settings);
   renderModelOptions(model);
@@ -84,6 +87,17 @@ async function init() {
   if (keepUserVoiceToggle) {
     keepUserVoiceToggle.addEventListener("change", async () => {
       await updateSettings({ keepUserVoice: !!keepUserVoiceToggle.checked });
+    });
+  }
+
+  // The one place to pause everything: Optimize on every site and Re-phrase.
+  // Per-app switches live on the settings page's sidebar headings.
+  if (enableAIToggle) {
+    enableAIToggle.addEventListener("change", async () => {
+      await updateSettings({ enableAI: !!enableAIToggle.checked });
+      const nextSettings = await readSettings();
+      renderPower(nextSettings);
+      renderStatus(nextSettings);
     });
   }
 
@@ -112,6 +126,16 @@ async function init() {
   });
 }
 
+function renderPower(settings) {
+  if (!enableAIToggle) {
+    return;
+  }
+  enableAIToggle.checked = !!settings.enableAI;
+  if (enableAILabel) {
+    enableAILabel.textContent = settings.enableAI ? "On" : "Paused";
+  }
+}
+
 function renderStatus(settings) {
   const meta = getProviderMeta(settings.provider);
   const hasKey = !!String(settings[meta.keyField] || "").trim();
@@ -122,7 +146,7 @@ function renderStatus(settings) {
   }
 
   if (!settings.enableAI) {
-    statusText.textContent = "AI disabled";
+    statusText.textContent = "Paused";
     statusText.className = "status-warn";
     if (statusBox) {
       statusBox.classList.add("state-warn");

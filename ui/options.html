@@ -23,12 +23,6 @@
               </span>
               <span class="nav-label">Models</span>
             </button>
-            <button class="nav-btn" data-section="section-mode" type="button">
-              <span class="nav-icon" aria-hidden="true">
-                <span class="icon-mask icon-mode"></span>
-              </span>
-              <span class="nav-label">Mode</span>
-            </button>
             <button class="nav-btn" data-section="section-reports" type="button">
               <span class="nav-icon" aria-hidden="true">
                 <span class="icon-mask icon-reports"></span>
@@ -44,41 +38,59 @@
           </div>
 
           <div class="menu-group" data-group="askbetter">
-            <p class="menu-title menu-title--group">Ask Better</p>
-            <button class="nav-btn" data-section="section-integrations" type="button">
-              <span class="nav-icon" aria-hidden="true">
-                <span class="icon-mask icon-integrations"></span>
+            <div class="menu-group-head">
+              <span class="menu-title menu-title--group" id="askbetterGroupLabel">Ask Better</span>
+              <span class="switch switch--sm" title="Turn the Optimize button on ChatGPT, Gemini, and Claude on or off">
+                <input id="enableAskBetterMode" name="enableAskBetterMode" type="checkbox" aria-labelledby="askbetterGroupLabel" aria-describedby="askbetterGroupDesc" aria-controls="askbetterGroupItems" />
+                <span class="slider" aria-hidden="true"></span>
               </span>
-              <span class="nav-label">Integrations</span>
-            </button>
-            <button class="nav-btn" data-section="section-presets" type="button">
-              <span class="nav-icon" aria-hidden="true">
-                <span class="icon-mask icon-presets"></span>
-              </span>
-              <span class="nav-label">Presets</span>
-            </button>
-            <button class="nav-btn" data-section="section-askbetter-suggestions" type="button">
-              <span class="nav-icon" aria-hidden="true">
-                <span class="icon-mask icon-mode"></span>
-              </span>
-              <span class="nav-label">Suggestions</span>
-            </button>
+              <span class="visually-hidden" id="askbetterGroupDesc">Turn the Optimize button on ChatGPT, Gemini, and Claude on or off</span>
+            </div>
+            <div class="menu-group-items" id="askbetterGroupItems">
+              <button class="nav-btn" data-section="section-integrations" type="button">
+                <span class="nav-icon" aria-hidden="true">
+                  <span class="icon-mask icon-integrations"></span>
+                </span>
+                <span class="nav-label">Integrations</span>
+              </button>
+              <button class="nav-btn" data-section="section-presets" type="button">
+                <span class="nav-icon" aria-hidden="true">
+                  <span class="icon-mask icon-presets"></span>
+                </span>
+                <span class="nav-label">Presets</span>
+              </button>
+              <button class="nav-btn" data-section="section-askbetter-suggestions" type="button">
+                <span class="nav-icon" aria-hidden="true">
+                  <span class="icon-mask icon-mode"></span>
+                </span>
+                <span class="nav-label">Suggestions</span>
+              </button>
+            </div>
           </div>
 
           <div class="menu-group" data-group="phrasebetter">
-            <p class="menu-title menu-title--group">Phrase Better</p>
-            <button class="nav-btn" data-section="section-phrasebetter-presets" type="button">
-              <span class="nav-icon" aria-hidden="true">
-                <span class="icon-mask icon-presets"></span>
+            <div class="menu-group-head">
+              <span class="menu-title menu-title--group" id="phrasebetterGroupLabel">Phrase Better</span>
+              <span class="switch switch--sm" title="Turn the right-click Re-phrase action on or off">
+                <input id="enablePhraseBetterMode" name="enablePhraseBetterMode" type="checkbox" aria-labelledby="phrasebetterGroupLabel" aria-describedby="phrasebetterGroupDesc" aria-controls="phrasebetterGroupItems" />
+                <span class="slider" aria-hidden="true"></span>
               </span>
-              <span class="nav-label">Presets</span>
-            </button>
-            <button class="nav-btn" data-section="section-phrasebetter-suggestions" type="button">
-              <span class="nav-icon" aria-hidden="true">
-                <span class="icon-mask icon-mode"></span>
-              </span>
-              <span class="nav-label">Suggestions</span>
-            </button>
+              <span class="visually-hidden" id="phrasebetterGroupDesc">Turn the right-click Re-phrase action on or off</span>
+            </div>
+            <div class="menu-group-items" id="phrasebetterGroupItems">
+              <button class="nav-btn" data-section="section-phrasebetter-presets" type="button">
+                <span class="nav-icon" aria-hidden="true">
+                  <span class="icon-mask icon-presets"></span>
+                </span>
+                <span class="nav-label">Presets</span>
+              </button>
+              <button class="nav-btn" data-section="section-phrasebetter-suggestions" type="button">
+                <span class="nav-icon" aria-hidden="true">
+                  <span class="icon-mask icon-mode"></span>
+                </span>
+                <span class="nav-label">Suggestions</span>
+              </button>
+            </div>
           </div>
         </nav>
         <p class="sidebar-foot">
@@ -130,18 +142,9 @@
                 <p class="section-sub">Choose the provider and model AskBetter uses. Add the provider's API key to load its live model list.</p>
               </div>
             </div>
-            <div class="toggle-grid">
-              <div class="toggle-row full">
-                <label for="enableAI" class="toggle-label-icon">
-                  <svg class="csel-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5c-.28 0-.5.16-.59.41l-1.6 4.55-4.55 1.6a.625.625 0 000 1.18l4.55 1.6 1.6 4.55c.09.25.31.41.59.41s.5-.16.59-.41l1.6-4.55 4.55-1.6a.625.625 0 000-1.18l-4.55-1.6-1.6-4.55A.625.625 0 0012 2.5z" fill="currentColor" opacity=".9"/><path d="M5.5 14.5c-.18 0-.33.1-.39.27l-.9 2.56-2.56.9a.415.415 0 000 .78l2.56.9.9 2.56c.06.17.21.27.39.27s.33-.1.39-.27l.9-2.56 2.56-.9a.415.415 0 000-.78l-2.56-.9-.9-2.56A.415.415 0 005.5 14.5z" fill="currentColor" opacity=".6"/></svg>
-                  <span class="csel-sep"></span>
-                  Enable AI (global)
-                </label>
-                <span class="switch">
-                  <input id="enableAI" name="enableAI" type="checkbox" />
-                  <span class="slider"></span>
-                </span>
-              </div>
+            <div class="paused-notice" id="pausedNotice" role="status" hidden>
+              <span><strong>AskBetter is paused.</strong> Optimize and Re-phrase are off everywhere until you resume.</span>
+              <button type="button" class="btn btn-secondary" id="resumeBtn">Resume</button>
             </div>
             <div class="grid">
               <div class="field full">
@@ -267,46 +270,6 @@
             <div class="history-list" id="historyList" aria-live="polite"></div>
             <p class="history-empty" id="historyEmpty">No history yet. Rewrites you generate with Optimize or Phrase Better will appear here.</p>
             <div class="history-pagination" id="historyPagination" hidden></div>
-          </section>
-
-          <section id="section-mode" class="settings-section">
-            <div class="section-head">
-              <div>
-                <div class="section-title-row">
-                  <h2 class="section-title">Mode</h2>
-                  <button type="button" class="section-info-btn" data-info-section="modes" aria-label="About Mode">
-                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
-                      <path d="M12 10.3V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
-                      <circle cx="12" cy="7.6" r="1.1" fill="currentColor"></circle>
-                    </svg>
-                  </button>
-                </div>
-                <p class="section-sub">Turn each experience on or off. When one is off, its menu sections are hidden.</p>
-              </div>
-            </div>
-            <div class="toggle-grid">
-              <div class="toggle-row full">
-                <div>
-                  <label for="enableAskBetterMode">Ask Better</label>
-                  <p class="inline-note">Shows the Optimize flow on ChatGPT, Gemini, and Claude for prompt rewrites.</p>
-                </div>
-                <span class="switch">
-                  <input id="enableAskBetterMode" name="enableAskBetterMode" type="checkbox" />
-                  <span class="slider"></span>
-                </span>
-              </div>
-              <div class="toggle-row full">
-                <div>
-                  <label for="enablePhraseBetterMode">Phrase Better</label>
-                  <p class="inline-note">Adds a right-click action for selected text that fixes grammar and spelling while preserving the original wording as much as possible.</p>
-                </div>
-                <span class="switch">
-                  <input id="enablePhraseBetterMode" name="enablePhraseBetterMode" type="checkbox" />
-                  <span class="slider"></span>
-                </span>
-              </div>
-            </div>
           </section>
 
           <section id="section-phrasebetter-suggestions" class="settings-section">
