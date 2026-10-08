@@ -1,13 +1,13 @@
 const DEFAULT_SETTINGS = {
   provider: "gemini",
   geminiApiKey: "",
-  geminiModel: "gemini-3-flash-preview",
+  geminiModel: "gemini-3.5-flash",
   geminiKeyVerified: false,
   openaiApiKey: "",
-  openaiModel: "gpt-5.2",
+  openaiModel: "gpt-5.5",
   openaiKeyVerified: false,
   anthropicApiKey: "",
-  anthropicModel: "claude-sonnet-4-6",
+  anthropicModel: "claude-sonnet-5-5",
   anthropicKeyVerified: false,
   defaultPreset: "structured",
   askBetterOptionCount: 1,
@@ -115,8 +115,12 @@ const PRICING_PER_MTOK = {
     { test: /./, input: 2.50, output: 10.0 }
   ],
   anthropic: [
-    { test: /haiku/, input: 0.80, output: 4.0 },
+    { test: /haiku/, input: 1.0, output: 5.0 },
+    { test: /fable|mythos/, input: 10.0, output: 50.0 },
+    { test: /opus-5-5/, input: 4.0, output: 20.0 },
+    { test: /opus-(4-[5-9]|5)/, input: 5.0, output: 25.0 },
     { test: /opus/, input: 15.0, output: 75.0 },
+    { test: /sonnet-5/, input: 2.0, output: 10.0 },
     { test: /sonnet/, input: 3.0, output: 15.0 },
     { test: /./, input: 3.0, output: 15.0 }
   ]
@@ -485,7 +489,11 @@ function buildRefineInstruction() {
 // Each callX returns { text, usage } where usage is { inputTokens, outputTokens }
 // or null when the provider omits token counts. A caller may pass systemOverride
 // to supply the system instruction directly (used by refineText).
-const MAX_OUTPUT_TOKENS = 3000;
+// Generous ceiling: current models on all three providers spend "thinking" /
+// reasoning tokens out of this same budget, so 3000 could be exhausted before
+// any visible text was produced. Billing is per token actually generated, so a
+// higher ceiling costs nothing on normal-length rewrites.
+const MAX_OUTPUT_TOKENS = 8192;
 
 // Mirrors the branch in buildSystemInstruction that asks for a JSON object, so
 // the provider call can enforce that shape natively instead of hoping for it.
@@ -499,6 +507,15 @@ function wantsJsonOutput({ settings, mode, systemOverride, variantCount }) {
   return mode === "phrase_better" && (!settings || settings.phraseBetterNewLines !== false);
 }
 
+const VARIANTS_JSON_SCHEMA = {
+  type: "object",
+  properties: {
+    variants: { type: "array", items: { type: "string" } }
+  },
+  required: ["variants"],
+  additionalProperties: false
+};
+
 async function callProvider({ provider, apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride }) {
   if (provider === "openai") {
     return await callOpenAI({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride });
@@ -509,15 +526,81 @@ async function callProvider({ provider, apiKey, model, prompt, preset, settings,
   return await callGemini({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride });
 }
 
+async function postProviderJson(url, headers, body) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...headers },
+    body: JSON.stringify(body)
+  });
+  if (!response.ok) {
+    let details = "";
+    try {
+      details = readApiErrorMessage(await response.json());
+    } catch (_error) {
+      details = "";
+    }
+    const error = new Error(details || `Provider request failed (${response.status})`);
+    error.status = response.status;
+    throw error;
+  }
+  return await response.json();
+}
+
+// Model catalogues move faster than this extension ships, so the per-model
+// tuning below (thinking level, effort, structured output) is best effort. When
+// a model rejects one of those optional fields with a 400 that names it, the
+// request is retried once without the optional fields rather than failing.
+function isOptionalParamRejection(error, pattern) {
+  return Number(error && error.status) === 400 && pattern.test(String(error && error.message || ""));
+}
+
+function providerOutputError(code, message) {
+  const error = new Error(message);
+  error.status = 422;
+  error.code = code;
+  return error;
+}
+
+// ---- Gemini ----------------------------------------------------------------
+
+// gemini-<major>.<minor>-<tier>; tier is pro / flash / flash-lite.
+function parseGeminiVersion(model) {
+  const match = /^gemini-(\d+)(?:\.(\d+))?-(pro|flash-lite|flash)\b/.exec(String(model || "").toLowerCase());
+  if (!match) {
+    return null;
+  }
+  return { major: Number(match[1]), minor: Number(match[2] || 0), tier: match[3] };
+}
+
+// Rewriting is a light task; keep thinking as low as each family allows so it
+// stays fast and does not eat the output budget.
+function geminiThinkingConfig(model) {
+  const v = parseGeminiVersion(model);
+  if (!v) {
+    return null;
+  }
+  if (v.major >= 3) {
+    return { thinkingLevel: "low" };
+  }
+  if (v.major === 2 && v.minor === 5) {
+    // 2.5 Pro cannot turn thinking off; 2.5 Flash / Flash-Lite can.
+    return v.tier === "pro" ? { thinkingLevel: "low" } : { thinkingBudget: 0 };
+  }
+  return null;
+}
+
 async function callGemini({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride }) {
   const systemText = systemOverride || buildSystemInstruction({ preset, settings, mode, completionPass, variantCount });
   const wantsJson = wantsJsonOutput({ settings, mode, systemOverride, variantCount });
-
   const normalizedModel = normalizeGeminiModel(model || DEFAULT_SETTINGS.geminiModel);
-  const generationConfig = {
-    temperature: 0.1,
-    maxOutputTokens: MAX_OUTPUT_TOKENS
-  };
+  const version = parseGeminiVersion(normalizedModel);
+
+  const generationConfig = { maxOutputTokens: MAX_OUTPUT_TOKENS };
+  // Gemini 3+ is tuned for its default temperature (1.0) and Google warns that
+  // lowering it can cause looping; older models rewrite more faithfully at 0.1.
+  if (!version || version.major < 3) {
+    generationConfig.temperature = 0.1;
+  }
   if (wantsJson) {
     // Constrained decoding: the model cannot emit malformed JSON at all.
     generationConfig.responseMimeType = "application/json";
@@ -529,50 +612,56 @@ async function callGemini({ apiKey, model, prompt, preset, settings, mode, compl
       required: ["variants"]
     };
   }
-  // Thinking tokens are billed against maxOutputTokens on 2.5 Flash models, so
-  // an unbounded budget can consume the whole ceiling and return empty text.
-  if (/2\.5-flash/.test(normalizedModel)) {
-    generationConfig.thinkingConfig = { thinkingBudget: 0 };
+  const thinkingConfig = geminiThinkingConfig(normalizedModel);
+  if (thinkingConfig) {
+    generationConfig.thinkingConfig = thinkingConfig;
   }
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(normalizedModel)}:generateContent`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey
-      },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: systemText }]
-        },
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt }]
-          }
-        ],
-        generationConfig
-      })
-    }
-  );
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(normalizedModel)}:generateContent`;
+  const headers = { "x-goog-api-key": apiKey };
+  const buildBody = (config) => ({
+    systemInstruction: { parts: [{ text: systemText }] },
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: config
+  });
 
-  if (!response.ok) {
-    let details = "";
-    try {
-      const body = await response.json();
-      details = readApiErrorMessage(body);
-    } catch (_error) {
-      details = "";
+  let data;
+  try {
+    data = await postProviderJson(url, headers, buildBody(generationConfig));
+  } catch (error) {
+    if (!generationConfig.thinkingConfig || !isOptionalParamRejection(error, /think/i)) {
+      throw error;
     }
-    const error = new Error(details || `Provider request failed (${response.status})`);
-    error.status = response.status;
-    throw error;
+    const { thinkingConfig: _dropped, ...fallbackConfig } = generationConfig;
+    data = await postProviderJson(url, headers, buildBody(fallbackConfig));
   }
 
-  const data = await response.json();
-  return { text: extractGeminiText(data).trim(), usage: extractGeminiUsage(data) };
+  const text = extractGeminiText(data).trim();
+  if (!text) {
+    const blockReason = data && data.promptFeedback && data.promptFeedback.blockReason;
+    const finishReason = data && Array.isArray(data.candidates) && data.candidates[0] && data.candidates[0].finishReason;
+    if (blockReason || finishReason === "SAFETY" || finishReason === "PROHIBITED_CONTENT") {
+      throw providerOutputError("MODEL_REFUSED", "Gemini declined to rewrite this text.");
+    }
+    if (finishReason === "MAX_TOKENS") {
+      throw providerOutputError("OUTPUT_LIMIT", "The model ran out of output tokens before answering. Try a lighter model.");
+    }
+  }
+  return { text, usage: extractGeminiUsage(data) };
+}
+
+// ---- OpenAI (Responses API) ------------------------------------------------
+
+// GPT-5+ and the o-series are reasoning models: they reject `temperature` and
+// bill hidden reasoning against max_output_tokens, so ask for the lightest
+// effort every one of them accepts. Older GPT-4.x models reject `reasoning`.
+function isOpenAIReasoningModel(model) {
+  const s = String(model || "").toLowerCase();
+  if (/^o\d/.test(s)) {
+    return true;
+  }
+  const match = /^gpt-(\d+)/.exec(s);
+  return !!match && Number(match[1]) >= 5;
 }
 
 async function callOpenAI({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride }) {
@@ -580,95 +669,138 @@ async function callOpenAI({ apiKey, model, prompt, preset, settings, mode, compl
   const normalizedModel = normalizeOpenAIModel(model || DEFAULT_SETTINGS.openaiModel);
   const payload = {
     model: normalizedModel,
-    input: prompt,
     instructions,
-    max_output_tokens: MAX_OUTPUT_TOKENS
+    input: [{ role: "user", content: prompt }],
+    max_output_tokens: MAX_OUTPUT_TOKENS,
+    // Nothing here needs server-side conversation state; don't keep it.
+    store: false
   };
+  if (isOpenAIReasoningModel(normalizedModel)) {
+    payload.reasoning = { effort: "low" };
+  }
   if (wantsJsonOutput({ settings, mode, systemOverride, variantCount })) {
     payload.text = {
       format: {
         type: "json_schema",
-        name: "phrase_variants",
+        name: "rewrite_variants",
         strict: true,
-        schema: {
-          type: "object",
-          properties: {
-            variants: { type: "array", items: { type: "string" } }
-          },
-          required: ["variants"],
-          additionalProperties: false
-        }
+        schema: VARIANTS_JSON_SCHEMA
       }
     };
   }
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`
-    },
-    body: JSON.stringify(payload)
-  });
 
-  if (!response.ok) {
-    let details = "";
-    try {
-      const body = await response.json();
-      details = readApiErrorMessage(body);
-    } catch (_error) {
-      details = "";
+  const url = "https://api.openai.com/v1/responses";
+  const headers = { Authorization: `Bearer ${apiKey}` };
+  let data;
+  try {
+    data = await postProviderJson(url, headers, payload);
+  } catch (error) {
+    if (!payload.reasoning || !isOptionalParamRejection(error, /reasoning/i)) {
+      throw error;
     }
-    const error = new Error(details || `Provider request failed (${response.status})`);
-    error.status = response.status;
-    throw error;
+    const { reasoning: _dropped, ...fallback } = payload;
+    data = await postProviderJson(url, headers, fallback);
   }
 
-  const data = await response.json();
-  return { text: extractOpenAIText(data).trim(), usage: extractOpenAIUsage(data) };
+  const text = extractOpenAIText(data).trim();
+  if (!text) {
+    if (hasOpenAIRefusal(data)) {
+      throw providerOutputError("MODEL_REFUSED", "OpenAI declined to rewrite this text.");
+    }
+    if (data && data.status === "incomplete") {
+      const reason = data.incomplete_details && data.incomplete_details.reason;
+      if (reason === "content_filter") {
+        throw providerOutputError("MODEL_REFUSED", "OpenAI declined to rewrite this text.");
+      }
+      throw providerOutputError("OUTPUT_LIMIT", "The model ran out of output tokens before answering. Try a lighter model.");
+    }
+  }
+  return { text, usage: extractOpenAIUsage(data) };
+}
+
+function hasOpenAIRefusal(data) {
+  return !!(data && Array.isArray(data.output) && data.output.some((item) =>
+    item && item.type === "message" && Array.isArray(item.content) && item.content.some((part) => part && part.type === "refusal")
+  ));
+}
+
+// ---- Anthropic (Messages API) ----------------------------------------------
+
+// Claude models from the 4.x generation onward support `output_config.effort`
+// and/or structured outputs; claude-3.x supports neither. Haiku 4.5 and
+// Sonnet 4.5 have structured outputs but reject `effort`.
+function anthropicFeatures(model) {
+  const s = String(model || "").toLowerCase();
+  const match = /^claude-(opus|sonnet|haiku|fable|mythos)-(\d+)(?:-(\d{1,2}))?(?:-|$)/.exec(s);
+  if (!match) {
+    return { structuredOutput: false, effort: false };
+  }
+  const family = match[1];
+  const major = Number(match[2]);
+  const minor = match[3] ? Number(match[3]) : 0;
+  const version = major + minor / 10;
+  const structuredOutput = version >= 4.5 || (family === "opus" && version >= 4.1);
+  const effort = family !== "haiku" && (version >= 4.6 || (family === "opus" && version >= 4.5));
+  return { structuredOutput, effort };
 }
 
 async function callAnthropic({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride }) {
   const system = systemOverride || buildSystemInstruction({ preset, settings, mode, completionPass, variantCount });
   const normalizedModel = normalizeAnthropicModel(model || DEFAULT_SETTINGS.anthropicModel);
-  // Anthropic has no JSON mode; prefilling the opening brace is the supported
-  // way to stop the model from wrapping the object in prose or a fence.
-  const prefill = wantsJsonOutput({ settings, mode, systemOverride, variantCount }) ? "{" : "";
-  const messages = [{ role: "user", content: prompt }];
-  if (prefill) {
-    messages.push({ role: "assistant", content: prefill });
-  }
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-      "x-api-key": apiKey
-    },
-    body: JSON.stringify({
-      model: normalizedModel,
-      system,
-      max_tokens: MAX_OUTPUT_TOKENS,
-      messages
-    })
-  });
+  const features = anthropicFeatures(normalizedModel);
+  const wantsJson = wantsJsonOutput({ settings, mode, systemOverride, variantCount });
 
-  if (!response.ok) {
-    let details = "";
-    try {
-      const body = await response.json();
-      details = readApiErrorMessage(body);
-    } catch (_error) {
-      details = "";
+  // Assistant-turn prefill (the old way to force JSON) is rejected by every
+  // Claude model since the 4.6 generation ("This model does not support
+  // assistant message prefill"), so JSON is requested via structured outputs
+  // and the conversation always ends on the user turn.
+  const outputConfig = {};
+  if (features.effort) {
+    // Thinking cannot be switched off on the newest models; low effort keeps
+    // it short for a rewrite. Older models simply run without thinking.
+    outputConfig.effort = "low";
+  }
+  if (wantsJson && features.structuredOutput) {
+    outputConfig.format = { type: "json_schema", schema: VARIANTS_JSON_SCHEMA };
+  }
+
+  const payload = {
+    model: normalizedModel,
+    system,
+    max_tokens: MAX_OUTPUT_TOKENS,
+    messages: [{ role: "user", content: prompt }]
+  };
+  if (Object.keys(outputConfig).length) {
+    payload.output_config = outputConfig;
+  }
+
+  const url = "https://api.anthropic.com/v1/messages";
+  const headers = {
+    "anthropic-version": "2023-06-01",
+    "anthropic-dangerous-direct-browser-access": "true",
+    "x-api-key": apiKey
+  };
+  let data;
+  try {
+    data = await postProviderJson(url, headers, payload);
+  } catch (error) {
+    if (!payload.output_config || !isOptionalParamRejection(error, /output_config|effort|format|schema|structured/i)) {
+      throw error;
     }
-    const error = new Error(details || `Provider request failed (${response.status})`);
-    error.status = response.status;
-    throw error;
+    // The system prompt still describes the JSON shape and parsePhraseVariants
+    // repairs loose output, so dropping the optional fields stays usable.
+    const { output_config: _dropped, ...fallback } = payload;
+    data = await postProviderJson(url, headers, fallback);
   }
 
-  const data = await response.json();
-  const body = extractAnthropicText(data).trim();
-  return { text: prefill && body ? prefill + body : body, usage: extractAnthropicUsage(data) };
+  const text = extractAnthropicText(data).trim();
+  if (data && data.stop_reason === "refusal") {
+    throw providerOutputError("MODEL_REFUSED", "Claude declined to rewrite this text.");
+  }
+  if (!text && data && data.stop_reason === "max_tokens") {
+    throw providerOutputError("OUTPUT_LIMIT", "The model ran out of output tokens before answering. Try a lighter model.");
+  }
+  return { text, usage: extractAnthropicUsage(data) };
 }
 
 async function fetchModelsForProvider(payload) {
@@ -707,25 +839,40 @@ async function fetchModelsForProvider(payload) {
 // These predicates keep the live list to the "main" general-purpose chat models
 // so the dropdown stays clean (and small) as providers keep adding SKUs, without
 // needing a code change each time a new flagship lands.
-const MODEL_DATED_SNAPSHOT = /-\d{4}(-\d{2}-\d{2})?$/; // gpt-4o-2024-08-06, gpt-4-0613
-const GEMINI_DATED_PREVIEW = /-\d{2}-\d{2}$/; // gemini-2.5-flash-preview-05-20
 const MODEL_FETCH_LIMIT = 12;
 
+// Allow-lists, not block-lists: providers keep adding non-chat SKUs (robotics,
+// computer-use, image, TTS, live audio...) whose names we can't predict, and
+// those 400 on a plain text request. Only the shapes below are text chat models.
+//   gemini-3.5-flash, gemini-3.1-pro-preview, gemini-2.5-flash-lite
+const GEMINI_CHAT_MODEL = /^gemini-\d+(\.\d+)?-(pro|flash|flash-lite)(-preview)?$/;
+// OpenAI suffixes are words (mini / nano / sol / luna ...); block the
+// specialised ones that the Responses text call can't serve or that are tuned
+// for something else (codex, deep-research, pro = minutes-long high reasoning).
+const OPENAI_NON_CHAT = /(audio|realtime|transcribe|tts|search|image|embedding|moderation|instruct|vision|codex|deep-research|computer|oss|pro|turbo|chat-latest|-\d+k)/;
+
 function isMainGeminiModel(id) {
-  const s = String(id || "").toLowerCase();
-  if (!s.startsWith("gemini-")) return false; // drop gemma / learnlm / imagen / veo / aqa
-  if (/(embedding|aqa|imagen|veo|vision|tuning|thinking)/.test(s)) return false;
-  if (/(^|-)exp(-|$)/.test(s)) return false;
-  if (GEMINI_DATED_PREVIEW.test(s)) return false;
-  return true;
+  return GEMINI_CHAT_MODEL.test(String(id || "").toLowerCase());
 }
 
 function isMainOpenAIModel(id) {
   const s = String(id || "").toLowerCase();
-  if (!/^gpt-/.test(s) && !/^o\d/.test(s)) return false;
-  if (/(audio|realtime|transcribe|tts|search|image|embedding|moderation|instruct|vision|-16k|chat-latest)/.test(s)) return false;
-  if (MODEL_DATED_SNAPSHOT.test(s)) return false;
+  if (!/^gpt-\d+(\.\d+)?o?(-[a-z]+)*$/.test(s) && !/^o\d+(-[a-z]+)*$/.test(s)) return false;
+  if (OPENAI_NON_CHAT.test(s)) return false;
   return true;
+}
+
+// Gemini's list has no timestamps; order by version, then pro > flash > lite,
+// stable before preview, so the newest flagship lands on top.
+function compareGeminiModels(a, b) {
+  const va = parseGeminiVersion(a);
+  const vb = parseGeminiVersion(b);
+  if (!va || !vb) return String(b).localeCompare(String(a));
+  if (va.major !== vb.major) return vb.major - va.major;
+  if (va.minor !== vb.minor) return vb.minor - va.minor;
+  const tierRank = { pro: 0, flash: 1, "flash-lite": 2 };
+  if (va.tier !== vb.tier) return tierRank[va.tier] - tierRank[vb.tier];
+  return Number(/-preview$/.test(a)) - Number(/-preview$/.test(b));
 }
 
 async function fetchGeminiModels(apiKey) {
@@ -744,8 +891,7 @@ async function fetchGeminiModels(apiKey) {
     .filter((m) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes("generateContent"))
     .map((m) => String(m.name || "").replace(/^models\//, ""))
     .filter(isMainGeminiModel)
-    .sort()
-    .reverse()
+    .sort(compareGeminiModels)
     .slice(0, MODEL_FETCH_LIMIT);
   return { ok: true, models: ids };
 }
@@ -1156,6 +1302,9 @@ function isLikelyIncompleteOutput(text) {
 
 function mapProviderError(error) {
   const status = Number(error && error.status);
+  if (error && error.code) {
+    return { ok: false, code: error.code, message: error.message || "Provider returned no usable output." };
+  }
   if (status === 401 || status === 403) {
     return { ok: false, code: "UNAUTHORIZED", message: `Invalid API key (${status}).` };
   }

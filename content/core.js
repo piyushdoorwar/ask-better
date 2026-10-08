@@ -893,10 +893,64 @@ function writePromptText(node, value) {
   }
 
   if (node.isContentEditable) {
+    // ChatGPT and Claude use ProseMirror, Gemini uses Quill. Both keep their
+    // own document model, so assigning textContent only repainted the DOM: the
+    // editor's state (and what Send actually submits) could stay stale, and
+    // line breaks collapsed into one text node. Go through the editor instead:
+    // select everything and replace it with insertText (synchronous, so the
+    // result can be checked), then a synthetic paste, and only then fall back
+    // to the raw DOM write.
     node.focus();
+    selectAllContent(node);
+    let inserted = false;
+    try {
+      inserted = document.execCommand("insertText", false, value);
+    } catch (_error) {
+      inserted = false;
+    }
+    if (inserted && contentMatches(node, value)) {
+      return;
+    }
+    selectAllContent(node);
+    if (tryPasteText(node, value) && contentMatches(node, value)) {
+      return;
+    }
     node.textContent = value;
     node.dispatchEvent(new InputEvent("input", { bubbles: true, data: value, inputType: "insertText" }));
   }
+}
+
+function selectAllContent(node) {
+  const selection = window.getSelection();
+  if (!selection) {
+    return;
+  }
+  const range = document.createRange();
+  range.selectNodeContents(node);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+// Returns true only when the editor consumed the paste (called preventDefault);
+// an unhandled synthetic paste inserts nothing.
+function tryPasteText(node, value) {
+  try {
+    const data = new DataTransfer();
+    data.setData("text/plain", value);
+    const event = new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true });
+    node.dispatchEvent(event);
+    return event.defaultPrevented;
+  } catch (_error) {
+    return false;
+  }
+}
+
+function normalizeEditorText(text) {
+  return String(text || "").replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function contentMatches(node, value) {
+  return normalizeEditorText(readPromptText(node)) === normalizeEditorText(value);
 }
 
 function sendMessage(payload) {

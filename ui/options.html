@@ -42,12 +42,6 @@
               </span>
               <span class="nav-label">History</span>
             </button>
-            <button class="nav-btn" data-section="section-security" type="button">
-              <span class="nav-icon" aria-hidden="true">
-                <span class="icon-mask icon-security"></span>
-              </span>
-              <span class="nav-label">Security</span>
-            </button>
           </div>
 
           <div class="menu-group" data-group="askbetter">
@@ -134,7 +128,7 @@
                     </svg>
                   </button>
                 </div>
-                <p class="section-sub">Choose the active provider and model used for optimization.</p>
+                <p class="section-sub">Pick a provider, add its API key, then choose a model from its live list.</p>
               </div>
             </div>
             <div class="toggle-grid">
@@ -151,7 +145,7 @@
               </div>
             </div>
             <div class="grid">
-              <div class="field">
+              <div class="field full">
                 <label for="providerSelect">Provider</label>
                 <div class="csel">
                   <select id="providerSelect" name="providerSelect" hidden>
@@ -161,16 +155,52 @@
                   </select>
                 </div>
               </div>
-              <div class="field">
+              <div class="field full">
+                <label for="apiKey">API key</label>
+                <div id="apiKeyEditor">
+                  <input id="apiKey" name="apiKey" type="password" autocomplete="off" placeholder="AIza..." />
+                </div>
+                <div id="keyLockedBanner" class="key-locked-card" hidden>
+                  <svg class="key-locked-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="5.5" y="10.5" width="13" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M8.5 10.5V7.7a3.5 3.5 0 0 1 7 0v2.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                  <span class="key-locked-mask" id="maskedApiKey">••••••••••••••••</span>
+                  <span class="key-locked-status">Verified &amp; locked</span>
+                </div>
+                <div class="security-actions">
+                  <button type="button" id="testKeyBtn" class="btn btn-primary">Verify key</button>
+                  <button type="button" id="clearDataBtn" class="btn btn-danger">Clear stored key &amp; data</button>
+                  <a
+                    id="generateKeyLink"
+                    class="btn btn-secondary gen-key-btn"
+                    href="https://aistudio.google.com/apikey"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    hidden
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="8" cy="15" r="4" stroke="currentColor" stroke-width="1.8"/>
+                      <path d="M12 11l8-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                      <path d="M18 5l2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                      <path d="M16 9l1 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                    Generate API key
+                  </a>
+                  <span id="testKeyStatus"></span>
+                </div>
+              </div>
+              <div class="field full">
                 <label id="modelLabel" for="modelSelect">Gemini model</label>
                 <div class="csel">
                   <!-- Options are populated at runtime from the provider's live
                        model list (see ui/models.js / options.js renderModelOptions). -->
                   <select id="modelSelect" name="modelSelect" hidden></select>
                 </div>
-                <p class="model-hint" id="modelHint" hidden>Set and verify your API key to load available models.</p>
+                <p class="model-hint" id="modelHint" hidden>Verify your API key above to load available models.</p>
               </div>
             </div>
+            <p class="note">Keys are stored in your browser only and are never synced or sent to any AskBetter server.</p>
             <div id="providerInfo" class="provider-info" aria-live="polite"></div>
           </section>
 
@@ -698,61 +728,6 @@
             </div>
           </section>
 
-          <section id="section-security" class="settings-section">
-            <div class="section-head">
-              <div>
-                <div class="section-title-row">
-                  <h2 class="section-title">Security</h2>
-                  <button type="button" class="section-info-btn" data-info-section="security" aria-label="About Security">
-                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
-                      <path d="M12 10.3V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
-                      <circle cx="12" cy="7.6" r="1.1" fill="currentColor"></circle>
-                    </svg>
-                  </button>
-                </div>
-                <p class="section-sub">Verify key once. After verification, key editing is locked.</p>
-              </div>
-            </div>
-            <div class="grid">
-              <div class="field full">
-                <label for="apiKey">API key</label>
-                <div id="apiKeyEditor">
-                  <input id="apiKey" name="apiKey" type="password" autocomplete="off" placeholder="AIza..." />
-                </div>
-                <div id="keyLockedBanner" class="key-locked-card" hidden>
-                  <svg class="key-locked-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <rect x="5.5" y="10.5" width="13" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/>
-                    <path d="M8.5 10.5V7.7a3.5 3.5 0 0 1 7 0v2.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                  </svg>
-                  <span class="key-locked-mask" id="maskedApiKey">••••••••••••••••</span>
-                  <span class="key-locked-status">Verified &amp; locked</span>
-                </div>
-                <div class="security-actions">
-                  <button type="button" id="testKeyBtn" class="btn btn-primary">Verify key</button>
-                  <button type="button" id="clearDataBtn" class="btn btn-danger">Clear stored key &amp; data</button>
-                  <a
-                    id="generateKeyLink"
-                    class="btn btn-secondary gen-key-btn"
-                    href="https://aistudio.google.com/apikey"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    hidden
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <circle cx="8" cy="15" r="4" stroke="currentColor" stroke-width="1.8"/>
-                      <path d="M12 11l8-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                      <path d="M18 5l2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                      <path d="M16 9l1 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                    </svg>
-                    Generate API key
-                  </a>
-                  <span id="testKeyStatus"></span>
-                </div>
-                <p class="note">Keys are stored in your browser only and are never synced or sent to any AskBetter server.</p>
-              </div>
-            </div>
-          </section>
         </main>
       </div>
     </div>

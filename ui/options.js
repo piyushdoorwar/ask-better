@@ -1,13 +1,13 @@
 const DEFAULT_SETTINGS = {
   provider: "gemini",
   geminiApiKey: "",
-  geminiModel: "gemini-3-flash-preview",
+  geminiModel: "gemini-3.5-flash",
   geminiKeyVerified: false,
   openaiApiKey: "",
-  openaiModel: "gpt-5.2",
+  openaiModel: "gpt-5.5",
   openaiKeyVerified: false,
   anthropicApiKey: "",
-  anthropicModel: "claude-sonnet-4-6",
+  anthropicModel: "claude-sonnet-5-5",
   anthropicKeyVerified: false,
   defaultPreset: "structured",
   askBetterOptionCount: 1,
@@ -43,7 +43,10 @@ const SECTION_INFO_CONTENT = {
       "Enable AI (global) turns optimization on/off everywhere, for both Ask Better and Phrase Better.",
       "AskBetter supports Google Gemini, OpenAI, and Anthropic Claude.",
       "Faster/lighter models usually respond quicker and cost less; larger models can improve rewrite quality.",
-      "Your API keys are stored locally and used only by the background worker for direct provider API calls."
+      "Your API keys are stored locally and used only by the background worker for direct provider API calls.",
+      "Verify key checks the selected provider's key, then locks it; the model list loads from that provider once the key is verified.",
+      "The model list shows only chat/text models (no image, audio, embedding, or robotics models) and refreshes once a day.",
+      "Clear stored key & data resets local settings, usage reports, and history, and unlocks key setup again."
     ]
   },
   modes: {
@@ -72,7 +75,7 @@ const SECTION_INFO_CONTENT = {
       "Each successful Optimize, Refine, and Phrase Better result is saved with its provider and preset/model.",
       "Copy any optimized text to reuse it elsewhere.",
       "Only the most recent 100 entries are kept, and everything is stored in this browser profile.",
-      "Clear stored key & data in the Security section (or the Clear history button here) wipes this list."
+      "Clear stored key & data in the Models section (or the Clear history button here) wipes this list."
     ]
   },
   phrasebetter_suggestions: {
@@ -132,17 +135,7 @@ const SECTION_INFO_CONTENT = {
       "The chart stacks daily request counts; switch the breakdown between provider and app (Ask Better vs Phrase Better).",
       "Data is stored only in this browser profile and is never sent anywhere.",
       "Entries older than 30 days are dropped automatically, so the view always reflects a rolling 30-day window.",
-      "Clear stored key & data in the Security section also wipes this usage history."
-    ]
-  },
-  security: {
-    title: "Security",
-    description: "This section is for key setup, verification, and reset controls.",
-    points: [
-      "Verify key checks the selected provider key before locking it.",
-      "Re-verify key tests the saved key without exposing it in the page.",
-      "After successful verification, key editing is locked for safety.",
-      "Use Clear stored key & data to reset local settings and unlock key setup again."
+      "Clear stored key & data in the Models section also wipes this usage history."
     ]
   }
 };
@@ -438,7 +431,6 @@ const SECTION_SLUGS = {
   "mode": "section-mode",
   "reports": "section-reports",
   "history": "section-history",
-  "security": "section-security",
   "integrations": "section-integrations",
   "ask-better-presets": "section-presets",
   "ask-better-suggestions": "section-askbetter-suggestions",
@@ -448,6 +440,9 @@ const SECTION_SLUGS = {
 const SECTION_TO_SLUG = Object.fromEntries(
   Object.entries(SECTION_SLUGS).map(([slug, id]) => [id, slug])
 );
+// Old bookmarks: the Security panel was folded into Models. Kept out of
+// SECTION_SLUGS so the reverse map still writes #models for that section.
+SECTION_SLUGS.security = "section-models";
 
 function hashForSection(targetId) {
   if (targetId === "section-history") {
