@@ -541,6 +541,7 @@ Site icons are an **inline SVG sprite** at the top of `index.html` (`<symbol id=
 ### Site Styling (`/site/styles.css`)
 
 - Same warm dark palette and DM Sans as the extension; flat 8px cards with crisp `--border` lines, 12px radius for the mocks/CTA.
+- **Light / dark follows the OS (site only).** The `:root` tokens are the dark palette (kept in sync with `ui/theme.css`); a `@media (prefers-color-scheme: light)` block overrides only tokens. The extension UI stays dark. Accent-coloured *text/icons* use `--accent-text` / `--accent-text-hover` (darkened in light mode for contrast), while fills keep `--accent`. Former literals are tokens too: `--topbar-bg`, `--mock-dot`, `--logo-tile`, `--overlay`. Both pages carry two `theme-color` metas with `media`. **Never add a raw colour outside the token blocks**; add a token and give it a value in both.
 - One stylesheet for both pages; the policy page uses `.page-hero`, `.meta`, `.prose-card` (numbered `h2 .num`, `.callout` / `.callout.danger`) and `.back-link`.
 
 ### Site Scripts (`/site/app.js`)
