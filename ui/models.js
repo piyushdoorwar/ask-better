@@ -14,6 +14,10 @@
 // once a live list loads, chooseModel() self-heals a stale or missing selection.
 
 const MODEL_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+// Bump when the background's model filters change, so lists cached under the
+// old filter (e.g. ones that still contained robotics / image models) are
+// refetched immediately instead of lingering for up to a day.
+const MODEL_FILTER_VERSION = 2;
 
 // Live models discovered for this page session (provider -> string[]).
 const MODELS_LIVE = { gemini: [], openai: [], anthropic: [] };
@@ -79,7 +83,7 @@ async function refreshProviderModels(provider) {
   const cache = await readModelCache();
   const entry = cache[p];
   const cached = entry && Array.isArray(entry.models) ? entry.models : null;
-  const fresh = entry && typeof entry.ts === "number" && (Date.now() - entry.ts) < MODEL_CACHE_TTL_MS;
+  const fresh = entry && entry.v === MODEL_FILTER_VERSION && typeof entry.ts === "number" && (Date.now() - entry.ts) < MODEL_CACHE_TTL_MS;
 
   if (fresh && cached) {
     MODELS_LIVE[p] = cached;
@@ -89,7 +93,7 @@ async function refreshProviderModels(provider) {
   const live = await fetchLiveModels(p);
   if (live && live.length) {
     MODELS_LIVE[p] = live;
-    cache[p] = { models: live, ts: Date.now() };
+    cache[p] = { models: live, ts: Date.now(), v: MODEL_FILTER_VERSION };
     try {
       await chrome.storage.local.set({ modelCache: cache });
     } catch (_e) {}
