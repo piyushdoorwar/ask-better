@@ -569,12 +569,19 @@ Four IIFEs: mobile nav toggle, scroll reveal, the hero mock loop (type rough pro
    - Visit `gemini.google.com`
    - Verify the button injects correctly
 
-### Chrome Web Store Submission
+### Chrome Web Store Release (tag-triggered)
 
-- Package the extension as a `.zip` file (entire repo directory or just the essential files)
-- Upload to Chrome Web Store developer console
-- Follow submission guidelines (privacy policy, permissions justification, screenshots)
-- Await review & approval
+Pushing a `v*` tag runs `.github/workflows/release.yml`:
+
+```bash
+git tag v0.11.0 && git push origin v0.11.0
+```
+
+1. **extension** — `node --check` on every script, then `scripts/package-extension.sh <tag>` builds `dist/askbetter-<ver>.zip` from `manifest.json`, `background.js`, `content/`, `injected/`, `ui/`, `assets/`, `LICENSE` (site/, store-assets/, scripts/ and docs stay out). The manifest `version` is **stamped from the tag**; a pre-release suffix (`-beta.1`) goes into `version_name`. It warns when `manifest.json` doesn't match the tag — bump `manifest.json` and the site's JSON-LD `softwareVersion` before tagging so the repo stays in sync.
+2. **chrome-web-store** (stable tags only) — `.github/scripts/publish-extension.cjs` (shared with yamlet) signs a JWT with the `CWS_SERVICE_ACCOUNT_KEY` secret, uploads to Chrome Web Store API v2 for publisher `CWS_PUBLISHER_ID`, item `eelecokniegejkbbklgdpnhmhgfkfpif`, and submits for review. It skips with an annotation when the store already has that version or newer, or while an earlier submission is still in review/staged (re-run the job once it clears). Skipped with a warning if either secret is unset.
+3. **github-release** — creates (or attaches to) the GitHub release with the zip.
+
+The service account must be added in the Web Store Developer Dashboard (Account → service accounts); it needs no Google Cloud roles.
 
 ### GitHub Pages Deployment
 

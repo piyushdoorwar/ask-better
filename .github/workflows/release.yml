@@ -1,0 +1,94 @@
+# On a v* tag (pushed with git, or created by publishing a release in the GitHub
+# UI): package the extension with the manifest version stamped from the tag,
+# submit it to the Chrome Web Store, and attach it to a GitHub release.
+#   git tag v0.11.0 && git push origin v0.11.0
+# Pre-release tags (v0.11.0-beta.1) are packaged and released on GitHub only; the
+# store needs a higher X.Y.Z each upload, so they never go there.
+# The store upload needs the CWS_SERVICE_ACCOUNT_KEY (service account JSON key) and
+# CWS_PUBLISHER_ID repository secrets; it is skipped with a warning while either is
+# unset, and while an earlier version is still in review (re-run the job later).
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  extension:
+    name: Extension package
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check scripts parse
+        run: |
+          for f in background.js content/*.js ui/*.js; do node --check "$f"; done
+      - run: bash scripts/package-extension.sh "$GITHUB_REF_NAME"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: extension
+          path: dist/askbetter-*.zip
+
+  chrome-web-store:
+    name: Chrome Web Store
+    needs: [extension]
+    if: ${{ !contains(github.ref_name, '-') }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - id: configured
+        name: Check store secrets
+        env:
+          CONFIGURED: ${{ secrets.CWS_SERVICE_ACCOUNT_KEY != '' && secrets.CWS_PUBLISHER_ID != '' }}
+        run: |
+          if [ "$CONFIGURED" != "true" ]; then
+            echo "::warning title=Chrome Web Store::CWS_SERVICE_ACCOUNT_KEY or CWS_PUBLISHER_ID is not set; not submitting to the store."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.configured.outputs.publish == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: extension
+          path: dist
+      - if: steps.configured.outputs.publish == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - if: steps.configured.outputs.publish == 'true'
+        name: Upload and submit for review
+        env:
+          CWS_SERVICE_ACCOUNT_KEY: ${{ secrets.CWS_SERVICE_ACCOUNT_KEY }}
+          CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+          CWS_EXTENSION_ID: eelecokniegejkbbklgdpnhmhgfkfpif
+        run: node .github/scripts/publish-extension.cjs dist/askbetter-*.zip "$GITHUB_REF_NAME"
+
+  github-release:
+    name: GitHub release
+    needs: [extension]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: extension
+          path: dist
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Publishing a release from the GitHub UI creates the tag that started this
+          # run, so the release may already exist; keep its text as written.
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists; attaching the package only."
+            gh release upload "$GITHUB_REF_NAME" dist/askbetter-*.zip --clobber
+            exit 0
+          fi
+          PRERELEASE=""; case "$GITHUB_REF_NAME" in *-*) PRERELEASE="--prerelease";; esac
+          gh release create "$GITHUB_REF_NAME" dist/askbetter-*.zip --generate-notes --verify-tag $PRERELEASE
