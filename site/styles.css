@@ -538,6 +538,13 @@ img { max-width: 100%; display: block; }
 .hidden, [hidden] { display: none !important; }
 .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
 
+/* ── Not found (404) ─────────────────────────────────────── */
+.notfound { min-height: calc(100vh - 64px - 140px); display: grid; place-items: center; text-align: center; padding: 64px 0; }
+.notfound .code404 { font: 700 clamp(72px, 14vw, 128px)/1 var(--mono); color: var(--accent-text); letter-spacing: -0.04em; }
+.notfound h1 { margin-top: 12px; font-size: clamp(24px, 4vw, 32px); }
+.notfound p { margin-top: 10px; color: var(--muted); }
+.notfound .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 24px; }
+
 /* ── Reveal ──────────────────────────────────────────────
    The hidden state is opt-in: app.js adds .js-reveal to <html> first thing,
    so without JS (or if the script fails) nothing stays invisible. */
