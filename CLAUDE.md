@@ -32,7 +32,7 @@
 - **Type**: Chrome Extension (MV3)
 - **Brand**: AskBetter (orange/yellow accent color: `#e8991e`)
 - **License**: Not specified
-- **Current version base**: `0.x`
+- **Version**: taken from the release tag (`v0.11.0` → manifest `0.11.0`); `manifest.json` in the repo is `0.0.0`
 - **Website**: deployed to GitHub Pages from `/site/`
 
 Design philosophy: minimal, non-intrusive UI; local-first (no telemetry); instant one-click optimization of any prompt.
@@ -551,7 +551,7 @@ Four IIFEs: mobile nav toggle, scroll reveal, the hero mock loop (type rough pro
 - The reveal IIFE reveals everything immediately when `IntersectionObserver` is unavailable.
 - **`prefers-reduced-motion: reduce` is honoured**: the CSS media block disables transitions/animations and the reveal offset; `app.js` reveals everything and holds the hero mock in its preview state instead of looping.
 
-**Version sync:** the JSON-LD `softwareVersion` in `site/index.html` must track `manifest.json` `version` — nothing enforces it, and it silently drifted 0.8.0 → 0.9.0 once already.
+**Version:** the site has no `softwareVersion` in its JSON-LD (it drifted twice); the released version lives only in the git tag.
 
 ### Privacy Policy Page (`/site/policy/`)
 
@@ -588,7 +588,7 @@ Pushing a `v*` tag runs `.github/workflows/release.yml`:
 git tag v0.11.0 && git push origin v0.11.0
 ```
 
-1. **extension** — `node --check` on every script, then `scripts/package-extension.sh <tag>` builds `dist/askbetter-<ver>.zip` from `manifest.json`, `background.js`, `content/`, `injected/`, `ui/`, `assets/`, `LICENSE` (site/, store-assets/, scripts/ and docs stay out). The manifest `version` is **stamped from the tag**; a pre-release suffix (`-beta.1`) goes into `version_name`. It warns when `manifest.json` doesn't match the tag — bump `manifest.json` and the site's JSON-LD `softwareVersion` before tagging so the repo stays in sync.
+1. **extension** — `node --check` on every script, then `scripts/package-extension.sh <tag>` builds `dist/askbetter-<ver>.zip` from `manifest.json`, `background.js`, `content/`, `injected/`, `ui/`, `assets/`, `LICENSE` (site/, store-assets/, scripts/ and docs stay out). The manifest `version` is **stamped from the tag**; a pre-release suffix (`-beta.1`) goes into `version_name`. **The tag is the only version source**: `manifest.json` in the repo stays at `0.0.0` (what *Load unpacked* shows for a dev build) and is never bumped by hand. The tag must be higher than the version live in the store.
 2. **chrome-web-store** (stable tags only) — `.github/scripts/publish-extension.cjs` (shared with yamlet) signs a JWT with the `CWS_SERVICE_ACCOUNT_KEY` secret, uploads to Chrome Web Store API v2 for publisher `CWS_PUBLISHER_ID`, item `eelecokniegejkbbklgdpnhmhgfkfpif`, and submits for review. It skips with an annotation when the store already has that version or newer, or while an earlier submission is still in review/staged (re-run the job once it clears). Skipped with a warning if either secret is unset.
 3. **github-release** — creates (or attaches to) the GitHub release with the zip.
 

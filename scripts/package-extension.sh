@@ -3,6 +3,8 @@
 # stamped into its manifest. The version is the first argument (a tag such as
 # v1.2.3 or v1.3.0-beta.1), else the latest git tag. Chrome only accepts dotted
 # numbers as `version`, so a pre-release suffix goes into `version_name` only.
+# The tag is the only source of the version: manifest.json in the repo stays at
+# 0.0.0, which is what "Load unpacked" shows for a development build.
 # Only what the extension loads is shipped: site/, store-assets/, scripts/ and the
 # docs stay out of the store package.
 set -euo pipefail
@@ -13,11 +15,6 @@ version="${full%%-*}"
 if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   echo "Not a release version: $tag (expected vX.Y.Z or vX.Y.Z-suffix)" >&2
   exit 1
-fi
-
-repo_version=$(node -p 'require("./manifest.json").version')
-if [ "$repo_version" != "$version" ]; then
-  echo "::warning title=Version::manifest.json says $repo_version but the tag is $tag; the package uses $version. Bump manifest.json (and the site's softwareVersion) to match."
 fi
 
 zip="dist/askbetter-$full.zip"
