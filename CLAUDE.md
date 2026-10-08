@@ -515,7 +515,7 @@ Full settings page accessible from the popup or extension management UI.
 - Located at `/site/` in the repo
 - Static HTML/CSS/JS site
 - Deployed automatically to GitHub Pages on every push to `main`
-- URL: `https://piyushdoorwar.github.io/ask-better/`
+- URL: `https://askbetter.piyushdoorwar.com/`
 - Contains: landing page, feature highlights, preset showcase, privacy statement
 
 ### Landing Page (`/site/index.html`)
@@ -586,7 +586,7 @@ The service account must be added in the Web Store Developer Dashboard (Account 
 ### GitHub Pages Deployment
 
 - `/site/` is automatically deployed to GitHub Pages via GitHub Actions (or manual push)
-- URL: `https://piyushdoorwar.github.io/ask-better/`
+- URL: `https://askbetter.piyushdoorwar.com/`
 
 ---
 

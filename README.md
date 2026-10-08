@@ -4,8 +4,8 @@
 
 Get better AI responses without rewriting your prompts from scratch. AskBetter adds an Optimize button directly inside ChatGPT, Gemini, and Claude — click it (or press `Ctrl/Cmd+Shift+O`), review the rewrite in a non-destructive preview, and accept it. Powered by your choice of Gemini, OpenAI, or Claude. Runs entirely in your browser. No backend, no tracking.
 
-🌐 **[piyushdoorwar.github.io/ask-better](https://piyushdoorwar.github.io/ask-better/)**
-🔒 **[Privacy Policy](https://piyushdoorwar.github.io/ask-better/policy/)**
+🌐 **[askbetter.piyushdoorwar.com](https://askbetter.piyushdoorwar.com/)**
+🔒 **[Privacy Policy](https://askbetter.piyushdoorwar.com/policy/)**
 
 ---
 
