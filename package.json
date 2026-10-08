@@ -1,0 +1,12 @@
+{
+  "name": "askbetter",
+  "private": true,
+  "description": "Dev tooling for the AskBetter Chrome extension (the extension itself has no build step or runtime dependencies).",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.js\"",
+    "check": "for f in background.js content/*.js ui/*.js; do node --check \"$f\" || exit 1; done"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

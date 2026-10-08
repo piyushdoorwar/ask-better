@@ -43,10 +43,10 @@ const SECTION_INFO_CONTENT = {
       "Enable AI (global) turns optimization on/off everywhere, for both Ask Better and Phrase Better.",
       "AskBetter supports Google Gemini, OpenAI, and Anthropic Claude.",
       "Faster/lighter models usually respond quicker and cost less; larger models can improve rewrite quality.",
-      "Your API keys are stored locally and used only by the background worker for direct provider API calls.",
-      "Verify key checks the selected provider's key, then locks it; the model list loads from that provider once the key is verified.",
+      "Your API keys are stored in this browser only and sent only to the provider they belong to.",
+      "Use the API key button beside the provider to add a key. Verify key checks it with the provider, then locks it; the model list loads once the key is verified. Replace key swaps a verified key without clearing anything else.",
       "The model list shows only chat/text models (no image, audio, embedding, or robotics models) and refreshes once a day.",
-      "Clear stored key & data resets local settings, usage reports, and history, and unlocks key setup again."
+      "Clear stored key & data (in the API key dialog) removes all keys, settings, custom presets, history, and usage reports."
     ]
   },
   modes: {
@@ -206,6 +206,7 @@ const customPresetInstructionEl = document.getElementById("customPresetInstructi
 const addCustomPresetBtnEl = document.getElementById("addCustomPresetBtn");
 const quickTagButtons = Array.from(document.querySelectorAll(".quick-tag"));
 const testKeyBtn = document.getElementById("testKeyBtn");
+const replaceKeyBtn = document.getElementById("replaceKeyBtn");
 const clearDataBtn = document.getElementById("clearDataBtn");
 const statusMsg = document.getElementById("statusMsg");
 const statusMsgText = document.getElementById("statusMsgText");
@@ -296,6 +297,7 @@ async function init() {
   bindSecurityActions();
   bindApiKeyModal();
   bindTopbarShadow();
+  bindExternalSettingsSync();
   bindHashRouting();
   applyHashRoute();
   setStatus("Auto-save enabled");
@@ -417,6 +419,17 @@ function closeApiKeyModal() {
     return;
   }
   apiKeyModalEl.hidden = true;
+  // Abandoned "Replace key": the stored key is still verified, so re-lock.
+  const meta = getProviderMeta((currentSettings && currentSettings.provider) || providerSelectEl.value);
+  const storedVerified = !!(currentSettings && currentSettings[meta.verifiedField] && String(currentSettings[meta.keyField] || "").trim());
+  if (!keyLocked && storedVerified) {
+    keyLocked = true;
+    apiKeyEl.value = "";
+    testKeyStatus.textContent = "";
+    testKeyStatus.className = "";
+    applyKeyLockState();
+    updateMissingKeyLinkVisibility();
+  }
   if (lastKeyTriggerEl && typeof lastKeyTriggerEl.focus === "function") {
     lastKeyTriggerEl.focus({ preventScroll: true });
   }
@@ -435,6 +448,27 @@ function updateApiKeyButton() {
   if (apiKeyModalTitleEl) {
     apiKeyModalTitleEl.textContent = `${meta.providerName} API key`;
   }
+}
+
+// Keeps this page in step with changes made elsewhere (popup, another tab,
+// the background's model self-heal). The form is only re-rendered when the user
+// isn't mid-typing, so an outside save never clobbers a half-written field.
+function bindExternalSettingsSync() {
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local" || !changes.settings) {
+      return;
+    }
+    const incoming = migrateSettings(changes.settings.newValue || {});
+    if (JSON.stringify(incoming) === JSON.stringify(currentSettings)) {
+      return; // our own write
+    }
+    currentSettings = incoming;
+    const active = document.activeElement;
+    const typing = active && (active.tagName === "TEXTAREA" || (active.tagName === "INPUT" && /^(text|password|search)$/i.test(active.type)));
+    if (!typing) {
+      fillForm(currentSettings);
+    }
+  });
 }
 
 // The top bar has no divider at rest; it gains a shadow only once content
@@ -1095,6 +1129,7 @@ function bindSecurityActions() {
     testKeyStatus.textContent = "Testing...";
     testKeyStatus.className = "";
 
+    const wasLocked = keyLocked;
     const response = await sendMessage({
       type: "ASKBETTER_TEST_KEY",
       payload: {
@@ -1103,6 +1138,10 @@ function bindSecurityActions() {
         model: modelSelectEl.value
       }
     });
+    // The dialog can be closed and the provider switched while the check runs;
+    // the result still belongs to the provider it was started for, but the
+    // on-screen lock/model state must not be applied to a different provider.
+    const stillActive = normalizeProvider(currentSettings && currentSettings.provider) === provider;
 
     if (response && response.ok) {
       await savePartial(
@@ -1112,6 +1151,10 @@ function bindSecurityActions() {
         },
         { silentStatus: true }
       );
+      if (!stillActive) {
+        setStatus(`${meta.providerName} key verified and saved.`, "ok");
+        return;
+      }
       keyLocked = true;
       applyKeyLockState();
       applyModelAvailability();
@@ -1125,21 +1168,62 @@ function bindSecurityActions() {
       return;
     }
 
+    // A re-verify that the provider rejects (revoked / rotated key) must not
+    // leave the key marked verified: unlock it so it can be replaced. Network
+    // errors and rate limits say nothing about the key, so they leave it alone.
+    if (wasLocked && response && response.code === "UNAUTHORIZED") {
+      await savePartial({ [meta.verifiedField]: false }, { silentStatus: true });
+      if (stillActive) {
+        keyLocked = false;
+        applyKeyLockState();
+        applyModelAvailability();
+        updateMissingKeyLinkVisibility();
+        renderProviderInfo(provider);
+      }
+    }
+    if (!stillActive) {
+      setStatus(`${meta.providerName} key verification failed.`, "warn");
+      return;
+    }
     testKeyStatus.textContent = (response && response.message) || "Test failed.";
     testKeyStatus.className = "warn";
     setStatus("Key verification failed.", "warn");
   });
 
+  // Swapping a verified key used to require "Clear stored key & data", which
+  // also wiped history, reports and presets. Replace unlocks just the field;
+  // the stored key keeps working until a new one verifies.
+  replaceKeyBtn.addEventListener("click", () => {
+    keyLocked = false;
+    applyKeyLockState();
+    apiKeyEl.value = "";
+    testKeyStatus.textContent = "Paste the new key, then verify it. The current key stays active until then.";
+    testKeyStatus.className = "";
+    updateMissingKeyLinkVisibility();
+    apiKeyEl.focus({ preventScroll: true });
+  });
+
   clearDataBtn.addEventListener("click", async () => {
-    const confirmed = window.confirm("Clear all stored AskBetter settings and local data?");
+    const confirmed = window.confirm(
+      "Clear everything AskBetter stores in this browser?\n\n" +
+      "This removes your API keys for all providers, all settings and custom presets, " +
+      "your prompt history, and your usage reports. It cannot be undone."
+    );
     if (!confirmed) {
       return;
     }
-    await chrome.storage.local.clear();
     const defaults = { ...DEFAULT_SETTINGS };
-    await chrome.storage.local.set({ settings: defaults });
     currentSettings = defaults;
+    await chrome.storage.local.clear();
+    await chrome.storage.local.set({ settings: defaults });
     fillForm(currentSettings);
+    // History and Reports render lazily and would keep showing the wiped data.
+    if (window.AskBetterHistory && typeof window.AskBetterHistory.refresh === "function") {
+      window.AskBetterHistory.refresh();
+    }
+    if (window.AskBetterReports && typeof window.AskBetterReports.render === "function") {
+      window.AskBetterReports.render();
+    }
     testKeyStatus.textContent = "";
     testKeyStatus.className = "";
     setStatus("Stored key/data cleared.", "ok");
@@ -1148,13 +1232,17 @@ function bindSecurityActions() {
 
 async function savePartial(partial, options) {
   const opts = options || {};
-  const current = currentSettings || await readSettings();
+  // Merge into what is stored now, not this page's copy: the popup (or another
+  // options tab) may have changed other settings since this page loaded, and
+  // writing the stale copy back would silently revert them.
+  const current = await readSettings();
   const next = {
     ...current,
     ...partial
   };
-  await chrome.storage.local.set({ settings: next });
+  // Set first so the storage.onChanged echo of this write is recognised as ours.
   currentSettings = next;
+  await chrome.storage.local.set({ settings: next });
   if (!opts.silentStatus) {
     setStatus("All changes saved.", "ok", true);
   }
@@ -1277,6 +1365,7 @@ function applyKeyLockState() {
   testKeyBtn.textContent = keyLocked ? "Re-verify key" : "Verify key";
   keyLockedBannerEl.hidden = !keyLocked;
   apiKeyEditorEl.hidden = keyLocked;
+  replaceKeyBtn.hidden = !keyLocked;
   updateMaskedApiKey();
   updateApiKeyButton();
 }

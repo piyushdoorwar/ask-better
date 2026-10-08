@@ -744,6 +744,7 @@
             </div>
             <div class="security-actions">
               <button type="button" id="testKeyBtn" class="btn btn-primary">Verify key</button>
+              <button type="button" id="replaceKeyBtn" class="btn btn-secondary" hidden>Replace key</button>
               <button type="button" id="clearDataBtn" class="btn btn-danger">Clear stored key &amp; data</button>
               <a
                 id="generateKeyLink"
@@ -836,23 +837,33 @@
 
           <h4>What Is Stored Locally</h4>
           <ul class="info-modal-list">
-            <li>Settings: provider, model, preset, integration toggles, and UI preferences.</li>
-            <li>Keys: your Gemini, OpenAI, and/or Anthropic API keys are saved in <code>chrome.storage.local</code>.</li>
+            <li>Settings: provider, model, presets (including your custom presets and prompt additions), integration toggles, and the Optimize button's position.</li>
+            <li>API keys: your Gemini, OpenAI, and/or Anthropic keys, in <code>chrome.storage.local</code>.</li>
+            <li>Prompt history: the text of your last 100 rewrites (original and result, including text you rephrased on other websites), kept until you clear it.</li>
+            <li>Usage log: for each request in the last 30 days, the time, provider, model, mode, token counts, and estimated cost. No prompt text.</li>
+            <li>Model list: each provider's available models, refreshed at most once a day.</li>
           </ul>
 
           <h4>What Is Sent Externally</h4>
+          <p>Everything below goes directly from your browser to the provider you selected (Google Gemini, OpenAI, or Anthropic), using your own key. Nothing passes through an AskBetter server.</p>
           <ul class="info-modal-list">
-            <li>Optimize request: your current prompt is sent only to the selected provider API, Google Gemini, OpenAI, or Anthropic.</li>
-            <li>Request metadata: selected provider model and preset instruction are sent with the request.</li>
-            <li>Custom Prompt Additions: if set, they are sent as additional guidance with optimize requests.</li>
-            <li>Key verification: a direct provider key validation call is made when you click Verify key.</li>
+            <li>Optimize, Regenerate, and Refine: your prompt (and, for Refine, the current rewrite and your change request), plus the preset instructions and any Custom Prompt Additions.</li>
+            <li>Phrase Better: the text you select and right-click on any website, plus your Phrase Better settings.</li>
+            <li>Key check and model list: your key is used to call the provider's models endpoint when you verify it and when the model list refreshes.</li>
           </ul>
 
           <h4>What Is Not Sent</h4>
           <ul class="info-modal-list">
-            <li>No AskBetter backend server receives your prompts or optimized outputs.</li>
-            <li>No AskBetter analytics or telemetry are collected in this version.</li>
-            <li>API keys are not injected into webpage DOM by content scripts.</li>
+            <li>No AskBetter server receives your prompts, rewrites, keys, history, or usage log.</li>
+            <li>The extension has no analytics, tracking, or telemetry.</li>
+            <li>API keys are never written into web pages.</li>
+          </ul>
+
+          <h4>Deleting Your Data</h4>
+          <ul class="info-modal-list">
+            <li>History → Clear history removes saved prompts.</li>
+            <li>Models → API key → Clear stored key &amp; data removes everything AskBetter stores, including keys, history, and usage reports.</li>
+            <li>Uninstalling the extension removes all of it too.</li>
           </ul>
 
           <h4>Privacy Policy</h4>

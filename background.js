@@ -45,7 +45,22 @@ const HISTORY_KEY = "promptHistory";
 const HISTORY_MAX = 100;
 const HISTORY_TEXT_MAX = 4000;
 
-async function recordUsage(entry) {
+// chrome.storage has no transactions, so two get→modify→set sequences that
+// overlap (two tabs finishing at once) lose one write. Every read-modify-write
+// of a shared key goes through this queue so they run one after another.
+let storageQueue = Promise.resolve();
+
+function enqueueStorageWrite(fn) {
+  const run = storageQueue.then(fn, fn);
+  storageQueue = run.catch(() => {});
+  return run;
+}
+
+function recordUsage(entry) {
+  return enqueueStorageWrite(() => recordUsageNow(entry));
+}
+
+async function recordUsageNow(entry) {
   try {
     const now = Date.now();
     const stored = await chrome.storage.local.get([USAGE_LOG_KEY]);
@@ -71,7 +86,11 @@ async function recordUsage(entry) {
   }
 }
 
-async function recordHistory(entry) {
+function recordHistory(entry) {
+  return enqueueStorageWrite(() => recordHistoryNow(entry));
+}
+
+async function recordHistoryNow(entry) {
   try {
     const now = Date.now();
     const original = String((entry && entry.original) || "").slice(0, HISTORY_TEXT_MAX);
@@ -291,7 +310,22 @@ async function triggerOptimizeInActiveTab() {
   }
 }
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+// These two accept an arbitrary API key and make network calls with it, so only
+// the extension's own pages (popup/options) may use them, never a content script.
+const EXTENSION_PAGE_ONLY_MESSAGES = new Set(["ASKBETTER_TEST_KEY", "ASKBETTER_FETCH_MODELS"]);
+
+function isExtensionPageSender(sender) {
+  return !!sender
+    && !sender.tab
+    && typeof sender.url === "string"
+    && sender.url.startsWith(chrome.runtime.getURL(""));
+}
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message && EXTENSION_PAGE_ONLY_MESSAGES.has(message.type) && !isExtensionPageSender(sender)) {
+    sendResponse({ ok: false, code: "FORBIDDEN", message: "Not allowed." });
+    return false;
+  }
   handleMessage(message)
     .then(sendResponse)
     .catch((error) => {
@@ -346,33 +380,30 @@ async function handleMessage(message) {
   return { ok: false, code: "BAD_REQUEST", message: "Unknown request type." };
 }
 
+// The Optimize button / shortcut path is Ask Better only. Phrase Better has its
+// own entry point (the context menu) and must never be reachable from here,
+// where it would skip the per-site toggle and return the raw JSON envelope.
 async function optimizePrompt(message) {
   const rawPrompt = typeof message.prompt === "string" ? message.prompt : "";
   const prompt = rawPrompt.trim();
-  const mode = normalizeOptimizationMode(message.mode);
   const settings = await readSettings();
-  const preset = mode === "phrase_better" ? "grammar" : normalizePreset(message.preset, settings);
+  const preset = normalizePreset(message.preset, settings);
   const site = normalizeSite(message.site);
-  const variantCount = mode === "phrase_better" ? 1 : settings.askBetterOptionCount;
-  return await rewriteText({ prompt, preset, site, settings, mode, variantCount });
+  return await rewriteText({ prompt, preset, site, settings, variantCount: settings.askBetterOptionCount });
 }
 
-async function rewriteText({ prompt, preset, site, settings, mode, variantCount }) {
+async function rewriteText({ prompt, preset, site, settings, variantCount }) {
+  const mode = "ask_better";
   const apiKey = getApiKeyForProvider(settings);
   const model = getModelForProvider(settings);
   const provider = normalizeProvider(settings.provider);
-  const count = mode === "phrase_better" ? 1 : normalizeAskBetterOptionCount(variantCount);
+  const count = normalizeAskBetterOptionCount(variantCount);
 
   if (!prompt) {
     return { ok: false, code: "EMPTY_PROMPT", message: "Prompt is empty." };
   }
 
-  const askBetterEnabled = settings.enableAskBetterMode !== false;
-  const phraseBetterEnabled = settings.enablePhraseBetterMode !== false;
-  const isModeEnabled = mode === "phrase_better" ? phraseBetterEnabled : askBetterEnabled;
-  const isAllowedOnSurface = mode === "phrase_better" ? true : isSiteEnabled(settings, site);
-
-  if (!settings.enableAI || !isModeEnabled || !isAllowedOnSurface || !apiKey) {
+  if (!settings.enableAI || settings.enableAskBetterMode === false || !isSiteEnabled(settings, site) || !apiKey) {
     return {
       ok: false,
       code: "DISABLED_OR_MISSING_KEY",
@@ -380,15 +411,20 @@ async function rewriteText({ prompt, preset, site, settings, mode, variantCount 
     };
   }
 
+  let primary;
   try {
-    const primary = await callProvider({ provider, apiKey, model, prompt, preset, settings, mode, variantCount: count });
-    let text = primary.text;
-    let usage = primary.usage;
-    let variants = count > 1 ? parsePhraseVariants(text, count) : [];
+    primary = await callProvider({ provider, apiKey, model, prompt, preset, settings, mode, variantCount: count });
+  } catch (error) {
+    return mapProviderError(error);
+  }
+  let text = primary.text;
+  let usage = primary.usage;
 
-    // The single-shot completion retry only applies when there is exactly one
-    // rewrite to guard against truncation; multi-variant output is parsed as-is.
-    if (count <= 1 && isLikelyIncompleteOutput(text)) {
+  // Retry only when the provider itself says the answer hit the token ceiling,
+  // and only for a single rewrite (multi-variant JSON is repaired by the parser).
+  // The retry is a bonus: if it fails, the primary answer still stands.
+  if (count <= 1 && primary.truncated) {
+    try {
       const retry = await callProvider({
         provider,
         apiKey,
@@ -399,40 +435,48 @@ async function rewriteText({ prompt, preset, site, settings, mode, variantCount 
         mode,
         completionPass: true
       });
-      if (retry && retry.text && retry.text.trim()) {
+      usage = mergeUsage(usage, retry && retry.usage);
+      if (retry && retry.text && retry.text.trim() && !retry.truncated) {
         text = retry.text;
-        usage = mergeUsage(usage, retry.usage);
       }
+    } catch (_error) {
+      // Keep the primary text; its usage is still recorded below.
     }
+  }
 
-    if (count > 1 && !variants.length && text && text.trim()) {
-      if (looksLikeJsonOutput(stripCodeFences(text.trim()))) {
-        return emptyOutputError(text);
-      }
-      variants = [text.trim()];
-    }
+  // Every successful provider call was billed, so log it even when the output
+  // turns out to be unusable.
+  const costUsd = estimateCostUsd(provider, model, usage && usage.inputTokens, usage && usage.outputTokens);
+  await recordUsage({ provider, model, mode, usage, costUsd });
 
-    const primaryText = count > 1 ? String((variants[0] || "")).trim() : String(text || "").trim();
-    if (!primaryText) {
+  const expectJson = wantsJsonOutput({ settings, mode, variantCount: count });
+  // preserveNewLines: a rewrite's own paragraphs must not be split into variants
+  // when the plain-text fallback runs.
+  let variants = count > 1 ? parsePhraseVariants(text, { count, preserveNewLines: true, expectJson }) : [];
+
+  if (count > 1 && !variants.length && text && text.trim()) {
+    if (looksLikeJsonOutput(stripCodeFences(text.trim()))) {
       return emptyOutputError(text);
     }
-
-    const costUsd = estimateCostUsd(provider, model, usage && usage.inputTokens, usage && usage.outputTokens);
-    await recordUsage({ provider, model, mode, usage, costUsd });
-    await recordHistory({ original: prompt, optimized: primaryText, preset, provider, model, mode });
-
-    const result = {
-      ok: true,
-      optimizedPrompt: primaryText,
-      usage: buildUsagePayload(provider, model, usage, costUsd)
-    };
-    if (count > 1 && variants.length > 1) {
-      result.variants = variants;
-    }
-    return result;
-  } catch (error) {
-    return mapProviderError(error);
+    variants = [text.trim()];
   }
+
+  const primaryText = count > 1 ? String((variants[0] || "")).trim() : String(text || "").trim();
+  if (!primaryText) {
+    return emptyOutputError(text);
+  }
+
+  await recordHistory({ original: prompt, optimized: primaryText, preset, provider, model, mode });
+
+  const result = {
+    ok: true,
+    optimizedPrompt: primaryText,
+    usage: buildUsagePayload(provider, model, usage, costUsd)
+  };
+  if (count > 1 && variants.length > 1) {
+    result.variants = variants;
+  }
+  return result;
 }
 
 // Follow-up refinement: apply a single requested change to already-generated text
@@ -486,8 +530,10 @@ function buildRefineInstruction() {
   ].join(" ");
 }
 
-// Each callX returns { text, usage } where usage is { inputTokens, outputTokens }
-// or null when the provider omits token counts. A caller may pass systemOverride
+// Each callX returns { text, usage, truncated } where usage is
+// { inputTokens, outputTokens } or null when the provider omits token counts,
+// and truncated is true only when the provider itself reports the answer was
+// cut off by the output-token ceiling (and some text came back). A caller may pass systemOverride
 // to supply the system instruction directly (used by refineText).
 // Generous ceiling: current models on all three providers spend "thinking" /
 // reasoning tokens out of this same budget, so 3000 could be exhausted before
@@ -526,24 +572,110 @@ async function callProvider({ provider, apiKey, model, prompt, preset, settings,
   return await callGemini({ apiKey, model, prompt, preset, settings, mode, completionPass, variantCount, systemOverride });
 }
 
-async function postProviderJson(url, headers, body) {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...headers },
-    body: JSON.stringify(body)
-  });
-  if (!response.ok) {
-    let details = "";
-    try {
-      details = readApiErrorMessage(await response.json());
-    } catch (_error) {
-      details = "";
-    }
-    const error = new Error(details || `Provider request failed (${response.status})`);
-    error.status = response.status;
-    throw error;
+// Generation can legitimately take a while on a slow/thinking model; listing
+// models and testing a key are cheap GETs and should fail fast.
+const GENERATION_TIMEOUT_MS = 90 * 1000;
+const LIGHT_REQUEST_TIMEOUT_MS = 20 * 1000;
+// Chrome may stop an MV3 service worker that has been idle for 30s even while a
+// fetch is pending, which silently drops the reply to the content script. Any
+// extension API call resets that idle timer, so ping one while work is in flight.
+const KEEPALIVE_INTERVAL_MS = 20 * 1000;
+let inFlightProviderRequests = 0;
+let keepAliveTimer = null;
+
+function beginKeepAlive() {
+  inFlightProviderRequests += 1;
+  if (keepAliveTimer) {
+    return;
   }
-  return await response.json();
+  keepAliveTimer = setInterval(() => {
+    try {
+      Promise.resolve(chrome.runtime.getPlatformInfo()).catch(() => {});
+    } catch (_error) {
+      // Keepalive is best effort.
+    }
+  }, KEEPALIVE_INTERVAL_MS);
+}
+
+function endKeepAlive() {
+  inFlightProviderRequests = Math.max(0, inFlightProviderRequests - 1);
+  if (inFlightProviderRequests === 0 && keepAliveTimer) {
+    clearInterval(keepAliveTimer);
+    keepAliveTimer = null;
+  }
+}
+
+function providerTimeoutError() {
+  const error = new Error("The provider took too long to respond. Try again or pick a faster model.");
+  error.code = "TIMEOUT";
+  return error;
+}
+
+// Runs `run(signal)` under a deadline and the SW keepalive. The callback owns
+// both the fetch and the body read, so a provider that sends headers and then
+// stalls mid-body is still cut off.
+async function runProviderRequest(timeoutMs, run) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  beginKeepAlive();
+  try {
+    return await run(controller.signal);
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw providerTimeoutError();
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+    endKeepAlive();
+  }
+}
+
+async function postProviderJson(url, headers, body) {
+  return await runProviderRequest(GENERATION_TIMEOUT_MS, async (signal) => {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify(body),
+      signal
+    });
+    if (!response.ok) {
+      let details = "";
+      try {
+        details = readApiErrorMessage(await response.json());
+      } catch (_error) {
+        details = "";
+      }
+      if (signal.aborted) {
+        throw providerTimeoutError();
+      }
+      const error = new Error(details || `Provider request failed (${response.status})`);
+      error.status = response.status;
+      throw error;
+    }
+    return await response.json();
+  });
+}
+
+// GET used by the model list; resolves to the parsed JSON body.
+async function getProviderJson(url, headers) {
+  return await runProviderRequest(LIGHT_REQUEST_TIMEOUT_MS, async (signal) => {
+    const response = await fetch(url, { method: "GET", headers, signal });
+    if (!response.ok) {
+      const error = new Error(`Provider request failed (${response.status})`);
+      error.status = response.status;
+      throw error;
+    }
+    return await response.json();
+  });
+}
+
+// Key test: only the status matters, so the body is never read.
+async function getProviderStatus(url, headers) {
+  return await runProviderRequest(LIGHT_REQUEST_TIMEOUT_MS, async (signal) => {
+    const response = await fetch(url, { method: "GET", headers, signal });
+    return response.status;
+  });
 }
 
 // Model catalogues move faster than this extension ships, so the per-model
@@ -583,8 +715,9 @@ function geminiThinkingConfig(model) {
     return { thinkingLevel: "low" };
   }
   if (v.major === 2 && v.minor === 5) {
-    // 2.5 Pro cannot turn thinking off; 2.5 Flash / Flash-Lite can.
-    return v.tier === "pro" ? { thinkingLevel: "low" } : { thinkingBudget: 0 };
+    // 2.5 Pro cannot turn thinking off and predates thinkingLevel, so ask for
+    // its minimum budget; 2.5 Flash / Flash-Lite can switch thinking off.
+    return v.tier === "pro" ? { thinkingBudget: 128 } : { thinkingBudget: 0 };
   }
   return null;
 }
@@ -637,9 +770,9 @@ async function callGemini({ apiKey, model, prompt, preset, settings, mode, compl
   }
 
   const text = extractGeminiText(data).trim();
+  const finishReason = data && Array.isArray(data.candidates) && data.candidates[0] && data.candidates[0].finishReason;
   if (!text) {
     const blockReason = data && data.promptFeedback && data.promptFeedback.blockReason;
-    const finishReason = data && Array.isArray(data.candidates) && data.candidates[0] && data.candidates[0].finishReason;
     if (blockReason || finishReason === "SAFETY" || finishReason === "PROHIBITED_CONTENT") {
       throw providerOutputError("MODEL_REFUSED", "Gemini declined to rewrite this text.");
     }
@@ -647,7 +780,7 @@ async function callGemini({ apiKey, model, prompt, preset, settings, mode, compl
       throw providerOutputError("OUTPUT_LIMIT", "The model ran out of output tokens before answering. Try a lighter model.");
     }
   }
-  return { text, usage: extractGeminiUsage(data) };
+  return { text, usage: extractGeminiUsage(data), truncated: !!text && finishReason === "MAX_TOKENS" };
 }
 
 // ---- OpenAI (Responses API) ------------------------------------------------
@@ -691,15 +824,29 @@ async function callOpenAI({ apiKey, model, prompt, preset, settings, mode, compl
 
   const url = "https://api.openai.com/v1/responses";
   const headers = { Authorization: `Bearer ${apiKey}` };
+  // Older models (gpt-4, gpt-4.1 snapshots) reject `reasoning` and/or the
+  // json_schema text format. Drop only the field the 400 names and retry; the
+  // system prompt still describes the JSON shape, and the parser repairs it.
+  const optionalFields = [
+    { key: "reasoning", pattern: /reasoning/i },
+    { key: "text", pattern: /text\.format|json_schema|response_format|schema/i }
+  ];
+  let attemptPayload = payload;
   let data;
-  try {
-    data = await postProviderJson(url, headers, payload);
-  } catch (error) {
-    if (!payload.reasoning || !isOptionalParamRejection(error, /reasoning/i)) {
-      throw error;
+  for (;;) {
+    try {
+      data = await postProviderJson(url, headers, attemptPayload);
+      break;
+    } catch (error) {
+      const rejected = optionalFields.find(
+        (field) => attemptPayload[field.key] && isOptionalParamRejection(error, field.pattern)
+      );
+      if (!rejected) {
+        throw error;
+      }
+      const { [rejected.key]: _dropped, ...fallback } = attemptPayload;
+      attemptPayload = fallback;
     }
-    const { reasoning: _dropped, ...fallback } = payload;
-    data = await postProviderJson(url, headers, fallback);
   }
 
   const text = extractOpenAIText(data).trim();
@@ -715,7 +862,9 @@ async function callOpenAI({ apiKey, model, prompt, preset, settings, mode, compl
       throw providerOutputError("OUTPUT_LIMIT", "The model ran out of output tokens before answering. Try a lighter model.");
     }
   }
-  return { text, usage: extractOpenAIUsage(data) };
+  const truncated = !!text && !!data && data.status === "incomplete"
+    && !!data.incomplete_details && data.incomplete_details.reason === "max_output_tokens";
+  return { text, usage: extractOpenAIUsage(data), truncated };
 }
 
 function hasOpenAIRefusal(data) {
@@ -800,7 +949,7 @@ async function callAnthropic({ apiKey, model, prompt, preset, settings, mode, co
   if (!text && data && data.stop_reason === "max_tokens") {
     throw providerOutputError("OUTPUT_LIMIT", "The model ran out of output tokens before answering. Try a lighter model.");
   }
-  return { text, usage: extractAnthropicUsage(data) };
+  return { text, usage: extractAnthropicUsage(data), truncated: !!text && !!data && data.stop_reason === "max_tokens" };
 }
 
 async function fetchModelsForProvider(payload) {
@@ -876,16 +1025,7 @@ function compareGeminiModels(a, b) {
 }
 
 async function fetchGeminiModels(apiKey) {
-  const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models", {
-    method: "GET",
-    headers: { "x-goog-api-key": apiKey }
-  });
-  if (!response.ok) {
-    const error = new Error(`Provider request failed (${response.status})`);
-    error.status = response.status;
-    throw error;
-  }
-  const data = await response.json();
+  const data = await getProviderJson("https://generativelanguage.googleapis.com/v1beta/models", { "x-goog-api-key": apiKey });
   const all = Array.isArray(data.models) ? data.models : [];
   const ids = all
     .filter((m) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes("generateContent"))
@@ -897,16 +1037,7 @@ async function fetchGeminiModels(apiKey) {
 }
 
 async function fetchOpenAIModels(apiKey) {
-  const response = await fetch("https://api.openai.com/v1/models", {
-    method: "GET",
-    headers: { Authorization: `Bearer ${apiKey}` }
-  });
-  if (!response.ok) {
-    const error = new Error(`Provider request failed (${response.status})`);
-    error.status = response.status;
-    throw error;
-  }
-  const data = await response.json();
+  const data = await getProviderJson("https://api.openai.com/v1/models", { Authorization: `Bearer ${apiKey}` });
   const items = Array.isArray(data.data) ? data.data : [];
   // Sort newest first by the API's `created` timestamp so flagships order
   // correctly (gpt-5.8 over gpt-5.2) without a version list to maintain.
@@ -920,20 +1051,11 @@ async function fetchOpenAIModels(apiKey) {
 }
 
 async function fetchAnthropicModels(apiKey) {
-  const response = await fetch("https://api.anthropic.com/v1/models", {
-    method: "GET",
-    headers: {
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-      "x-api-key": apiKey
-    }
+  const data = await getProviderJson("https://api.anthropic.com/v1/models", {
+    "anthropic-version": "2023-06-01",
+    "anthropic-dangerous-direct-browser-access": "true",
+    "x-api-key": apiKey
   });
-  if (!response.ok) {
-    const error = new Error(`Provider request failed (${response.status})`);
-    error.status = response.status;
-    throw error;
-  }
-  const data = await response.json();
   const items = Array.isArray(data.data) ? data.data : [];
   // Anthropic's list is already only Claude chat models — sort newest first by
   // created_at (string IDs don't order opus/sonnet/haiku correctly).
@@ -974,89 +1096,49 @@ async function testKey(payload) {
 }
 
 async function testGeminiKey(apiKey) {
-  try {
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models", {
-      method: "GET",
-      headers: {
-        "x-goog-api-key": apiKey
-      }
-    });
-
-    if (response.ok) {
-      return { ok: true, message: "API key is valid." };
-    }
-    if (response.status === 401 || response.status === 403) {
-      return { ok: false, code: "UNAUTHORIZED", message: `Invalid API key (${response.status}).` };
-    }
-    if (response.status === 429) {
-      return { ok: false, code: "RATE_LIMIT", message: "Rate limit reached (429)." };
-    }
-    return {
-      ok: false,
-      code: "PROVIDER_ERROR",
-      message: `Provider error (${response.status}).`
-    };
-  } catch (_error) {
-    return { ok: false, code: "NETWORK_ERROR", message: "Network error while testing key." };
-  }
+  return await testKeyAt("https://generativelanguage.googleapis.com/v1beta/models", {
+    "x-goog-api-key": apiKey
+  });
 }
 
 async function testOpenAIKey(apiKey) {
-  try {
-    const response = await fetch("https://api.openai.com/v1/models", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${apiKey}`
-      }
-    });
-
-    if (response.ok) {
-      return { ok: true, message: "API key is valid." };
-    }
-    if (response.status === 401 || response.status === 403) {
-      return { ok: false, code: "UNAUTHORIZED", message: `Invalid API key (${response.status}).` };
-    }
-    if (response.status === 429) {
-      return { ok: false, code: "RATE_LIMIT", message: "Rate limit reached (429)." };
-    }
-    return {
-      ok: false,
-      code: "PROVIDER_ERROR",
-      message: `Provider error (${response.status}).`
-    };
-  } catch (_error) {
-    return { ok: false, code: "NETWORK_ERROR", message: "Network error while testing key." };
-  }
+  return await testKeyAt("https://api.openai.com/v1/models", {
+    Authorization: `Bearer ${apiKey}`
+  });
 }
 
 async function testAnthropicKey(apiKey) {
-  try {
-    const response = await fetch("https://api.anthropic.com/v1/models", {
-      method: "GET",
-      headers: {
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true",
-        "x-api-key": apiKey
-      }
-    });
+  return await testKeyAt("https://api.anthropic.com/v1/models", {
+    "anthropic-version": "2023-06-01",
+    "anthropic-dangerous-direct-browser-access": "true",
+    "x-api-key": apiKey
+  });
+}
 
-    if (response.ok) {
-      return { ok: true, message: "API key is valid." };
+async function testKeyAt(url, headers) {
+  let status;
+  try {
+    status = await getProviderStatus(url, headers);
+  } catch (error) {
+    if (error && error.code === "TIMEOUT") {
+      return mapProviderError(error);
     }
-    if (response.status === 401 || response.status === 403) {
-      return { ok: false, code: "UNAUTHORIZED", message: `Invalid API key (${response.status}).` };
-    }
-    if (response.status === 429) {
-      return { ok: false, code: "RATE_LIMIT", message: "Rate limit reached (429)." };
-    }
-    return {
-      ok: false,
-      code: "PROVIDER_ERROR",
-      message: `Provider error (${response.status}).`
-    };
-  } catch (_error) {
     return { ok: false, code: "NETWORK_ERROR", message: "Network error while testing key." };
   }
+  if (status >= 200 && status < 300) {
+    return { ok: true, message: "API key is valid." };
+  }
+  if (status === 401 || status === 403) {
+    return { ok: false, code: "UNAUTHORIZED", message: `Invalid API key (${status}).` };
+  }
+  if (status === 429) {
+    return { ok: false, code: "RATE_LIMIT", message: "Rate limit reached (429)." };
+  }
+  return {
+    ok: false,
+    code: "PROVIDER_ERROR",
+    message: `Provider error (${status}).`
+  };
 }
 
 function extractGeminiText(data) {
@@ -1108,7 +1190,11 @@ function extractGeminiUsage(data) {
   if (!u) {
     return null;
   }
-  return { inputTokens: Number(u.promptTokenCount) || 0, outputTokens: Number(u.candidatesTokenCount) || 0 };
+  // Thinking tokens are reported separately from the answer but billed as output.
+  return {
+    inputTokens: Number(u.promptTokenCount) || 0,
+    outputTokens: (Number(u.candidatesTokenCount) || 0) + (Number(u.thoughtsTokenCount) || 0)
+  };
 }
 
 function extractOpenAIUsage(data) {
@@ -1254,50 +1340,6 @@ function buildSystemInstruction({ preset, settings, mode, completionPass, varian
   }
 
   return parts.join(" ");
-}
-
-function isLikelyIncompleteOutput(text) {
-  const value = String(text || "").trim();
-  if (!value) {
-    return true;
-  }
-  if (value.length < 60) {
-    return false;
-  }
-  if (/[.!?]["')\]]?$/.test(value)) {
-    return false;
-  }
-  if (/[,;:\-–—]$/.test(value)) {
-    return true;
-  }
-  const lastWord = value.split(/\s+/).pop().toLowerCase();
-  const danglingWords = new Set([
-    "and",
-    "or",
-    "to",
-    "for",
-    "with",
-    "that",
-    "which",
-    "because",
-    "while",
-    "when",
-    "if",
-    "of",
-    "in",
-    "on",
-    "at",
-    "by",
-    "from",
-    "as",
-    "than",
-    "then",
-    "about"
-  ]);
-  if (danglingWords.has(lastWord)) {
-    return true;
-  }
-  return false;
 }
 
 function mapProviderError(error) {
@@ -1446,10 +1488,6 @@ function getModelForProvider(settings) {
   return normalizeGeminiModel(settings.geminiModel || DEFAULT_SETTINGS.geminiModel);
 }
 
-function normalizeOptimizationMode(value) {
-  return String(value || "").toLowerCase() === "phrase_better" ? "phrase_better" : "ask_better";
-}
-
 function isSiteEnabled(settings, site) {
   if (site === "gemini") {
     return !!settings.enableGemini;
@@ -1557,18 +1595,21 @@ async function handlePhraseBetterContextMenu(info, tab) {
   // Capture WHERE/WHAT was selected up front, before the async request can let the
   // selection get lost (focus change, typing). The chooser later applies to this
   // stored location, so the user does not have to keep the text selected while it processes.
-  const captured = await capturePhraseBetterSelectionInTab(tab.id, info.frameId);
+  // Ties this request's captured selection, busy pill, and chooser together so
+  // a second right-click while this one is in flight cannot cross the wires.
+  const nonce = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  const captured = await capturePhraseBetterSelectionInTab(tab.id, info.frameId, nonce);
   if (!captured) {
     await showPageToastInTab(tab.id, info.frameId, "Phrase Better works in editable text fields.");
     return;
   }
 
-  await showPageBusyIndicatorInTab(tab.id, info.frameId, "Phrase Better is working…");
+  await showPageBusyIndicatorInTab(tab.id, info.frameId, "Phrase Better is working…", nonce);
   let response;
   try {
     response = await generatePhraseBetterOptions({ prompt: selectedText, settings, count });
   } finally {
-    await hidePageBusyIndicatorInTab(tab.id, info.frameId);
+    await hidePageBusyIndicatorInTab(tab.id, info.frameId, nonce);
   }
 
   if (!response || !response.ok) {
@@ -1580,20 +1621,21 @@ async function handlePhraseBetterContextMenu(info, tab) {
   }
 
   const tokenCount = response.usage && Number(response.usage.totalTokens) > 0 ? Number(response.usage.totalTokens) : 0;
-  const shown = await showPhraseBetterChooserInTab(tab.id, info.frameId, response.options, tokenCount);
+  const shown = await showPhraseBetterChooserInTab(tab.id, info.frameId, response.options, tokenCount, nonce);
   if (!shown) {
     await showPageToastInTab(tab.id, info.frameId, "Phrase Better works in editable text fields.");
   }
 }
 
-async function capturePhraseBetterSelectionInTab(tabId, frameId) {
+async function capturePhraseBetterSelectionInTab(tabId, frameId, nonce) {
   try {
     const results = await chrome.scripting.executeScript({
       target: {
         tabId,
         frameIds: typeof frameId === "number" ? [frameId] : undefined
       },
-      func: capturePhraseBetterSelectionOnPage
+      func: capturePhraseBetterSelectionOnPage,
+      args: [String(nonce || "")]
     });
     return !!(results && results[0] && results[0].result && results[0].result.ok);
   } catch (_error) {
@@ -1616,56 +1658,52 @@ async function generatePhraseBetterOptions({ prompt, settings, count }) {
   }
 
   try {
-    if (variantCount <= 1) {
-      const result = await callProvider({ provider, apiKey, model, prompt, preset: "grammar", settings, mode: "phrase_better" });
-      const parsed = parsePhraseVariants(result.text, 1, settings.phraseBetterNewLines !== false);
-      const cleaned = parsed[0] || "";
-      if (!cleaned) {
-        return emptyOutputError(result.text);
-      }
-      const costUsd = estimateCostUsd(provider, model, result.usage && result.usage.inputTokens, result.usage && result.usage.outputTokens);
-      await recordUsage({ provider, model, mode: "phrase_better", usage: result.usage, costUsd });
-      await recordHistory({ original: prompt, optimized: cleaned, preset: "phrase", provider, model, mode: "phrase_better" });
-      return { ok: true, options: [cleaned], usage: buildUsagePayload(provider, model, result.usage, costUsd) };
-    }
-
-    const raw = await callProvider({
-      provider,
-      apiKey,
-      model,
-      prompt,
-      preset: "grammar",
-      settings,
-      mode: "phrase_better",
-      variantCount
+    const mode = "phrase_better";
+    const raw = await callProvider({ provider, apiKey, model, prompt, preset: "grammar", settings, mode, variantCount });
+    // Billed regardless of whether the output parses.
+    const costUsd = estimateCostUsd(provider, model, raw.usage && raw.usage.inputTokens, raw.usage && raw.usage.outputTokens);
+    await recordUsage({ provider, model, mode, usage: raw.usage, costUsd });
+    const options = parsePhraseVariants(raw.text, {
+      count: variantCount,
+      preserveNewLines: settings.phraseBetterNewLines !== false,
+      expectJson: wantsJsonOutput({ settings, mode, variantCount })
     });
-    const options = parsePhraseVariants(raw.text, variantCount, settings.phraseBetterNewLines !== false);
     if (!options.length) {
       return emptyOutputError(raw.text);
     }
-    const costUsd = estimateCostUsd(provider, model, raw.usage && raw.usage.inputTokens, raw.usage && raw.usage.outputTokens);
-    await recordUsage({ provider, model, mode: "phrase_better", usage: raw.usage, costUsd });
-    await recordHistory({ original: prompt, optimized: options[0], preset: "phrase", provider, model, mode: "phrase_better" });
+    await recordHistory({ original: prompt, optimized: options[0], preset: "phrase", provider, model, mode });
     return { ok: true, options, usage: buildUsagePayload(provider, model, raw.usage, costUsd) };
   } catch (error) {
     return mapProviderError(error);
   }
 }
 
-function parsePhraseVariants(raw, count, preserveNewLines = false) {
+// expectJson must mirror wantsJsonOutput for the request that produced `raw`:
+// when JSON was not asked for, a rewrite that happens to start with "[" or "{"
+// is real text and must not be fed through the JSON repair chain.
+function parsePhraseVariants(raw, { count = 1, preserveNewLines = false, expectJson = false } = {}) {
   let text = String(raw || "").trim();
   if (!text) {
     return [];
   }
 
-  text = stripCodeFences(text);
+  if (expectJson) {
+    text = stripCodeFences(text);
+  } else {
+    // Plain text may legitimately contain a fenced code block; only unwrap a
+    // fence that encloses the entire response.
+    const whole = text.match(/^```[\w-]*[ \t]*\r?\n([\s\S]*?)\r?\n?```$/);
+    if (whole && whole[1].trim()) {
+      text = whole[1].trim();
+    }
+  }
 
   let candidates = [];
   let parsedJson = false;
   // Models drift off the requested JSON shape in predictable ways: prose around
   // the object, raw newlines inside strings, trailing commas, or a response cut
   // off mid-array. Slice out the JSON, repair it, and only then give up.
-  if (looksLikeJsonOutput(text)) {
+  if (expectJson && looksLikeJsonOutput(text)) {
     const slice = extractJsonSlice(text);
     if (slice) {
       candidates = variantsFromJsonValue(parseJsonLoose(slice));
@@ -1935,7 +1973,7 @@ function coerceVariantText(candidate) {
   return "";
 }
 
-async function showPhraseBetterChooserInTab(tabId, frameId, options, tokenCount) {
+async function showPhraseBetterChooserInTab(tabId, frameId, options, tokenCount, nonce) {
   try {
     const results = await chrome.scripting.executeScript({
       target: {
@@ -1945,7 +1983,8 @@ async function showPhraseBetterChooserInTab(tabId, frameId, options, tokenCount)
       func: showPhraseBetterChooserOnPage,
       args: [
         Array.isArray(options) ? options.map((option) => String(option || "")) : [],
-        Number(tokenCount) > 0 ? Number(tokenCount) : 0
+        Number(tokenCount) > 0 ? Number(tokenCount) : 0,
+        String(nonce || "")
       ]
     });
     return !!(results && results[0] && results[0].result && results[0].result.ok);
@@ -1969,7 +2008,7 @@ async function showPageToastInTab(tabId, frameId, message) {
   }
 }
 
-async function showPageBusyIndicatorInTab(tabId, frameId, message) {
+async function showPageBusyIndicatorInTab(tabId, frameId, message, nonce) {
   try {
     await chrome.scripting.executeScript({
       target: {
@@ -1977,32 +2016,43 @@ async function showPageBusyIndicatorInTab(tabId, frameId, message) {
         frameIds: typeof frameId === "number" ? [frameId] : undefined
       },
       func: showPageBusyIndicatorOnPage,
-      args: [String(message || "")]
+      args: [String(message || ""), String(nonce || "")]
     });
   } catch (_error) {
     // Ignore busy indicator injection errors on unsupported pages.
   }
 }
 
-async function hidePageBusyIndicatorInTab(tabId, frameId) {
+async function hidePageBusyIndicatorInTab(tabId, frameId, nonce) {
   try {
     await chrome.scripting.executeScript({
       target: {
         tabId,
         frameIds: typeof frameId === "number" ? [frameId] : undefined
       },
-      func: hidePageBusyIndicatorOnPage
+      func: hidePageBusyIndicatorOnPage,
+      args: [String(nonce || "")]
     });
   } catch (_error) {
     // Ignore busy indicator cleanup errors on unsupported pages.
   }
 }
 
-function capturePhraseBetterSelectionOnPage() {
+function capturePhraseBetterSelectionOnPage(nonce) {
   // Store the current selection (location + live DOM references) on the page's
   // isolated-world global so a later executeScript call can apply to it, even if the
   // live selection is gone by then. The captured object keeps real DOM references; this
   // is fine because both executeScript calls share the same isolated world for the tab.
+  // Entries are keyed per request so overlapping right-clicks each keep their own target.
+  const selections = window.__askBetterPhraseSelections || (window.__askBetterPhraseSelections = {});
+  // A request that failed before showing its chooser never cleans up; drop
+  // anything old enough that its request must have finished.
+  const staleBefore = Date.now() - 10 * 60 * 1000;
+  for (const key of Object.keys(selections)) {
+    if (!selections[key] || !(selections[key].ts >= staleBefore)) {
+      delete selections[key];
+    }
+  }
   let captured = null;
   const active = document.activeElement;
   const isTextInput = active instanceof HTMLTextAreaElement
@@ -2026,12 +2076,30 @@ function capturePhraseBetterSelectionOnPage() {
     }
   }
 
-  window.__askBetterPhraseSelection = captured;
+  if (captured) {
+    captured.ts = Date.now();
+    selections[String(nonce || "")] = captured;
+  }
   return { ok: !!captured };
 }
 
-function showPhraseBetterChooserOnPage(options, tokenCount) {
+function showPhraseBetterChooserOnPage(options, tokenCount, nonce) {
   const chooserId = "askbetter-phrase-chooser";
+  const selectionKey = String(nonce || "");
+  const selections = window.__askBetterPhraseSelections || (window.__askBetterPhraseSelections = {});
+  const forgetSelection = () => {
+    delete selections[selectionKey];
+  };
+  // Only one chooser is shown at a time. Run the previous one's cleanup rather
+  // than just removing its node, so its document listeners and stored
+  // selection do not leak.
+  if (typeof window.__askBetterPhraseChooserCleanup === "function") {
+    try {
+      window.__askBetterPhraseChooserCleanup();
+    } catch (_error) {
+      // Ignore stale cleanup failures.
+    }
+  }
   const existing = document.getElementById(chooserId);
   if (existing) {
     existing.remove();
@@ -2058,15 +2126,17 @@ function showPhraseBetterChooserOnPage(options, tokenCount) {
 
   const variants = Array.isArray(options) ? options.filter((option) => String(option || "").trim()) : [];
   if (!variants.length) {
+    forgetSelection();
     return { ok: false, reason: "NO_OPTIONS" };
   }
 
-  // Prefer the selection captured at context-menu time (stored on the page global);
-  // fall back to the live selection if it is still present and the stored one is gone.
+  // Prefer the selection this request captured at context-menu time (keyed by
+  // its nonce, so a second right-click cannot redirect it); fall back to the
+  // live selection if it is still present and the stored one is gone.
   let captured = null;
   let anchorRect = null;
 
-  const stored = window.__askBetterPhraseSelection || null;
+  const stored = selections[selectionKey] || null;
   if (stored && stored.type === "input" && stored.el && stored.el.isConnected) {
     captured = stored;
     anchorRect = stored.el.getBoundingClientRect();
@@ -2106,7 +2176,7 @@ function showPhraseBetterChooserOnPage(options, tokenCount) {
   }
 
   if (!captured) {
-    window.__askBetterPhraseSelection = null;
+    forgetSelection();
     return { ok: false, reason: "UNEDITABLE_SELECTION" };
   }
 
@@ -2257,7 +2327,10 @@ function showPhraseBetterChooserOnPage(options, tokenCount) {
       return;
     }
     closed = true;
-    window.__askBetterPhraseSelection = null;
+    forgetSelection();
+    if (window.__askBetterPhraseChooserCleanup === cleanup) {
+      window.__askBetterPhraseChooserCleanup = null;
+    }
     document.removeEventListener("keydown", onKeydown, true);
     document.removeEventListener("pointerdown", onOutside, true);
     card.remove();
@@ -2364,6 +2437,7 @@ function showPhraseBetterChooserOnPage(options, tokenCount) {
   });
 
   closeBtn.addEventListener("click", cleanup);
+  window.__askBetterPhraseChooserCleanup = cleanup;
 
   document.documentElement.appendChild(card);
 
@@ -2451,8 +2525,9 @@ function showPageToastOnPage(message) {
   }, 1800);
 }
 
-function showPageBusyIndicatorOnPage(message) {
-  const indicatorId = "askbetter-page-busy";
+function showPageBusyIndicatorOnPage(message, nonce) {
+  // Per-request id, so an overlapping request's hide call cannot remove this pill.
+  const indicatorId = "askbetter-page-busy-" + String(nonce || "");
 
   try {
     const fontStyleId = "askbetter-dm-sans-font";
@@ -2499,7 +2574,7 @@ function showPageBusyIndicatorOnPage(message) {
           <circle cx="3.5" cy="12" r="2" fill="#ff6a1a" opacity="0.48"></circle>
         </svg>
       </span>
-      <span id="askbetter-page-busy-text"></span>
+      <span data-askbetter-busy-text></span>
     `;
     document.documentElement.appendChild(indicator);
   }
@@ -2512,7 +2587,7 @@ function showPageBusyIndicatorOnPage(message) {
     document.documentElement.appendChild(styleTag);
   }
 
-  const textEl = indicator.querySelector("#askbetter-page-busy-text");
+  const textEl = indicator.querySelector("[data-askbetter-busy-text]");
   if (textEl) {
     textEl.textContent = String(message || "Working…");
   }
@@ -2549,8 +2624,9 @@ function showPageBusyIndicatorOnPage(message) {
   indicator.style.left = `${left}px`;
 }
 
-function hidePageBusyIndicatorOnPage() {
-  const indicator = document.getElementById("askbetter-page-busy");
+function hidePageBusyIndicatorOnPage(nonce) {
+  // Only remove this request's pill; a concurrent Phrase Better run owns its own.
+  const indicator = document.getElementById("askbetter-page-busy-" + String(nonce || ""));
   if (indicator) {
     indicator.remove();
   }
@@ -2575,10 +2651,12 @@ async function getButtonOffset(site) {
 }
 
 async function saveButtonOffset(site, offset) {
-  const uiPrefs = await readUiPrefs();
-  uiPrefs.buttonOffsets[site] = normalizeOffset(offset);
-  await chrome.storage.local.set({ uiPrefs });
-  return uiPrefs.buttonOffsets[site];
+  return await enqueueStorageWrite(async () => {
+    const uiPrefs = await readUiPrefs();
+    uiPrefs.buttonOffsets[site] = normalizeOffset(offset);
+    await chrome.storage.local.set({ uiPrefs });
+    return uiPrefs.buttonOffsets[site];
+  });
 }
 
 function normalizeSite(value) {

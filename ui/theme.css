@@ -301,6 +301,11 @@ code {
   color: var(--text-muted);
 }
 
+/* .btn sets display, which would otherwise beat the hidden attribute. */
+.btn[hidden] {
+  display: none !important;
+}
+
 .model-hint[hidden] {
   display: none;
 }

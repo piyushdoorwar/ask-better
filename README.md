@@ -47,14 +47,14 @@ Get better AI responses without rewriting your prompts from scratch. AskBetter a
 | Technical Spec | Precise requirements and acceptance criteria |
 | Implementation Plan | Ordered tasks, dependencies, and deliverables |
 
-Plus **Custom presets** — add your own `{ name, instruction }` styles in Settings → Presets; they appear in the preset picker alongside the built-ins.
+Plus **Custom presets** — add your own `{ name, instruction }` styles in Settings → Ask Better → **Presets**; they appear in the preset picker alongside the built-ins.
 
 ## Privacy
 
-- No backend server — API calls go directly from your browser to your chosen AI provider.
-- Settings and API keys are stored locally in `chrome.storage.local`. Never synced to the cloud.
-- API keys are only readable by the background service worker — web pages never see them.
-- No analytics. No telemetry. Not in this version, not ever.
+- No backend server — your prompts go directly from your browser to the AI provider you choose.
+- Settings, API keys, prompt history (last 100 rewrites) and a 30-day usage log are stored locally in `chrome.storage.local`. Never synced to the cloud. Clear them from History or Models → API key → **Clear stored key & data**.
+- API keys are read only by the extension's settings page and background worker — the scripts on ChatGPT, Claude and Gemini, and web pages, never see them.
+- The extension has no analytics or telemetry. (The website uses cookie-free Cloudflare Web Analytics.) Full details in the [privacy policy](https://askbetter.piyushdoorwar.com/policy/).
 
 ## Install from the Chrome Web Store
 
@@ -63,8 +63,8 @@ Plus **Custom presets** — add your own `{ name, instruction }` styles in Setti
 ## Quick setup
 
 1. Click the AskBetter icon → **Open settings**.
-2. Choose your provider (Gemini, OpenAI, or Anthropic Claude).
-3. Paste your API key and click **Test key**. It saves automatically on success.
+2. In **Models**, choose your provider (Gemini, OpenAI, or Anthropic Claude).
+3. Click **Add API key** next to the provider, paste your key and click **Verify key**. It saves on success and unlocks the model list.
 4. Pick a default preset. Done.
 
 Then open ChatGPT, Gemini, or Claude and click the **Optimize** button (or press `Ctrl/Cmd+Shift+O`). The shortcut can be rebound at `chrome://extensions/shortcuts`.

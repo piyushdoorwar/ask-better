@@ -130,6 +130,16 @@ function renderStatus(settings) {
     return;
   }
 
+  // Same notion of "connected" as the options page: saved AND verified.
+  if (hasKey && !settings[meta.verifiedField]) {
+    statusText.textContent = `${meta.providerName} key: Saved, not verified`;
+    statusText.className = "status-warn";
+    if (statusBox) {
+      statusBox.classList.add("state-warn");
+    }
+    return;
+  }
+
   if (hasKey) {
     statusText.textContent = `${meta.providerName} key: Connected`;
     statusText.className = "status-ok";

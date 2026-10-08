@@ -85,7 +85,7 @@
     {
       "matches": [
         "https://claude.ai/*",
-        "https://*.claude.ai/*"
+        "https://a.claude.ai/*"
       ],
       "js": [
         "content/core.js",

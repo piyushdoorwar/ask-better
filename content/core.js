@@ -1,4 +1,7 @@
-function startAskBetter(site, siteToggleKey, selectors) {
+// options.acceptInput(node) — optional site-specific predicate; a candidate
+// prompt input is used only when it returns true (keeps this engine generic).
+function startAskBetter(site, siteToggleKey, selectors, options) {
+  const acceptInput = options && typeof options.acceptInput === "function" ? options.acceptInput : null;
   const OPTIMIZE_TEXT = "Optimize";
   const BUSY_TEXT = "Optimizing…";
   const SPARKLE_SVG = '<svg viewBox="0 0 36 36" width="14" height="14" aria-hidden="true" focusable="false" style="display:block;fill:currentColor"><path d="M34.347 16.893l-8.899-3.294l-3.323-10.891a1 1 0 0 0-1.912 0l-3.322 10.891l-8.9 3.294a1 1 0 0 0 0 1.876l8.895 3.293l3.324 11.223a1 1 0 0 0 1.918-.001l3.324-11.223l8.896-3.293a.998.998 0 0 0-.001-1.875z"></path><path d="M14.347 27.894l-2.314-.856l-.9-3.3a.998.998 0 0 0-1.929-.001l-.9 3.3l-2.313.856a1 1 0 0 0 0 1.876l2.301.853l.907 3.622a1 1 0 0 0 1.94-.001l.907-3.622l2.301-.853a.997.997 0 0 0 0-1.874z"></path><path d="M10.009 6.231l-2.364-.875l-.876-2.365a.999.999 0 0 0-1.876 0l-.875 2.365l-2.365.875a1 1 0 0 0 0 1.876l2.365.875l.875 2.365a1 1 0 0 0 1.876 0l.875-2.365l2.365-.875a1 1 0 0 0 0-1.876z"></path></svg>';
@@ -22,9 +25,17 @@ function startAskBetter(site, siteToggleKey, selectors) {
   let busyIndicator = null;
   let previewCard = null;
   let previewState = null;
-  // Monotonic token for in-flight background requests. Any response whose token
-  // is stale (superseded by a newer optimize/regenerate/refine) is dropped.
-  let requestSeq = 0;
+  let settingsPromise = null;
+  // Monotonic tokens for in-flight background requests, one per busy flag:
+  // optimizeSeq guards the button's busy state (Optimize), previewSeq guards the
+  // card's busy state (Regenerate / Refine). Keeping them separate means a
+  // superseded request never leaves the *other* busy flag stuck on. A stale
+  // reply is still dropped — and preview replies additionally require the same
+  // previewState object, so they can never land in a newer card.
+  let optimizeSeq = 0;
+  let previewSeq = 0;
+  let suppressClickTimer = 0;
+  let tornDown = false;
 
   scheduleSync();
   window.addEventListener("resize", scheduleSync, { passive: true });
@@ -40,7 +51,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
   ) {
     chrome.runtime.onMessage.addListener((message) => {
       if (message && message.type === "ASKBETTER_TRIGGER_OPTIMIZE") {
-        void onOptimizeClick();
+        onShortcutTrigger();
       }
       return false;
     });
@@ -60,6 +71,9 @@ function startAskBetter(site, siteToggleKey, selectors) {
   // would schedule another sync — a self-sustaining per-frame loop. Ignore
   // records that originate entirely from our own UI.
   function onDocumentMutated(records) {
+    if (tornDown) {
+      return;
+    }
     for (const record of records) {
       if (!isOwnMutation(record)) {
         scheduleSync();
@@ -102,12 +116,16 @@ function startAskBetter(site, siteToggleKey, selectors) {
     button.addEventListener("pointermove", onPointerMove);
     button.addEventListener("pointerup", onPointerUp);
     button.addEventListener("pointercancel", onPointerUp);
-    button.addEventListener("click", onOptimizeClick);
+    button.addEventListener("click", onButtonClick);
     document.body.appendChild(button);
   }
 
   function scheduleSync() {
-    if (rafToken) {
+    if (rafToken || tornDown) {
+      return;
+    }
+    if (!isExtensionContextValid()) {
+      teardown();
       return;
     }
     rafToken = window.requestAnimationFrame(async () => {
@@ -118,20 +136,26 @@ function startAskBetter(site, siteToggleKey, selectors) {
 
   async function syncButton() {
     const settings = await getPublicSettings(false);
+    if (tornDown) {
+      return;
+    }
     if (!settings || !settings.enableAI || !settings.enableAskBetterMode || !settings[siteToggleKey]) {
       hideButton();
       return;
     }
 
-    const input = (activeInput && activeInput.isConnected && isEligiblePromptInput(activeInput))
+    const input = (activeInput && activeInput.isConnected && isUsableInput(activeInput))
       ? activeInput
-      : findPromptInput(selectors);
+      : findPromptInput(selectors, acceptInput);
     if (!input) {
       hideButton();
       return;
     }
 
     await ensureOffsetLoaded();
+    if (tornDown) {
+      return;
+    }
     ensureButton();
     activeInput = input;
     placeButtonNearInput(input);
@@ -149,7 +173,46 @@ function startAskBetter(site, siteToggleKey, selectors) {
       button.style.display = "none";
     }
     hideBusyIndicator();
+    // The composer is gone (chat switched, site disabled…): a floating card
+    // would now belong to nothing. Don't pull focus back to the old composer.
+    closePreview(false);
     activeInput = null;
+  }
+
+  function isUsableInput(node) {
+    return isEligiblePromptInput(node) && (!acceptInput || acceptInput(node));
+  }
+
+  // After the extension is reloaded/updated, this orphaned script can no longer
+  // reach the background worker. Stop observing and remove our button so it
+  // doesn't keep running (or offer a button that can only fail). An open
+  // preview is left alone: Accept / Discard work without the runtime.
+  function teardown() {
+    if (tornDown) {
+      return;
+    }
+    tornDown = true;
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
+    if (rafToken) {
+      window.cancelAnimationFrame(rafToken);
+      rafToken = 0;
+    }
+    window.removeEventListener("resize", scheduleSync);
+    window.removeEventListener("scroll", scheduleSync);
+    window.removeEventListener("focus", scheduleSync);
+    window.clearTimeout(offsetSaveTimer);
+    if (button) {
+      button.remove();
+      button = null;
+    }
+    if (busyIndicator) {
+      busyIndicator.remove();
+      busyIndicator = null;
+    }
+    isBusy = false;
   }
 
   function placeButtonNearInput(input) {
@@ -172,14 +235,40 @@ function startAskBetter(site, siteToggleKey, selectors) {
     button.style.left = `${left}px`;
   }
 
-  async function onOptimizeClick() {
+  function onButtonClick() {
     if (suppressNextClick) {
       suppressNextClick = false;
+      window.clearTimeout(suppressClickTimer);
+      return;
+    }
+    void runOptimize(false);
+  }
+
+  // Keyboard shortcut. The background worker messages every frame of the tab,
+  // so only the frame that actually holds focus handles it: document.hasFocus()
+  // is also true for a parent whose focused element is a child frame, so defer
+  // to that child in that case. Never routed through suppressNextClick.
+  function onShortcutTrigger() {
+    if (tornDown || !document.hasFocus()) {
+      return;
+    }
+    const focused = document.activeElement;
+    if (focused && (focused.tagName === "IFRAME" || focused.tagName === "FRAME")) {
+      return;
+    }
+    void runOptimize(true);
+  }
+
+  async function runOptimize(fromShortcut) {
+    if (isBusy || tornDown) {
       return;
     }
 
-    const targetInput = activeInput && document.contains(activeInput) ? activeInput : findPromptInput(selectors);
+    const targetInput = activeInput && activeInput.isConnected ? activeInput : findPromptInput(selectors, acceptInput);
     if (!targetInput) {
+      if (fromShortcut) {
+        showToast("Click in the prompt box first.");
+      }
       return;
     }
 
@@ -199,7 +288,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
   }
 
   async function requestOptimization(targetInput, prompt, preset) {
-    const token = ++requestSeq;
+    const token = ++optimizeSeq;
     setBusy(true, targetInput);
     const response = await sendMessage({
       type: "ASKBETTER_OPTIMIZE",
@@ -207,11 +296,14 @@ function startAskBetter(site, siteToggleKey, selectors) {
       preset,
       site
     });
-    // A newer request is already in flight and still owns the busy state.
-    if (token !== requestSeq) {
+    // A newer optimize is already in flight and still owns the busy state.
+    if (token !== optimizeSeq) {
       return;
     }
     setBusy(false, targetInput);
+    if (response && response.code === "EXTENSION_CONTEXT_INVALIDATED") {
+      teardown();
+    }
 
     if (!response || !response.ok) {
       const message = response && response.code === "DISABLED_OR_MISSING_KEY"
@@ -242,6 +334,8 @@ function startAskBetter(site, siteToggleKey, selectors) {
     }
     previewCard = document.createElement("div");
     previewCard.className = "pf-preview-card";
+    previewCard.setAttribute("role", "dialog");
+    previewCard.setAttribute("aria-label", "AskBetter preview");
     previewCard.style.display = "none";
     previewCard.innerHTML = `
       <div class="pf-preview-head">
@@ -253,8 +347,8 @@ function startAskBetter(site, siteToggleKey, selectors) {
           </svg>
         </button>
       </div>
-      <div class="pf-preview-variants" role="tablist" aria-label="Optimized options" hidden></div>
-      <textarea class="pf-preview-text" spellcheck="false"></textarea>
+      <div class="pf-preview-variants" role="group" aria-label="Optimized options" hidden></div>
+      <textarea class="pf-preview-text" spellcheck="false" aria-label="Optimized prompt"></textarea>
       <div class="pf-preview-diff" aria-live="polite" hidden></div>
       <div class="pf-preview-refine">
         <input type="text" class="pf-preview-refine-input" spellcheck="false" placeholder="Refine — e.g. make it shorter, more formal…" aria-label="Describe a follow-up change" />
@@ -302,13 +396,15 @@ function startAskBetter(site, siteToggleKey, selectors) {
         if (previewState && Array.isArray(previewState.variants)) {
           previewState.variants[previewState.activeIndex] = textarea.value;
         }
+        updateAcceptState();
       });
     }
 
     const refineInput = previewCard.querySelector(".pf-preview-refine-input");
     if (refineInput) {
       refineInput.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
+        // Enter that commits an IME composition is not a submit.
+        if (event.key === "Enter" && !isImeEvent(event)) {
           event.preventDefault();
           void refinePreview();
         }
@@ -332,6 +428,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
     renderDiffMode();
     updateCostFooter();
     setPreviewBusy(false);
+    updateAcceptState();
     const refineInput = previewCard.querySelector(".pf-preview-refine-input");
     if (refineInput) {
       refineInput.value = "";
@@ -362,9 +459,20 @@ function startAskBetter(site, siteToggleKey, selectors) {
     if (previewState && previewState.diffMode) {
       renderDiff();
     }
+    updateAcceptState();
   }
 
-  // Render the variant tabs when Ask Better returned more than one rewrite.
+  // Accept would wipe the prompt box with nothing, so it needs real text.
+  function updateAcceptState() {
+    const accept = previewCard && previewCard.querySelector(".pf-preview-accept");
+    if (!accept) {
+      return;
+    }
+    const busy = previewCard.classList.contains("pf-preview-is-busy");
+    accept.disabled = busy || !getActiveText().trim();
+  }
+
+  // Render the variant switcher when Ask Better returned more than one rewrite.
   function renderVariants() {
     const wrap = previewCard && previewCard.querySelector(".pf-preview-variants");
     if (!wrap) {
@@ -383,8 +491,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
       pill.type = "button";
       pill.className = "pf-preview-variant" + (index === previewState.activeIndex ? " pf-is-active" : "");
       pill.setAttribute("data-variant-index", String(index));
-      pill.setAttribute("role", "tab");
-      pill.setAttribute("aria-selected", String(index === previewState.activeIndex));
+      pill.setAttribute("aria-pressed", String(index === previewState.activeIndex));
       pill.textContent = `Option ${index + 1}`;
       wrap.appendChild(pill);
     });
@@ -407,6 +514,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
     if (textarea) {
       textarea.value = getActiveText();
     }
+    updateAcceptState();
     if (previewState.diffMode) {
       renderDiff();
     } else if (textarea) {
@@ -461,8 +569,13 @@ function startAskBetter(site, siteToggleKey, selectors) {
     costEl.hidden = !label;
   }
 
+  function isPreviewBusy() {
+    return !!(previewCard && previewCard.classList.contains("pf-preview-is-busy"));
+  }
+
   async function refinePreview() {
-    if (!previewState || !previewCard) {
+    // Enter in the refine box isn't blocked by the disabled buttons.
+    if (!previewState || !previewCard || isPreviewBusy()) {
       return;
     }
     const refineInput = previewCard.querySelector(".pf-preview-refine-input");
@@ -479,7 +592,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
       return;
     }
     const state = previewState;
-    const token = ++requestSeq;
+    const token = ++previewSeq;
     setPreviewBusy(true);
     const response = await sendMessage({
       type: "ASKBETTER_REFINE",
@@ -489,8 +602,10 @@ function startAskBetter(site, siteToggleKey, selectors) {
     });
     // Drop the result if it was superseded, or if this card was discarded —
     // previewState identity changes when a new preview opens, so a stale
-    // response can never land in a card it was not requested from.
-    if (token !== requestSeq || previewState !== state || !isPreviewOpen()) {
+    // response can never land in a card it was not requested from. In every
+    // drop case someone else already reset the card's busy state: a newer
+    // preview op owns it, or closePreview / showPreview cleared it.
+    if (token !== previewSeq || previewState !== state || !isPreviewOpen()) {
       return;
     }
     setPreviewBusy(false);
@@ -551,6 +666,9 @@ function startAskBetter(site, siteToggleKey, selectors) {
     if (regenerate) {
       regenerate.textContent = busy ? "Regenerating..." : "Regenerate";
     }
+    if (!busy) {
+      updateAcceptState();
+    }
   }
 
   function acceptPreview() {
@@ -561,14 +679,19 @@ function startAskBetter(site, siteToggleKey, selectors) {
     const textarea = previewCard.querySelector(".pf-preview-text");
     // In diff mode the textarea is hidden, so read from the persisted variant.
     const nextText = previewState.diffMode ? getActiveText() : (textarea ? textarea.value : getActiveText());
-    const input = previewState.input && document.contains(previewState.input)
-      ? previewState.input
-      : findPromptInput(selectors);
-    closePreview();
-    if (!input) {
-      showToast("Prompt box not found");
+    if (!nextText.trim()) {
       return;
     }
+    // Never re-target: if the composer this rewrite came from is gone (e.g. the
+    // user switched chats), pasting into whatever box exists now would put one
+    // conversation's prompt into another.
+    const input = previewState.input;
+    if (!input || !input.isConnected) {
+      closePreview(false);
+      showToast("The prompt box changed — optimize again.");
+      return;
+    }
+    closePreview(false);
     writePromptText(input, nextText);
     showToast("Prompt optimized", "success");
   }
@@ -577,15 +700,16 @@ function startAskBetter(site, siteToggleKey, selectors) {
     if (!previewState || !previewCard) {
       return;
     }
-    const input = previewState.input && document.contains(previewState.input)
-      ? previewState.input
-      : findPromptInput(selectors);
-    if (!input) {
-      showToast("Prompt box not found");
+    if (isPreviewBusy()) {
+      return;
+    }
+    if (!previewState.input || !previewState.input.isConnected) {
+      closePreview(false);
+      showToast("The prompt box changed — optimize again.");
       return;
     }
     const state = previewState;
-    const token = ++requestSeq;
+    const token = ++previewSeq;
     setPreviewBusy(true);
     const response = await sendMessage({
       type: "ASKBETTER_OPTIMIZE",
@@ -593,7 +717,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
       preset: previewState.preset,
       site
     });
-    if (token !== requestSeq || previewState !== state || !isPreviewOpen()) {
+    if (token !== previewSeq || previewState !== state || !isPreviewOpen()) {
       return;
     }
     setPreviewBusy(false);
@@ -612,6 +736,7 @@ function startAskBetter(site, siteToggleKey, selectors) {
       textarea.value = getActiveText();
     }
     updateCostFooter();
+    updateAcceptState();
     if (previewState.diffMode) {
       renderDiff();
     } else if (textarea) {
@@ -620,33 +745,54 @@ function startAskBetter(site, siteToggleKey, selectors) {
     }
   }
 
-  function closePreview() {
+  // restoreFocus (default true): hand focus back to the composer, but only when
+  // focus was inside the card — never steal it from wherever the user went.
+  function closePreview(restoreFocus) {
+    const input = previewState && previewState.input;
     previewState = null;
     if (previewCard && previewCard.isConnected) {
+      const focused = document.activeElement;
+      const hadFocus = !!focused && (focused === document.body || previewCard.contains(focused));
       previewCard.style.display = "none";
       setPreviewBusy(false);
+      if (restoreFocus !== false && hadFocus && input && input.isConnected && typeof input.focus === "function") {
+        input.focus();
+      }
     }
   }
 
   function onGlobalKeydown(event) {
-    if (event.key === "Escape" && isPreviewOpen()) {
+    if (event.key === "Escape" && !isImeEvent(event) && isPreviewOpen()) {
       event.stopPropagation();
       closePreview();
     }
   }
 
-  async function getPublicSettings(forceRefresh) {
+  function getPublicSettings(forceRefresh) {
     const now = Date.now();
     if (!forceRefresh && settingsCache && now - settingsLoadedAt < 5000) {
-      return settingsCache;
+      return Promise.resolve(settingsCache);
     }
-    const response = await sendMessage({ type: "ASKBETTER_GET_PUBLIC_SETTINGS" });
-    if (response && response.ok && response.settings) {
-      settingsCache = response.settings;
-      settingsLoadedAt = now;
-      return settingsCache;
+    // Overlapping syncs after the cache expires share one request.
+    if (!forceRefresh && settingsPromise) {
+      return settingsPromise;
     }
-    return settingsCache;
+    const pending = sendMessage({ type: "ASKBETTER_GET_PUBLIC_SETTINGS" }).then((response) => {
+      if (response && response.ok && response.settings) {
+        settingsCache = response.settings;
+        settingsLoadedAt = Date.now();
+      } else if (response && response.code === "EXTENSION_CONTEXT_INVALIDATED") {
+        teardown();
+      }
+      return settingsCache;
+    });
+    settingsPromise = pending;
+    pending.then(() => {
+      if (settingsPromise === pending) {
+        settingsPromise = null;
+      }
+    });
+    return pending;
   }
 
   async function ensureOffsetLoaded() {
@@ -726,7 +872,17 @@ function startAskBetter(site, siteToggleKey, selectors) {
     }
 
     if (didMove) {
-      suppressNextClick = true;
+      // A drag released with pointerup is followed by a click that must not
+      // optimize. pointercancel is never followed by one, so setting the flag
+      // there would swallow the user's next real click. The timer clears it
+      // in case the browser doesn't deliver that click at all.
+      if (event.type === "pointerup") {
+        suppressNextClick = true;
+        window.clearTimeout(suppressClickTimer);
+        suppressClickTimer = window.setTimeout(() => {
+          suppressNextClick = false;
+        }, 300);
+      }
       scheduleOffsetSave(true);
     }
   }
@@ -810,21 +966,51 @@ function startAskBetter(site, siteToggleKey, selectors) {
   }
 }
 
-function findPromptInput(selectors) {
+function isImeEvent(event) {
+  return !!event && (event.isComposing || event.keyCode === 229);
+}
+
+function isExtensionContextValid() {
+  try {
+    return typeof chrome !== "undefined" && !!chrome.runtime && !!chrome.runtime.id;
+  } catch (_error) {
+    return false;
+  }
+}
+
+// The deep (shadow-piercing) scan walks every element, and syncs run on most
+// DOM mutations while no composer exists — so run it at most once a second.
+// `var`, not `const`: a top-level lexical redeclaration would throw if this
+// file were ever evaluated twice in the same isolated world.
+var DEEP_SCAN_INTERVAL_MS = 1000;
+var deepScanCache = { at: 0, selectors: null, result: null };
+
+function findPromptInput(selectors, acceptInput) {
+  const accepts = (node) => isEligiblePromptInput(node) && (!acceptInput || acceptInput(node));
   for (const selector of selectors) {
     const nodes = document.querySelectorAll(selector);
     for (const node of nodes) {
-      if (isEligiblePromptInput(node)) {
+      if (accepts(node)) {
         return node;
       }
     }
   }
   // Fallback: some sites render the composer inside a shadow root, which
   // document.querySelectorAll cannot reach. Pierce open shadow roots.
-  return findPromptInputDeep(document, selectors);
+  const now = Date.now();
+  if (deepScanCache.selectors === selectors && now - deepScanCache.at < DEEP_SCAN_INTERVAL_MS) {
+    const cached = deepScanCache.result;
+    return cached && cached.isConnected && accepts(cached) ? cached : null;
+  }
+  const result = findPromptInputDeep(document, selectors, accepts);
+  deepScanCache.at = now;
+  deepScanCache.selectors = selectors;
+  deepScanCache.result = result;
+  return result;
 }
 
-function findPromptInputDeep(root, selectors) {
+function findPromptInputDeep(root, selectors, accepts) {
+  const isMatch = typeof accepts === "function" ? accepts : isEligiblePromptInput;
   const hosts = root.querySelectorAll("*");
   for (const host of hosts) {
     const shadow = host.shadowRoot;
@@ -834,12 +1020,12 @@ function findPromptInputDeep(root, selectors) {
     for (const selector of selectors) {
       const nodes = shadow.querySelectorAll(selector);
       for (const node of nodes) {
-        if (isEligiblePromptInput(node)) {
+        if (isMatch(node)) {
           return node;
         }
       }
     }
-    const nested = findPromptInputDeep(shadow, selectors);
+    const nested = findPromptInputDeep(shadow, selectors, isMatch);
     if (nested) {
       return nested;
     }
@@ -880,6 +1066,18 @@ function readPromptText(node) {
 
 function writePromptText(node, value) {
   if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) {
+    // insertText goes through the browser's editing pipeline, so it stays on
+    // the undo stack and fires a real input event for frameworks like React.
+    try {
+      node.focus();
+      node.select();
+      document.execCommand("insertText", false, value);
+    } catch (_error) {
+      // fall through to the value setter
+    }
+    if (node.value === value) {
+      return;
+    }
     const prototype = Object.getPrototypeOf(node);
     const descriptor = Object.getOwnPropertyDescriptor(prototype, "value");
     if (descriptor && typeof descriptor.set === "function") {
@@ -912,7 +1110,9 @@ function writePromptText(node, value) {
       return;
     }
     selectAllContent(node);
-    if (tryPasteText(node, value) && contentMatches(node, value)) {
+    // A consumed paste means the editor owns the insert, possibly in a
+    // deferred handler — writing textContent too would duplicate it.
+    if (tryPasteText(node, value)) {
       return;
     }
     node.textContent = value;
@@ -1006,6 +1206,8 @@ function showToast(message, variant) {
     toast = document.createElement("div");
     toast.id = "pf-toast";
     toast.className = "pf-toast";
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
     toast.innerHTML = '<span class="pf-toast-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" focusable="false"><path d="M5 12.5L10 17L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="pf-toast-text"></span>';
     document.body.appendChild(toast);
   }
@@ -1028,23 +1230,33 @@ function tokenizeForDiff(text) {
   return String(text || "").match(/\s+|[^\s]+/g) || [];
 }
 
+// Upper bound on LCS table cells (Uint32 → ~8MB). Beyond it the changed middle
+// is shown as one removed block + one added block instead of a word diff.
+var DIFF_MAX_CELLS = 2000000;
+
 // Build a word-level diff (original → revised) as DOM nodes: unchanged text plain,
 // removed words struck, added words highlighted. Whitespace is never flagged so the
-// result reads naturally. Uses an LCS table over tokens.
+// result reads naturally. Common leading/trailing tokens are emitted as-is; an LCS
+// table runs only over the changed middle, and only when it fits DIFF_MAX_CELLS.
 function buildDiffFragment(original, revised) {
-  const a = tokenizeForDiff(original);
-  const b = tokenizeForDiff(revised);
+  const allA = tokenizeForDiff(original);
+  const allB = tokenizeForDiff(revised);
+  let prefix = 0;
+  while (prefix < allA.length && prefix < allB.length && allA[prefix] === allB[prefix]) {
+    prefix += 1;
+  }
+  let suffix = 0;
+  while (
+    suffix < allA.length - prefix &&
+    suffix < allB.length - prefix &&
+    allA[allA.length - 1 - suffix] === allB[allB.length - 1 - suffix]
+  ) {
+    suffix += 1;
+  }
+  const a = allA.slice(prefix, allA.length - suffix);
+  const b = allB.slice(prefix, allB.length - suffix);
   const n = a.length;
   const m = b.length;
-  const dp = [];
-  for (let i = 0; i <= n; i += 1) {
-    dp.push(new Uint32Array(m + 1));
-  }
-  for (let i = n - 1; i >= 0; i -= 1) {
-    for (let j = m - 1; j >= 0; j -= 1) {
-      dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
-    }
-  }
 
   const frag = document.createDocumentFragment();
   const push = (cls, text) => {
@@ -1059,6 +1271,24 @@ function buildDiffFragment(original, revised) {
     span.textContent = text;
     frag.appendChild(span);
   };
+
+  push("", allA.slice(0, prefix).join(""));
+  if (n * m > DIFF_MAX_CELLS) {
+    push("pf-diff-del", a.join(""));
+    push("pf-diff-add", b.join(""));
+    push("", allA.slice(allA.length - suffix).join(""));
+    return frag;
+  }
+
+  const dp = [];
+  for (let i = 0; i <= n; i += 1) {
+    dp.push(new Uint32Array(m + 1));
+  }
+  for (let i = n - 1; i >= 0; i -= 1) {
+    for (let j = m - 1; j >= 0; j -= 1) {
+      dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
 
   let i = 0;
   let j = 0;
@@ -1083,6 +1313,7 @@ function buildDiffFragment(original, revised) {
     push("pf-diff-add", b[j]);
     j += 1;
   }
+  push("", allA.slice(allA.length - suffix).join(""));
   return frag;
 }
 

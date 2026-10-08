@@ -171,6 +171,10 @@ Pattern: **Message-based communication** between background script, content scri
 
 4. **User can review, refine, & submit** the optimized prompt to the AI
 
+**Sender check:** `ASKBETTER_TEST_KEY` and `ASKBETTER_FETCH_MODELS` are accepted only from extension pages (`isExtensionPageSender`: no `sender.tab`, URL under `chrome.runtime.getURL("")`); content scripts get `FORBIDDEN`. No message ever returns a stored key.
+
+**Timeouts / keepalive:** every provider call goes through `runProviderRequest(timeoutMs, run)` — an `AbortController` timeout (90s generation, 20s model list / key test) that throws `code: "TIMEOUT"`, plus a refcounted keepalive (`chrome.runtime.getPlatformInfo()` every 20s) so Chrome doesn't stop the service worker mid-request. `recordUsage` / `recordHistory` / `saveButtonOffset` run through `enqueueStorageWrite` so concurrent completions don't lose entries.
+
 **Other message types:** `ASKBETTER_REFINE` `{ base, instruction, site }` → follow-up refinement of preview text; `ASKBETTER_GET_PUBLIC_SETTINGS`, `ASKBETTER_TEST_KEY`, `ASKBETTER_FETCH_MODELS`, `ASKBETTER_GET/SAVE_BUTTON_OFFSET`, and the `ASKBETTER_TRIGGER_OPTIMIZE` shortcut dispatch.
 
 ### State Management
@@ -236,7 +240,7 @@ Pattern: **Message-based communication** between background script, content scri
 ### Multi-variant Optimize
 
 - `askBetterOptionCount` (1–3, **default 1** so out-of-box behavior and cost are unchanged) controls how many rewrites the Optimize preview offers. Set in **Options → AskBetter → Suggestions** (`section-askbetter-suggestions`), mirroring Phrase Better's Suggestions.
-- When > 1, the ask-better branch of `buildSystemInstruction` requests a JSON `{ variants: [...] }` object (it previously asked for numbered `1. / 2.` lines, which could not be told apart from a numbered list *inside* a single rewrite); `rewriteText` parses it with the shared `parsePhraseVariants` and returns a `variants` array (and `optimizedPrompt` = variants[0] for back-compat). The single-shot completion-retry only runs for the 1-variant case.
+- When > 1, the ask-better branch of `buildSystemInstruction` requests a JSON `{ variants: [...] }` object (it previously asked for numbered `1. / 2.` lines, which could not be told apart from a numbered list *inside* a single rewrite); `rewriteText` parses it with the shared `parsePhraseVariants` and returns a `variants` array (and `optimizedPrompt` = variants[0] for back-compat). The single-shot completion retry only runs for the 1-variant case, and only when the provider reports the output hit the token limit (`truncated` from `call*`: Gemini `MAX_TOKENS`, OpenAI `incomplete/max_output_tokens`, Anthropic `max_tokens`); it has its own try/catch, so a failed retry keeps the first text, and usage of every billed call is recorded.
 
 ### Follow-up Refinement
 
@@ -357,9 +361,11 @@ Earlier provider-call fixes: and `extractGeminiText` / `extractOpenAIText` / `ex
 
 > **Mutation observer must ignore its own output**: `scheduleSync()` repositions and restyles the injected button/preview/busy nodes on every run, which mutates them, which would schedule another sync — a self-sustaining per-frame loop (measured at 2 syncs per self-mutation). The observer callback is `onDocumentMutated`, which drops any record originating inside `OWN_UI_SELECTOR` (`.pf-optimize-btn, .pf-preview-card, .pf-busy-indicator, #pf-toast`) via `isOwnMutation` / `isOwnElement`. Childlist records are judged by their added/removed nodes because our roots are appended to `document.body` (so the record target is the body, not ours). The observe options also carry an `attributeFilter` (`class`, `style`, `hidden`, `contenteditable`, `disabled`, `aria-hidden`) — the attributes that can change whether the composer is present, visible, or sized — instead of `attributes: true`, which is extremely noisy on ChatGPT. **When adding a new injected element, add its selector to `OWN_UI_SELECTOR`**, or it will re-open the feedback loop.
 
-> **In-flight responses are generation-tagged**: `requestSeq` is a monotonic counter bumped by `requestOptimization`, `regeneratePreview`, and `refinePreview` before each `sendMessage`. After the await, a handler bails unless its token still equals `requestSeq` — and the two preview handlers additionally require `previewState` to be the *same object* they started with (`closePreview` nulls it and each new preview is a fresh literal). Without this, discarding a card and opening a new one while a Regenerate/Refine was in flight dropped the stale result into the new card, and double-clicking Optimize let the slower reply overwrite the faster one.
+> **In-flight responses are generation-tagged**: two monotonic counters — `optimizeSeq` (Optimize; owns the button busy state) and `previewSeq` (Regenerate / Refine; owns the card busy state) — so a superseded request of one kind can never leave the other's busy flag stuck. After the await a handler bails unless its token is still current, and preview handlers also require `previewState` to be the *same object* they started with (`closePreview` nulls it; each new preview is a fresh literal). Regenerate/Refine are ignored while the card is busy. `hideButton()` closes the preview, and Accept refuses (with a toast) when the original prompt box is no longer connected instead of re-targeting a different chat's composer.
 
-> **Claude runs in an iframe**: Claude isolates its composer in a **separate-subdomain iframe** (`https://a.claude.ai/isolated-segment.html`), not in the top `claude.ai` document. So the Claude content-script entry uses `matches: ["https://claude.ai/*", "https://*.claude.ai/*"]`, `"all_frames": true`, and iframe fallback flags (`match_about_blank`, `match_origin_as_fallback`) — without these, the script can miss the composer frame. The button is created inside that iframe (its `position: fixed` is relative to the iframe viewport, which overlays the composer). Claude's editor may expose `contenteditable="true"` or `contenteditable="plaintext-only"`, and the shared eligibility check allows single-line contenteditable editors as short as 16px high. ChatGPT and Gemini keep their composer in the top frame and don't need these Claude-specific frame flags.
+> **Keyboard shortcut**: the background sends `ASKBETTER_TRIGGER_OPTIMIZE` to every frame; `onShortcutTrigger` acts only in the frame where `document.hasFocus()` and the active element isn't a child frame, returns while busy, and toasts "Click in the prompt box first." when that frame has no composer. Only the button click path consults `suppressNextClick` (set on `pointerup` after a drag, cleared after 300ms).
+
+> **Claude runs in an iframe**: Claude isolates its composer in a **separate-subdomain iframe** (`https://a.claude.ai/isolated-segment.html`), not in the top `claude.ai` document. So the Claude content-script entry uses `matches: ["https://claude.ai/*", "https://a.claude.ai/*"]` (not `*.claude.ai`, which reached support/docs subdomains), `"all_frames": true`, and iframe fallback flags (`match_about_blank`, `match_origin_as_fallback`) — without these, the script can miss the composer frame. The button is created inside that iframe (its `position: fixed` is relative to the iframe viewport, which overlays the composer). Claude's editor may expose `contenteditable="true"` or `contenteditable="plaintext-only"`, and the shared eligibility check allows single-line contenteditable editors as short as 16px high. ChatGPT and Gemini keep their composer in the top frame and don't need these Claude-specific frame flags. `claude.js` adds the generic `[contenteditable]` / `textarea` fallbacks only inside the `a.claude.ai` frame; elsewhere it passes `startAskBetter(…, { acceptInput })`, a generic per-site predicate hook in core.js, that rejects `/settings` paths and anything inside a dialog (project instructions, preferences).
 
 ### ChatGPT Integration (`content/chatgpt.js`)
 
@@ -453,7 +459,9 @@ Full settings page accessible from the popup or extension management UI.
 
 **Sidebar menu is grouped by app**, each group wrapped in a `<div class="menu-group" data-group="...">` (tab-style: one `.settings-section` shown at a time, switched by `activateSection` via each nav button's `data-section`). Group headers use `.menu-title` / `.menu-title--group`:
 
-- **Common** — `section-models` (provider, model, and the global **Enable AI** toggle), `section-mode` (**both** Ask Better + Phrase Better on/off), `section-reports` (local usage dashboard), `section-history` (local rewrite history). The old Security panel was folded into `section-models` as an **API key dialog**: an `#apiKeyBtn` sits to the right of the provider select (`.provider-row`), its `data-state` (`missing` = solid amber CTA, `unverified` = amber dot, `verified` = green dot) set by `updateApiKeyButton()` from `applyKeyLockState()`. It and the model hint's `#modelHintKeyBtn` open `#apiKeyModal` (reuses `.info-modal` styles; Esc / backdrop / close button dismiss; Enter in the key field verifies; a successful verify closes it after 700ms so the unlocked model list is visible). The key field, Verify, Clear and Generate controls keep their old IDs, so `bindSecurityActions` is unchanged. The legacy `#security` hash still opens Models (alias added after `SECTION_TO_SLUG` is built so `section-models` keeps writing `#models`).
+- **Common** — `section-models` (provider, model, and the global **Enable AI** toggle), `section-mode` (**both** Ask Better + Phrase Better on/off), `section-reports` (local usage dashboard), `section-history` (local rewrite history). The old Security panel was folded into `section-models` as an **API key dialog**: an `#apiKeyBtn` sits to the right of the provider select (`.provider-row`), its `data-state` (`missing` = solid amber CTA, `unverified` = amber dot, `verified` = green dot) set by `updateApiKeyButton()` from `applyKeyLockState()`. It and the model hint's `#modelHintKeyBtn` open `#apiKeyModal` (reuses `.info-modal` styles; Esc / backdrop / close button dismiss; Enter in the key field verifies; a successful verify closes it after 700ms so the unlocked model list is visible). The key field, Verify, Clear and Generate controls keep their old IDs. **Replace key** (`#replaceKeyBtn`, shown when locked) unlocks just the field — the stored key keeps working until a new one verifies, and closing the dialog mid-replace re-locks. A re-verify the provider rejects with 401/403 clears `*KeyVerified` and unlocks; network errors/rate limits leave it alone. A verify result is applied to the UI only if the provider wasn't switched while it ran.
+
+**Settings writes merge into storage, not the page's copy:** `savePartial` re-reads `settings` before writing (so popup changes aren't reverted), and `bindExternalSettingsSync` re-renders the form on outside changes unless a text field is focused. The legacy `#security` hash still opens Models (alias added after `SECTION_TO_SLUG` is built so `section-models` keeps writing `#models`).
 - **AskBetter** — `section-integrations` (Enable on ChatGPT/Gemini/Claude), `section-presets` (**Presets & Additions** — merged panel: default-preset chips + Keep-user-voice, **Custom presets**, and **Custom prompt additions**/quick tags; the old standalone `section-custom` was folded in here), `section-askbetter-suggestions` (**how many rewrite options** the preview offers, `askBetterOptionCount`)
 - **PhraseBetter** — `section-phrasebetter-presets` (**preset** + on-top **adjustment toggles**), `section-phrasebetter-suggestions` (how many options to show)
 
@@ -547,6 +555,7 @@ Four IIFEs: mobile nav toggle, scroll reveal, the hero mock loop (type rough pro
 
 - 18 numbered `.prose-card` sections styled by the shared `../styles.css` (no inline `<style>` block any more)
 - Explains no telemetry, local-only storage, no backend, and the source-available license
+- **Keep it in step with the code.** §03 lists every `chrome.storage.local` key (settings, keys, `promptHistory` — prompt *content*, last 100 — `usageLog` — no prompt text, 30 days — `modelCache`) plus how to delete it; §04 lists everything sent to providers (Optimize/Regenerate/Refine, Phrase Better selections from any site, key check / model list); §08 separates the extension (no analytics) from the website (cookie-free Cloudflare Web Analytics, never loaded by the extension). The in-extension summary (`#privacyInfoModal` in `ui/options.html`) mirrors it. When you add a stored key, a new request type, or a permission, update both and the "Last updated" date.
 
 ---
 
@@ -591,6 +600,20 @@ The service account must be added in the Web Store Developer Dashboard (Account 
 ---
 
 ## 12. Development Setup
+
+### Tests
+
+```bash
+npm test         # node --test "tests/**/*.test.js" — no dependencies to install
+npm run check    # node --check on every extension script
+```
+
+- `tests/helpers/load.js` runs the classic (non-module) scripts in a `vm` context with a permissive `chrome` stub and an in-memory `chrome.storage.local` (`context.chrome.__store`). Top-level `const`s are not context properties, so pass the names you need in `expose`; exposed functions return plain main-realm copies so `assert.deepStrictEqual` works.
+- `tests/background.test.js`: output parsing (`parsePhraseVariants` / JSON repair), prompt↔transport JSON agreement (`wantsJsonOutput` vs `buildSystemInstruction`), model filters against `tests/fixtures/models.js`, per-model tuning, pricing, usage extraction, error mapping, sender check, storage-queue concurrency, timeouts, and provider request shapes/fallbacks against a scripted `fetch` (no prefill on Anthropic, `output_config`, OpenAI format fallback, Gemini 3 config, truncation retry).
+- `tests/content-core.test.js`: diff, usage footer, offsets, IME detection from `content/core.js` with a fake `document`.
+- Not covered: writing into the real ProseMirror / Quill composers and the injected UI — those need a browser (Playwright) and are checked by hand.
+- CI (`.github/workflows/ci.yml`) runs `check` + `test` on every push/PR; `release.yml` runs them before packaging. When you add a model family or change a filter, add it to the fixtures.
+
 
 ### Prerequisites
 
