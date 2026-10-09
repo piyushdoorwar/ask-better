@@ -21,14 +21,14 @@ jobs:
     name: Extension package
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
       - run: npm run check
       - run: npm test
       - run: bash scripts/package-extension.sh "$GITHUB_REF_NAME"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: extension
           path: dist/askbetter-*.zip
@@ -39,7 +39,7 @@ jobs:
     if: ${{ !contains(github.ref_name, '-') }}
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: configured
         name: Check store secrets
         env:
@@ -52,12 +52,12 @@ jobs:
             echo "publish=true" >> "$GITHUB_OUTPUT"
           fi
       - if: steps.configured.outputs.publish == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: extension
           path: dist
       - if: steps.configured.outputs.publish == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 24
       - if: steps.configured.outputs.publish == 'true'
@@ -73,8 +73,8 @@ jobs:
     needs: [extension]
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v7
         with:
           name: extension
           path: dist
