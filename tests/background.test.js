@@ -22,6 +22,7 @@ const EXPOSE = [
 function load() {
   const { context, exports } = loadScripts(["background.js"], { expose: EXPOSE });
   context.chrome.runtime.getURL = (p = "") => `chrome-extension://askbetter/${p}`;
+  context.chrome.runtime.id = "askbetter";
   return { context, bg: exports };
 }
 
@@ -194,9 +195,15 @@ test("mapProviderError", () => {
 // Messaging and storage
 
 test("only extension pages may test keys or list models", () => {
-  assert.equal(bg.isExtensionPageSender({ url: "chrome-extension://askbetter/ui/options.html" }), true);
-  assert.equal(bg.isExtensionPageSender({ tab: { id: 1 }, url: "https://chatgpt.com/" }), false);
-  assert.equal(bg.isExtensionPageSender({ url: "https://evil.example/" }), false);
+  const ours = "chrome-extension://askbetter/ui/options.html";
+  // Popup: no tab.
+  assert.equal(bg.isExtensionPageSender({ id: "askbetter", url: ours }), true);
+  // options_page opens in a regular tab, so its messages carry sender.tab.
+  assert.equal(bg.isExtensionPageSender({ id: "askbetter", tab: { id: 7, url: ours }, url: ours }), true);
+  // Content script: same extension id, but the URL is the host page.
+  assert.equal(bg.isExtensionPageSender({ id: "askbetter", tab: { id: 1 }, url: "https://chatgpt.com/" }), false);
+  assert.equal(bg.isExtensionPageSender({ id: "askbetter", url: "https://evil.example/" }), false);
+  assert.equal(bg.isExtensionPageSender({ id: "other", url: ours }), false);
   assert.equal(bg.isExtensionPageSender(undefined), false);
 });
 

@@ -171,7 +171,7 @@ Pattern: **Message-based communication** between background script, content scri
 
 4. **User can review, refine, & submit** the optimized prompt to the AI
 
-**Sender check:** `ASKBETTER_TEST_KEY` and `ASKBETTER_FETCH_MODELS` are accepted only from extension pages (`isExtensionPageSender`: no `sender.tab`, URL under `chrome.runtime.getURL("")`); content scripts get `FORBIDDEN`. No message ever returns a stored key.
+**Sender check:** `ASKBETTER_TEST_KEY` and `ASKBETTER_FETCH_MODELS` are accepted only from extension pages (`isExtensionPageSender`: `sender.id` is ours and the URL is under `chrome.runtime.getURL("")`); content scripts get `FORBIDDEN`. **Don't test `sender.tab`** — `options_page` opens in a normal tab, so its messages carry one (that check once blocked key verify with "Not allowed."). No message ever returns a stored key.
 
 **Timeouts / keepalive:** every provider call goes through `runProviderRequest(timeoutMs, run)` — an `AbortController` timeout (90s generation, 20s model list / key test) that throws `code: "TIMEOUT"`, plus a refcounted keepalive (`chrome.runtime.getPlatformInfo()` every 20s) so Chrome doesn't stop the service worker mid-request. `recordUsage` / `recordHistory` / `saveButtonOffset` run through `enqueueStorageWrite` so concurrent completions don't lose entries.
 

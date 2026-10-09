@@ -314,9 +314,12 @@ async function triggerOptimizeInActiveTab() {
 // the extension's own pages (popup/options) may use them, never a content script.
 const EXTENSION_PAGE_ONLY_MESSAGES = new Set(["ASKBETTER_TEST_KEY", "ASKBETTER_FETCH_MODELS"]);
 
+// Don't reject on sender.tab: options_page opens in a regular tab, so messages from
+// it carry a tab. The URL alone is what tells our pages apart from a content script,
+// whose sender.url is the host page.
 function isExtensionPageSender(sender) {
   return !!sender
-    && !sender.tab
+    && sender.id === chrome.runtime.id
     && typeof sender.url === "string"
     && sender.url.startsWith(chrome.runtime.getURL(""));
 }
